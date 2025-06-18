@@ -1,0 +1,492 @@
+import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import * as path from 'path';
+import { CredentialManager } from './credential-manager';
+import { DataManager } from './data-manager';
+import { MetadataExtractor } from './metadata-extractor';
+import { ArweaveManager } from './arweave-manager';
+import { ATProtoManager } from './atproto-manager';
+import { XManager } from './x-manager';
+import { SocialManager } from './social-manager';
+import { AccountStateManager } from './account-state-manager';
+
+class MeridianApp {
+  private mainWindow: BrowserWindow | null = null;
+  private credentialManager: CredentialManager;
+  private dataManager: DataManager;
+  private metadataExtractor: MetadataExtractor;
+  private arweaveManager: ArweaveManager;
+  private atprotoManager: ATProtoManager;
+  private xManager: XManager;
+  private socialManager: SocialManager;
+  private accountStateManager: AccountStateManager;
+
+  constructor() {
+    this.credentialManager = CredentialManager.getInstance();
+    this.dataManager = new DataManager();
+    this.metadataExtractor = new MetadataExtractor();
+    this.arweaveManager = new ArweaveManager(this.dataManager);
+    this.atprotoManager = new ATProtoManager(this.dataManager);
+    this.xManager = new XManager(this.dataManager);
+    this.socialManager = new SocialManager();
+
+    // Initialize centralized account state manager
+    this.accountStateManager = AccountStateManager.getInstance(
+      this.credentialManager,
+      this.arweaveManager,
+      this.atprotoManager,
+      this.xManager
+    );
+
+    this.setupApp();
+    this.setupIPC();
+  }
+
+  private setupApp(): void {
+    // Set security policies
+    app.setAsDefaultProtocolClient('meridian');
+    
+    // Ready event
+    app.whenReady().then(() => {
+      this.createWindow();
+      
+      app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+          this.createWindow();
+        }
+      });
+    });
+
+    // All windows closed
+    app.on('window-all-closed', () => {
+      if (process.platform !== 'darwin') {
+        app.quit();
+      }
+    });
+
+    // Security: Prevent new window creation
+    app.on('web-contents-created', (_, contents) => {
+      contents.setWindowOpenHandler(({ url }) => {
+        shell.openExternal(url);
+        return { action: 'deny' };
+      });
+    });
+  }
+
+  private createWindow(): void {
+    this.mainWindow = new BrowserWindow({
+      width: 900,
+      height: 800,
+      minWidth: 700,
+      minHeight: 600,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+
+        preload: path.join(__dirname, 'preload.js'),
+        webSecurity: true,
+        allowRunningInsecureContent: false,
+        experimentalFeatures: false
+      },
+      titleBarStyle: 'hiddenInset',
+      show: false
+    });
+
+    // Load the renderer
+    if (process.env.NODE_ENV === 'development') {
+      this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/index.html'));
+      this.mainWindow.webContents.openDevTools();
+    } else {
+      this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/index.html'));
+    }
+
+    // Show when ready
+    this.mainWindow.once('ready-to-show', () => {
+      this.mainWindow?.show();
+    });
+
+    // Handle close
+    this.mainWindow.on('closed', () => {
+      this.mainWindow = null;
+    });
+  }
+
+  private setupIPC(): void {
+    // Workspace management
+    ipcMain.handle('select-workspace', async () => {
+      const result = await dialog.showOpenDialog(this.mainWindow!, {
+        properties: ['openDirectory'],
+        title: 'Select Workspace Directory'
+      });
+
+      if (!result.canceled && result.filePaths.length > 0) {
+        const workspacePath = result.filePaths[0]!;
+        await this.dataManager.setWorkspace(workspacePath);
+        await this.credentialManager.setWorkspace(workspacePath);
+        
+        // Initialize centralized account state detection
+        await this.accountStateManager.initializeForWorkspace(workspacePath);
+        
+        return { success: true, path: workspacePath };
+      }
+
+      return { success: false };
+    });
+
+    ipcMain.handle('get-workspace', () => {
+      return this.dataManager.getWorkspacePath();
+    });
+
+    // Collate IPC handlers
+    ipcMain.handle('collate:load-data', async () => {
+      return await this.dataManager.loadCollateData();
+    });
+
+    ipcMain.handle('collate:add-resource', async (_, resourceData) => {
+      return await this.dataManager.addResource(resourceData);
+    });
+
+    ipcMain.handle('collate:update-resource', async (_, id, updates) => {
+      return await this.dataManager.updateResource(id, updates);
+    });
+
+    ipcMain.handle('collate:add-tag-to-resource', async (_, resourceId, tag) => {
+      return await this.dataManager.addTagToResource(resourceId, tag);
+    });
+
+    ipcMain.handle('collate:remove-tag-from-resource', async (_, resourceId, tag) => {
+      return await this.dataManager.removeTagFromResource(resourceId, tag);
+    });
+
+    ipcMain.handle('collate:rename-tag', async (_, oldTag, newTag) => {
+      return await this.dataManager.renameTag(oldTag, newTag);
+    });
+
+    ipcMain.handle('collate:delete-tag', async (_, tag) => {
+      return await this.dataManager.deleteTag(tag);
+    });
+
+    ipcMain.handle('collate:remove-resource', async (_, resourceId) => {
+      return await this.dataManager.removeResource(resourceId);
+    });
+
+    ipcMain.handle('collate:extract-metadata', async (_, url) => {
+      return await this.metadataExtractor.extractMetadata(url);
+    });
+
+    ipcMain.handle('collate:export-resources', async (_, format, data, filename) => {
+      return await this.dataManager.exportResources(format, data, filename);
+    });
+
+    // Archive IPC handlers
+    ipcMain.handle('archive:load-data', async () => {
+      return await this.dataManager.loadArchiveData();
+    });
+
+    ipcMain.handle('archive:save-data', async (_, data) => {
+      return await this.dataManager.saveArchiveData(data);
+    });
+
+    ipcMain.handle('archive:upload-file', async (_, filePath, tags) => {
+      return await this.arweaveManager.uploadFile(filePath, tags);
+    });
+
+    ipcMain.handle('archive:get-wallet-balance', async () => {
+      return await this.arweaveManager.getWalletBalance();
+    });
+
+    ipcMain.handle('archive:estimate-cost', async (_, fileSize) => {
+      return await this.arweaveManager.estimateUploadCost(fileSize);
+    });
+
+    ipcMain.handle('archive:setup-wallet', async (_, walletJWK) => {
+      return await this.arweaveManager.setupWallet(walletJWK);
+    });
+
+    ipcMain.handle('archive:get-wallet-info', async () => {
+      return await this.arweaveManager.getWalletInfo();
+    });
+
+    ipcMain.handle('archive:is-wallet-configured', async () => {
+      return await this.arweaveManager.isWalletConfigured();
+    });
+
+    ipcMain.handle('archive:remove-wallet', async () => {
+      return await this.arweaveManager.removeWallet();
+    });
+
+    ipcMain.handle('archive:check-transaction-status', async (_, transactionId) => {
+      return await this.arweaveManager.checkTransactionStatus(transactionId);
+    });
+
+    // Multi-account Arweave IPC handlers
+    ipcMain.handle('archive:add-account', async (_, walletJWK, nickname) => {
+      return await this.arweaveManager.addAccount(walletJWK, nickname);
+    });
+
+    ipcMain.handle('archive:remove-account', async (_, accountId) => {
+      return await this.arweaveManager.removeAccount(accountId);
+    });
+
+    ipcMain.handle('archive:list-accounts', async () => {
+      return await this.arweaveManager.listAccounts();
+    });
+
+    ipcMain.handle('archive:switch-account', async (_, accountId) => {
+      return await this.arweaveManager.switchAccount(accountId);
+    });
+
+    ipcMain.handle('archive:get-active-account', async () => {
+      return await this.arweaveManager.getActiveAccount();
+    });
+
+    ipcMain.handle('archive:update-account-nickname', async (_, accountId, nickname) => {
+      return await this.arweaveManager.updateAccountNickname(accountId, nickname);
+    });
+
+    // File Registry IPC handlers (UUID-based file management)
+    ipcMain.handle('registry:resolve-uuid', async (_, filePath) => {
+      return await this.arweaveManager.resolveUUID(filePath);
+    });
+
+    ipcMain.handle('registry:get-file-by-uuid', async (_, uuid) => {
+      return await this.dataManager.getFileByUUID(uuid);
+    });
+
+    ipcMain.handle('registry:get-file-by-path', async (_, filePath) => {
+      const files = await this.dataManager.searchFiles({ filePath });
+      return files.length > 0 ? files[0] : null;
+    });
+
+    ipcMain.handle('registry:add-or-update-file', async (_, entry) => {
+      return await this.dataManager.addOrUpdateFile(entry);
+    });
+
+    ipcMain.handle('registry:get-all-files', async () => {
+      return await this.dataManager.getAllFiles();
+    });
+
+    ipcMain.handle('registry:search-by-tags', async (_, tags) => {
+      return await this.dataManager.searchFiles({ tags });
+    });
+
+    ipcMain.handle('registry:search-by-title', async (_, query) => {
+      return await this.dataManager.searchFiles({ title: query });
+    });
+
+    ipcMain.handle('registry:validate-registry', async () => {
+      // This functionality would need to be implemented in DataManager if needed
+      return { valid: true, issues: [] };
+    });
+
+    ipcMain.handle('registry:rebuild-registry', async (_, scanPaths) => {
+      // This functionality would need to be implemented in DataManager if needed
+      return { success: true, filesProcessed: 0 };
+    });
+
+    // AT Protocol IPC handlers
+    ipcMain.handle('atproto:add-account', async (_, handle, password, nickname) => {
+      return await this.atprotoManager.addAccount(handle, password, nickname);
+    });
+
+    ipcMain.handle('atproto:remove-account', async (_, accountId) => {
+      return await this.atprotoManager.removeAccount(accountId);
+    });
+
+    ipcMain.handle('atproto:list-accounts', async () => {
+      return await this.atprotoManager.listAccounts();
+    });
+
+    ipcMain.handle('atproto:switch-account', async (_, accountId) => {
+      return await this.atprotoManager.switchAccount(accountId);
+    });
+
+    ipcMain.handle('atproto:get-active-account', async () => {
+      return await this.atprotoManager.getActiveAccount();
+    });
+
+    ipcMain.handle('atproto:update-account-nickname', async (_, accountId, nickname) => {
+      return await this.atprotoManager.updateAccountNickname(accountId, nickname);
+    });
+
+    ipcMain.handle('atproto:get-profile', async (_, accountId) => {
+      return await this.atprotoManager.getProfile(accountId);
+    });
+
+    ipcMain.handle('atproto:validate-session', async (_, accountId) => {
+      return await this.atprotoManager.validateSession(accountId);
+    });
+
+    ipcMain.handle('atproto:post-content', async (_, content, accountId) => {
+      return await this.atprotoManager.postContent(content, accountId);
+    });
+
+    ipcMain.handle('atproto:is-available', async () => {
+      return await this.atprotoManager.isAvailable();
+    });
+
+    // X (Twitter) IPC handlers
+    ipcMain.handle('x:add-account', async (_, apiKey, apiSecret, accessToken, accessTokenSecret, nickname) => {
+      return await this.xManager.addAccount(apiKey, apiSecret, accessToken, accessTokenSecret, nickname);
+    });
+
+    ipcMain.handle('x:remove-account', async (_, accountId) => {
+      return await this.xManager.removeAccount(accountId);
+    });
+
+    ipcMain.handle('x:list-accounts', async () => {
+      return await this.xManager.listAccounts();
+    });
+
+    ipcMain.handle('x:switch-account', async (_, accountId) => {
+      return await this.xManager.switchAccount(accountId);
+    });
+
+    ipcMain.handle('x:get-active-account', async () => {
+      return await this.xManager.getActiveAccount();
+    });
+
+    ipcMain.handle('x:update-account-nickname', async (_, accountId, nickname) => {
+      return await this.xManager.updateAccountNickname(accountId, nickname);
+    });
+
+    ipcMain.handle('x:get-user-info', async (_, accountId) => {
+      return await this.xManager.getUserInfo(accountId);
+    });
+
+    ipcMain.handle('x:validate-credentials', async (_, accountId) => {
+      return await this.xManager.validateCredentials(accountId);
+    });
+
+    ipcMain.handle('x:post-tweet', async (_, content, accountId) => {
+      return await this.xManager.postTweet(content, accountId);
+    });
+
+    ipcMain.handle('x:is-available', async () => {
+      return await this.xManager.isAvailable();
+    });
+
+    ipcMain.handle('x:check-app-permissions', async (_, accountId) => {
+      return await this.xManager.checkAppPermissions(accountId);
+    });
+
+    // Broadcast IPC handlers
+    ipcMain.handle('broadcast:load-data', async () => {
+      return await this.dataManager.loadBroadcastData();
+    });
+
+    ipcMain.handle('broadcast:add-post', async (_, postData) => {
+      return await this.dataManager.addPost(postData);
+    });
+
+    ipcMain.handle('broadcast:update-post-status', async (_, id, status, postedAt) => {
+      return await this.dataManager.updatePostStatus(id, status, postedAt);
+    });
+
+    ipcMain.handle('broadcast:post-to-platform', async (_, postId, platform) => {
+      return await this.socialManager.postToPlatform(postId, platform);
+    });
+
+    ipcMain.handle('broadcast:authenticate-platform', async (_, platform, credentials) => {
+      return await this.socialManager.authenticatePlatform(platform, credentials);
+    });
+
+    // Centralized Account State Management IPC handlers
+    ipcMain.handle('account-state:get-state', async () => {
+      return this.accountStateManager.getState();
+    });
+
+    ipcMain.handle('account-state:get-platform-state', async (_, platform) => {
+      return this.accountStateManager.getPlatformState(platform);
+    });
+
+    ipcMain.handle('account-state:refresh-all', async () => {
+      return await this.accountStateManager.refreshAllPlatforms();
+    });
+
+    ipcMain.handle('account-state:refresh-platform', async (_, platform) => {
+      return await this.accountStateManager.refreshPlatform(platform);
+    });
+
+    ipcMain.handle('account-state:is-initialized', async () => {
+      return this.accountStateManager.isStateInitialized();
+    });
+
+    ipcMain.handle('account-state:handle-switch', async (_, platform, accountId) => {
+      return await this.accountStateManager.handleAccountSwitch(platform, accountId);
+    });
+
+    // Credential management
+    ipcMain.handle('credentials:set', async (_, service, key, value) => {
+      return await this.credentialManager.setCredential(service, key, value);
+    });
+
+    ipcMain.handle('credentials:get', async (_, service, key) => {
+      return await this.credentialManager.getCredential(service, key);
+    });
+
+    ipcMain.handle('credentials:validate-platform', async (_, platform) => {
+      return await this.credentialManager.validatePlatformCredentials(platform);
+    });
+
+    // Utility handlers
+    ipcMain.handle('show-item-in-folder', async (_, filePath) => {
+      shell.showItemInFolder(filePath);
+    });
+
+    ipcMain.handle('open-external', async (_, url) => {
+      shell.openExternal(url);
+    });
+
+    ipcMain.handle('select-file', async (_, filters) => {
+      const result = await dialog.showOpenDialog(this.mainWindow!, {
+        properties: ['openFile'],
+        filters: filters || [{ name: 'All Files', extensions: ['*'] }]
+      });
+
+      if (!result.canceled && result.filePaths.length > 0) {
+        return result.filePaths[0];
+      }
+
+      return null;
+    });
+
+    ipcMain.handle('get-file-stats', async (_, filePath) => {
+      const fs = require('fs');
+      const path = require('path');
+      
+      try {
+        const stats = fs.statSync(filePath);
+        return {
+          size: stats.size,
+          name: path.basename(filePath)
+        };
+      } catch (error) {
+        throw new Error(`Failed to get file stats: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    });
+
+    ipcMain.handle('file-exists', async (_, filePath) => {
+      const fs = require('fs');
+      
+      try {
+        return fs.existsSync(filePath);
+      } catch (error) {
+        return false;
+      }
+    });
+
+    ipcMain.handle('read-file', async (_, filePath) => {
+      const fs = require('fs');
+      
+      try {
+        const content = await fs.promises.readFile(filePath, 'utf-8');
+        return content;
+      } catch (error) {
+        throw new Error(`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    });
+  }
+}
+
+// Initialize the application
+new MeridianApp(); 

@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;"
+    />
+    <title>Meridian - Local-First Multi-Tool Interface</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="js/OrganicWaveRenderer.js"></script>
+  </head>
+  <body>
+    <!-- Landing Page -->
+    <div id="landing-page" class="landing-page">
+      <canvas id="marbling-canvas" class="marbling-background"></canvas>
+      <div class="landing-content">
+        <h1>Welcome to Meridian</h1>
+        <p>Please select a workspace directory to begin</p>
+        <button id="landing-workspace-btn" class="primary-btn">
+          Select Workspace
+        </button>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <!-- Main Header (Draggable) -->
+      <header class="app-header">
+        <div class="header-left"></div>
+        <h1 class="app-title">Meridian</h1>
+        <div class="header-actions">
+          <button
+            id="global-search-btn"
+            class="header-icon-btn"
+            title="Global Search (Ctrl+K)"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+              />
+            </svg>
+          </button>
+          <button id="settings-btn" class="header-icon-btn" title="Settings">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"
+              />
+            </svg>
+          </button>
+          <button id="info-btn" class="header-icon-btn" title="About Meridian">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM13,17h-2v-6h2v6zM13,9h-2V7h2v2z"
+              />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Tab Navigation -->
+        <nav class="tab-navigation">
+          <button class="tab-btn active" data-tool="collate">
+            <span class="tab-icon"></span>
+            <span class="tab-label">Collate</span>
+          </button>
+          <button class="tab-btn" data-tool="archive">
+            <span class="tab-icon"></span>
+            <span class="tab-label">Archive</span>
+          </button>
+          <button class="tab-btn" data-tool="broadcast">
+            <span class="tab-icon"></span>
+            <span class="tab-label">Broadcast</span>
+          </button>
+        </nav>
+
+        <!-- Tool Panels -->
+        <div class="tool-panels">
+          <!-- Collate Panel -->
+          <div id="collate-panel" class="tool-panel active">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <div class="panel-actions">
+                  <button
+                    id="add-resources-btn"
+                    class="panel-header-icon-btn"
+                    title="Add Resources"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                    </svg>
+                  </button>
+                  <button
+                    id="export-btn"
+                    class="panel-header-icon-btn"
+                    title="Export Resources"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M23,12L19,8V11H10V13H19V16M1,18V6C1,4.89 1.9,4 3,4H15A2,2 0 0,1 17,6V9H15V6H3V18H15V15H17V18A2,2 0 0,1 15,20H3A2,2 0 0,1 1,18Z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    id="collapse-all-btn"
+                    class="panel-header-icon-btn"
+                    title="Collapse All Resources"
+                    data-state="expanded"
+                  >
+                    <!-- Collapse All icon (when expanded) - two chevrons pointing toward center -->
+                    <svg
+                      class="collapse-icon collapse-down"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                    >
+                      <path
+                        d="M4 2L8 6L12 2"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M4 14L8 10L12 14"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                    <!-- Expand All icon (when collapsed) - two chevrons pointing away from center -->
+                    <svg
+                      class="collapse-icon collapse-up"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                    >
+                      <path
+                        d="M4 6L8 2L12 6"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M4 10L8 14L12 10"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div class="panel-search">
+                  <input
+                    type="text"
+                    id="resource-search"
+                    class="search-input"
+                    placeholder="Search resources..."
+                  />
+                  <div class="resource-count">
+                    <span id="resource-count-text">0 Resources Listed</span>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-header-right">
+                <button
+                  id="filter-logic-btn"
+                  class="panel-header-icon-btn"
+                  data-logic="any"
+                  title="Toggle Filter Logic: ANY of these tags"
+                >
+                  <!-- ANY state SVG (all circles filled) -->
+                  <svg
+                    class="filter-logic-icon filter-logic-any"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 21 21"
+                    fill="currentColor"
+                  >
+                    <circle cx="13.5" cy="10.5" r="5" />
+                    <circle cx="7.5" cy="10.5" r="5" />
+                  </svg>
+                  <!-- ALL state SVG (only intersection filled) -->
+                  <svg
+                    class="filter-logic-icon filter-logic-all"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 21 21"
+                  >
+                    <!-- Draw outline circles -->
+                    <circle
+                      cx="13.5"
+                      cy="10.5"
+                      r="5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                    <circle
+                      cx="7.5"
+                      cy="10.5"
+                      r="5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                    <!-- Draw intersection area (lens shape) -->
+                    <path
+                      d="M 10.5 6.464 A 5 5 0 0 1 10.5 14.536 A 5 5 0 0 1 10.5 6.464 Z"
+                      fill="currentColor"
+                      stroke="none"
+                    />
+                  </svg>
+                </button>
+                <button
+                  id="clear-filters-btn"
+                  class="panel-header-icon-btn"
+                  title="Clear All Filters"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 32 32"
+                    fill="currentColor"
+                    stroke="currentColor"
+                    stroke-width="0.5"
+                  >
+                    <polygon
+                      points="30 11.414 28.586 10 24 14.586 19.414 10 18 11.414 22.586 16 18 20.585 19.415 22 24 17.414 28.587 22 30 20.587 25.414 16 30 11.414"
+                      stroke-width="0.8"
+                    />
+                    <path
+                      d="M4,4A2,2,0,0,0,2,6V9.1709a2,2,0,0,0,.5859,1.4145L10,18v8a2,2,0,0,0,2,2h4a2,2,0,0,0,2-2V24H16v2H12V17.1709l-.5859-.5855L4,9.1709V6H24V8h2V6a2,2,0,0,0-2-2Z"
+                      stroke-width="0.8"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="panel-content">
+              <div class="main-content-area">
+                <div class="resource-controls">
+                  <!-- Search controls remain here -->
+                </div>
+
+                <div class="resource-list" id="resource-list">
+                  <div class="loading-state">Loading resources...</div>
+                </div>
+              </div>
+
+              <div class="filters-sidebar">
+                <div class="tag-filter-list" id="tag-filter-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Archive Panel -->
+          <div id="archive-panel" class="tool-panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <div class="panel-actions">
+                  <button
+                    id="upload-file-btn"
+                    class="panel-header-icon-btn"
+                    title="Upload File"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    id="setup-wallet-btn"
+                    class="panel-header-icon-btn"
+                    title="Setup Wallet"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M13,9V7.5A2.5,2.5 0 0,0 10.5,5A2.5,2.5 0 0,0 8,7.5V9A2,2 0 0,0 6,11V16A2,2 0 0,0 8,18H15A2,2 0 0,0 17,16V11A2,2 0 0,0 15,9H13M12.5,16A1.5,1.5 0 0,1 11,14.5A1.5,1.5 0 0,1 12.5,13A1.5,1.5 0 0,1 14,14.5A1.5,1.5 0 0,1 12.5,16M10,9V7.5A0.5,0.5 0 0,1 10.5,7A0.5,0.5 0 0,1 11,7.5V9H10Z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    id="archive-collapse-all-btn"
+                    class="panel-header-icon-btn"
+                    title="Collapse All Files"
+                    data-state="expanded"
+                  >
+                    <!-- Collapse All icon (when expanded) - two chevrons pointing toward center -->
+                    <svg
+                      class="collapse-icon collapse-down"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                    >
+                      <path
+                        d="M4 2L8 6L12 2"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M4 14L8 10L12 14"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                    <!-- Expand All icon (when collapsed) - two chevrons pointing away from center -->
+                    <svg
+                      class="collapse-icon collapse-up"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                    >
+                      <path
+                        d="M4 6L8 2L12 6"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M4 10L8 14L12 10"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div class="panel-search">
+                  <input
+                    type="text"
+                    id="archive-search"
+                    class="search-input"
+                    placeholder="Search archive..."
+                  />
+                  <div class="resource-count">
+                    <span id="archive-count-text">0 Files Listed</span>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-header-right">
+                <button
+                  id="archive-filter-logic-btn"
+                  class="panel-header-icon-btn"
+                  data-logic="any"
+                  title="Toggle Filter Logic: ANY of these tags"
+                >
+                  <!-- ANY state SVG (all circles filled) -->
+                  <svg
+                    class="filter-logic-icon filter-logic-any"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 21 21"
+                    fill="currentColor"
+                  >
+                    <circle cx="13.5" cy="10.5" r="5" />
+                    <circle cx="7.5" cy="10.5" r="5" />
+                  </svg>
+                  <!-- ALL state SVG (only intersection filled) -->
+                  <svg
+                    class="filter-logic-icon filter-logic-all"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 21 21"
+                  >
+                    <!-- Draw outline circles -->
+                    <circle
+                      cx="13.5"
+                      cy="10.5"
+                      r="5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                    <circle
+                      cx="7.5"
+                      cy="10.5"
+                      r="5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                    <!-- Draw intersection area (lens shape) -->
+                    <path
+                      d="M 10.5 6.464 A 5 5 0 0 1 10.5 14.536 A 5 5 0 0 1 10.5 6.464 Z"
+                      fill="currentColor"
+                      stroke="none"
+                    />
+                  </svg>
+                </button>
+                <button
+                  id="archive-clear-filters-btn"
+                  class="panel-header-icon-btn"
+                  title="Clear All Filters"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 32 32"
+                    fill="currentColor"
+                    stroke="currentColor"
+                    stroke-width="0.5"
+                  >
+                    <polygon
+                      points="30 11.414 28.586 10 24 14.586 19.414 10 18 11.414 22.586 16 18 20.585 19.415 22 24 17.414 28.587 22 30 20.587 25.414 16 30 11.414"
+                      stroke-width="0.8"
+                    />
+                    <path
+                      d="M4,4A2,2,0,0,0,2,6V9.1709a2,2,0,0,0,.5859,1.4145L10,18v8a2,2,0,0,0,2,2h4a2,2,0,0,0,2-2V24H16v2H12V17.1709l-.5859-.5855L4,9.1709V6H24V8h2V6a2,2,0,0,0-2-2Z"
+                      stroke-width="0.8"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="panel-content">
+              <div class="main-content-area">
+                <div class="archive-list" id="archive-list">
+                  <div class="wallet-info-section">
+                    <div class="wallet-info-compact">
+                      <div class="wallet-indicator">
+                        <span class="wallet-label">Wallet:</span>
+                        <span class="wallet-value" id="wallet-address"
+                          >Not configured</span
+                        >
+                      </div>
+                      <div class="balance-display">
+                        <span class="balance-label">Balance:</span>
+                        <span class="balance-value">--</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="loading-state">Loading archive...</div>
+                </div>
+              </div>
+
+              <div class="filters-sidebar">
+                <div class="tag-filter-list" id="archive-tag-filter-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Broadcast Panel -->
+          <div id="broadcast-panel" class="tool-panel">
+            <div class="panel-header">
+              <h2>Social Media Scheduler</h2>
+              <div class="panel-actions">
+                <button id="new-post-btn" class="panel-header-btn">
+                  New Post
+                </button>
+                <button id="manage-accounts-btn" class="panel-header-btn">
+                  Manage Accounts
+                </button>
+              </div>
+            </div>
+
+            <div class="panel-content">
+              <div class="platform-status">
+                <div class="platform-indicator" data-platform="bluesky">
+                  <span class="platform-name">Bluesky</span>
+                  <span class="connection-status">Disconnected</span>
+                </div>
+                <div class="platform-indicator" data-platform="farcaster">
+                  <span class="platform-name">Farcaster</span>
+                  <span class="connection-status">Disconnected</span>
+                </div>
+                <div class="platform-indicator" data-platform="x">
+                  <span class="platform-name">X</span>
+                  <span class="connection-status">Disconnected</span>
+                </div>
+              </div>
+
+              <div class="post-calendar" id="post-calendar">
+                <div class="loading-state">Loading posts...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer (Status Bar) -->
+      <footer class="app-footer">
+        <div class="footer-content">
+          <div class="workspace-status-footer">
+            <span class="footer-label">Workspace:</span>
+            <div class="footer-dropdown">
+              <button id="workspace-dropdown-btn" class="footer-dropdown-btn">
+                <span id="footer-workspace-path" class="footer-value"
+                  >Not selected</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <div class="arweave-status-footer">
+            <span class="footer-label">Arweave:</span>
+            <div class="footer-dropdown">
+              <button id="arweave-dropdown-btn" class="footer-dropdown-btn">
+                <span id="footer-arweave-address" class="footer-value"
+                  >Not connected</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <div class="farcaster-status-footer">
+            <span class="footer-label">Farcaster:</span>
+            <div class="footer-dropdown">
+              <button id="farcaster-dropdown-btn" class="footer-dropdown-btn">
+                <span id="footer-farcaster-status" class="footer-value"
+                  >Not connected</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <div class="bluesky-status-footer">
+            <span class="footer-label">Bluesky:</span>
+            <div class="footer-dropdown">
+              <button id="bluesky-dropdown-btn" class="footer-dropdown-btn">
+                <span id="footer-bluesky-status" class="footer-value"
+                  >Not connected</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <div class="x-status-footer">
+            <span class="footer-label">X:</span>
+            <div class="footer-dropdown">
+              <button id="x-dropdown-btn" class="footer-dropdown-btn">
+                <span id="footer-x-status" class="footer-value"
+                  >Not connected</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <div class="connection-status-footer">
+            <span class="footer-label">Status:</span>
+            <span id="footer-connection-status" class="footer-value"
+              >Ready</span
+            >
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay">
+      <!-- Global Search Modal -->
+      <div id="global-search-modal" class="modal">
+        <div class="modal-header">
+          <h3>Global Search</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="search-modal-content">
+            <input
+              type="text"
+              id="global-search-input"
+              class="search-modal-input"
+              placeholder="Search across all tools..."
+              autofocus
+            />
+            <div class="search-results" id="global-search-results">
+              <div class="search-results-empty">
+                Type to search across all tools and resources...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Information Modal -->
+      <div id="info-modal" class="modal">
+        <div class="modal-header">
+          <h3>About Meridian</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="info-modal-content">
+            <div class="app-info">
+              <h4>Meridian - Local-First Multi-Tool Interface</h4>
+              <p>
+                Meridian is a local-first productivity application that combines
+                multiple tools into a unified interface.
+              </p>
+
+              <div class="features-section">
+                <h5>Collate</h5>
+                <p>
+                  Organize and manage web resources, bookmarks, and research
+                  materials with powerful tagging and search capabilities.
+                </p>
+
+                <h5>Archive</h5>
+                <p>
+                  Upload files to Arweave for permanent, decentralized storage.
+                  Manage your uploads and wallet directly from the interface.
+                </p>
+
+                <h5>Broadcast</h5>
+                <p>
+                  Schedule and manage posts across multiple social media
+                  platforms including Bluesky, Farcaster, and Twitter.
+                </p>
+              </div>
+
+              <div class="shortcuts-section">
+                <h5>Keyboard Shortcuts</h5>
+                <div class="shortcut-list">
+                  <div class="shortcut-item">
+                    <span class="shortcut-key">Ctrl/Cmd + K</span>
+                    <span class="shortcut-desc">Open Global Search</span>
+                  </div>
+                  <div class="shortcut-item">
+                    <span class="shortcut-key">Esc</span>
+                    <span class="shortcut-desc">Close Modal</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="footer-info">
+                <p><strong>Version:</strong> 0.1.0</p>
+                <p>
+                  <strong>Local-First:</strong> All data is stored locally on
+                  your machine
+                </p>
+                <p>
+                  <strong>Privacy:</strong> No tracking, no analytics, your data
+                  stays with you
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Resources Modal (Combined) -->
+      <div id="add-resources-modal" class="modal large-modal">
+        <div class="modal-header">
+          <h3>Add Resources</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+
+        <!-- Modal Subheader for Tabs -->
+        <div class="modal-subheader">
+          <div class="modal-tab-navigation">
+            <button class="modal-tab-btn active" data-tab="single">
+              Single Resource
+            </button>
+            <button class="modal-tab-btn" data-tab="bulk">Bulk Add</button>
+          </div>
+        </div>
+
+        <div class="modal-content">
+          <!-- Tab Content -->
+          <div class="modal-tab-content">
+            <!-- Single Resource Tab -->
+            <div id="single-tab" class="modal-tab-panel active">
+              <form id="add-resource-form">
+                <div class="form-group">
+                  <label for="resource-url">URL</label>
+                  <div class="form-group-inline">
+                    <input
+                      type="url"
+                      id="resource-url"
+                      placeholder="Enter URL (e.g., https://example.com)"
+                      required
+                    />
+                    <button
+                      type="button"
+                      id="extract-metadata-btn"
+                      class="panel-header-btn"
+                    >
+                      Extract Metadata
+                    </button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="resource-title">Title</label>
+                  <input
+                    type="text"
+                    id="resource-title"
+                    placeholder="Resource title"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="resource-description">Description</label>
+                  <textarea
+                    id="resource-description"
+                    placeholder="Optional description"
+                  ></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Tags</label>
+                  <div class="modal-resource-tags">
+                    <div class="modal-resource-tag-input">
+                      <div class="tag-input-container">
+                        <input
+                          type="text"
+                          class="tag-input"
+                          placeholder="add tag..."
+                          id="modal-tag-input"
+                        />
+                        <button
+                          type="button"
+                          class="add-tag-btn"
+                          id="modal-add-tag-btn"
+                          disabled
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div
+                        class="tag-autocomplete modal-tag-autocomplete"
+                        id="modal-tag-autocomplete"
+                        style="display: none"
+                      ></div>
+                    </div>
+                    <div class="modal-tags-list" id="modal-tags-list">
+                      <!-- Tags will appear here -->
+                    </div>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="secondary-btn modal-cancel">
+                    Cancel
+                  </button>
+                  <button type="submit" class="primary-btn">
+                    Add Resource
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Bulk Add Tab -->
+            <div id="bulk-tab" class="modal-tab-panel">
+              <div class="bulk-add-content">
+                <!-- Phase Progress Cards -->
+                <div class="modal-tab-phase-cards" id="bulk-phase-cards">
+                  <div class="modal-tab-phase-card active" data-phase="paste">
+                    <div class="phase-number">1</div>
+                    <div class="phase-title">Paste Text</div>
+                  </div>
+                  <div class="modal-tab-phase-card" data-phase="review">
+                    <div class="phase-number">2</div>
+                    <div class="phase-title">Review URLs</div>
+                  </div>
+                  <div class="modal-tab-phase-card" data-phase="bulk-tags">
+                    <div class="phase-number">3</div>
+                    <div class="phase-title">Bulk Tagging</div>
+                  </div>
+                  <div class="modal-tab-phase-card" data-phase="processing">
+                    <div class="phase-number">4</div>
+                    <div class="phase-title">Processing</div>
+                  </div>
+                  <div class="modal-tab-phase-card" data-phase="results">
+                    <div class="phase-number">5</div>
+                    <div class="phase-title">Results</div>
+                  </div>
+                </div>
+
+                <!-- Step 1: Paste Text -->
+                <div id="bulk-step-paste" class="bulk-step active">
+                  <div class="step-header">
+                    <h4>1. Paste Text</h4>
+                    <p>
+                      Paste any text containing URLs below. We'll automatically
+                      detect and extract them.
+                    </p>
+                  </div>
+                  <div class="form-group">
+                    <label for="bulk-text-input">Text Content</label>
+                    <textarea
+                      id="bulk-text-input"
+                      rows="8"
+                      placeholder="Paste text here... URLs like https://example.com or www.example.com will be automatically detected."
+                    ></textarea>
+                  </div>
+                  <div class="form-actions">
+                    <button type="button" class="secondary-btn modal-cancel">
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      id="extract-urls-btn"
+                      class="primary-btn"
+                    >
+                      Extract URLs
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Step 2: Review URLs -->
+                <div id="bulk-step-review" class="bulk-step">
+                  <div class="step-header">
+                    <h4>2. Review URLs</h4>
+                    <p>
+                      Review the detected URLs below. Uncheck any you don't want
+                      to add.
+                    </p>
+                  </div>
+                  <div class="url-review-list" id="url-review-list">
+                    <!-- URLs will be populated here -->
+                  </div>
+                  <div class="form-actions">
+                    <button
+                      type="button"
+                      id="back-to-paste-btn"
+                      class="secondary-btn"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      id="proceed-to-tagging-btn"
+                      class="primary-btn"
+                    >
+                      Next: Add Tags
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Step 3: Bulk Tagging -->
+                <div id="bulk-step-bulk-tags" class="bulk-step">
+                  <div class="step-header">
+                    <h4>3. Bulk Tagging</h4>
+                    <p>
+                      Add tags that will be applied to all selected resources
+                      during import.
+                    </p>
+                  </div>
+                  <div class="form-group">
+                    <div class="modal-resource-tags">
+                      <div class="modal-resource-tag-input">
+                        <div class="tag-input-container">
+                          <input
+                            type="text"
+                            class="tag-input"
+                            placeholder="add tag..."
+                            id="bulk-tag-input"
+                          />
+                          <button
+                            type="button"
+                            class="add-tag-btn"
+                            id="bulk-add-tag-btn"
+                            disabled
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div
+                          class="tag-autocomplete modal-tag-autocomplete"
+                          id="bulk-tag-autocomplete"
+                          style="display: none"
+                        ></div>
+                      </div>
+                      <div class="modal-tags-list" id="bulk-tags-list">
+                        <!-- Bulk tags will appear here -->
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-actions">
+                    <button
+                      type="button"
+                      id="back-to-review-btn"
+                      class="secondary-btn"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      id="process-urls-btn"
+                      class="primary-btn"
+                    >
+                      Process Selected URLs
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Step 4: Processing -->
+                <div id="bulk-step-processing" class="bulk-step">
+                  <div class="step-header">
+                    <h4>4. Processing URLs</h4>
+                    <p>Extracting metadata and adding resources...</p>
+                  </div>
+                  <div class="progress-container">
+                    <div class="progress-bar">
+                      <div class="progress-fill" id="bulk-progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="bulk-progress-text">
+                      0 / 0 processed
+                    </div>
+                  </div>
+                  <div class="processing-log" id="processing-log">
+                    <!-- Processing messages will appear here -->
+                  </div>
+                </div>
+
+                <!-- Step 5: Results -->
+                <div id="bulk-step-results" class="bulk-step">
+                  <div class="step-header">
+                    <h4>5. Results</h4>
+                    <p>Bulk add operation completed.</p>
+                  </div>
+                  <div class="results-summary" id="results-summary">
+                    <!-- Results summary will appear here -->
+                  </div>
+                  <div class="form-actions">
+                    <button type="button" class="primary-btn modal-close">
+                      Done
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Post Modal -->
+      <div id="new-post-modal" class="modal">
+        <div class="modal-header">
+          <h3>New Post</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <form id="new-post-form">
+            <div class="form-group">
+              <label for="post-content">Content</label>
+              <textarea
+                id="post-content"
+                placeholder="What's on your mind?"
+                required
+                rows="4"
+              ></textarea>
+              <div class="character-count">
+                <span id="char-count">0</span> /
+                <span id="char-limit">280</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Platforms</label>
+              <div class="platform-checkboxes">
+                <label><input type="checkbox" value="bluesky" /> Bluesky</label>
+                <label
+                  ><input type="checkbox" value="farcaster" /> Farcaster</label
+                >
+                <label><input type="checkbox" value="x" /> X</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="post-schedule">Schedule (optional)</label>
+              <input
+                type="datetime-local"
+                id="post-schedule"
+                placeholder="Schedule post (optional)"
+              />
+            </div>
+            <div class="form-actions">
+              <button type="button" class="secondary-btn modal-cancel">
+                Cancel
+              </button>
+              <button type="submit" class="tertiary-btn" data-action="draft">
+                Save as Draft
+              </button>
+              <button type="submit" class="primary-btn" data-action="post">
+                Post Now
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Arweave Accounts Management Modal -->
+      <div id="arweave-accounts-modal" class="modal large-modal">
+        <div class="modal-header">
+          <h3>Arweave Account Management</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <!-- Active Account Section -->
+          <div class="active-account-section">
+            <h4>Active Account</h4>
+            <div class="active-account-display" id="active-account-display">
+              <p>No account selected</p>
+            </div>
+          </div>
+
+          <!-- Account List Section -->
+          <div class="accounts-list-section">
+            <h4>All Accounts</h4>
+            <div class="accounts-list" id="accounts-list">
+              <div class="loading-state">Loading accounts...</div>
+            </div>
+          </div>
+
+          <!-- Add Account Section -->
+          <div class="add-account-section">
+            <h4>Add New Account</h4>
+            <form id="add-account-form">
+              <div class="form-group">
+                <label for="account-nickname">Account Nickname</label>
+                <input
+                  type="text"
+                  id="account-nickname"
+                  placeholder="e.g., Personal Wallet"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="account-jwk">Wallet JWK JSON</label>
+                <textarea
+                  id="account-jwk"
+                  rows="6"
+                  placeholder='{"kty":"RSA","n":"...","e":"AQAB",...}'
+                  required
+                ></textarea>
+              </div>
+              <div class="wallet-help">
+                <details>
+                  <summary>How to get your wallet JWK</summary>
+                  <div class="help-content">
+                    <ol>
+                      <li>
+                        Open your Arweave wallet file (usually ends in .json)
+                      </li>
+                      <li>Copy the entire contents of the file</li>
+                      <li>Paste it in the text area above</li>
+                    </ol>
+                    <p>
+                      <strong>Security Note:</strong> Your wallet will be
+                      encrypted and stored securely using your system's secure
+                      storage (Keychain on Mac, Credential Manager on Windows).
+                    </p>
+                  </div>
+                </details>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="primary-btn">Add Account</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- AT Protocol Accounts Management Modal -->
+      <div id="atproto-accounts-modal" class="modal large-modal">
+        <div class="modal-header">
+          <h3>Bluesky Account Management</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <!-- Active Account Section -->
+          <div class="active-account-section">
+            <h4>Active Account</h4>
+            <div
+              class="active-account-display"
+              id="atproto-active-account-display"
+            >
+              <p>No account selected</p>
+            </div>
+          </div>
+
+          <!-- Account List Section -->
+          <div class="accounts-list-section">
+            <h4>All Accounts</h4>
+            <div class="accounts-list" id="atproto-accounts-list">
+              <div class="loading-state">Loading accounts...</div>
+            </div>
+          </div>
+
+          <!-- Add Account Section -->
+          <div class="add-account-section">
+            <h4>Add New Account</h4>
+            <form id="atproto-add-account-form">
+              <div class="form-group">
+                <label for="atproto-account-nickname">Account Nickname</label>
+                <input
+                  type="text"
+                  id="atproto-account-nickname"
+                  placeholder="e.g., Personal Account"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="atproto-account-handle">Bluesky Handle</label>
+                <input
+                  type="text"
+                  id="atproto-account-handle"
+                  placeholder="e.g., user.bsky.social"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="atproto-account-password">App Password</label>
+                <input
+                  type="password"
+                  id="atproto-account-password"
+                  placeholder="Your Bluesky app password"
+                  required
+                />
+              </div>
+              <div class="wallet-help">
+                <details>
+                  <summary>How to get your app password</summary>
+                  <div class="help-content">
+                    <ol>
+                      <li>Go to Bluesky Settings → App Passwords</li>
+                      <li>Create a new app password for Meridian</li>
+                      <li>Copy the generated password</li>
+                      <li>Use this password (not your main password)</li>
+                    </ol>
+                    <p>
+                      <strong>Security Note:</strong> Your credentials will be
+                      encrypted and stored securely using your system's secure
+                      storage. App passwords can be revoked at any time.
+                    </p>
+                  </div>
+                </details>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="primary-btn">Add Account</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- AT Protocol Rename Account Modal -->
+      <div id="atproto-rename-account-modal" class="modal">
+        <div class="modal-header">
+          <h3>Rename Bluesky Account</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <form id="atproto-rename-account-form">
+            <div class="form-group">
+              <label for="atproto-rename-account-nickname"
+                >Account Nickname</label
+              >
+              <input
+                type="text"
+                id="atproto-rename-account-nickname"
+                placeholder="Enter new nickname"
+                required
+              />
+            </div>
+            <div class="form-actions">
+              <button type="button" class="secondary-btn modal-cancel">
+                Cancel
+              </button>
+              <button type="submit" class="primary-btn">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- X (Twitter) Accounts Management Modal -->
+      <div id="x-accounts-modal" class="modal large-modal">
+        <div class="modal-header">
+          <h3>X Account Management</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <!-- Active Account Section -->
+          <div class="active-account-section">
+            <h4>Active Account</h4>
+            <div class="active-account-display" id="x-active-account-display">
+              <p>No account selected</p>
+            </div>
+            <div class="account-diagnostics">
+              <button
+                id="x-check-permissions-btn"
+                class="secondary-btn"
+                style="margin-top: 10px"
+              >
+                Check API Permissions
+              </button>
+              <div
+                id="x-permissions-result"
+                style="margin-top: 10px; font-size: 0.9em"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Account List Section -->
+          <div class="accounts-list-section">
+            <h4>All Accounts</h4>
+            <div class="accounts-list" id="x-accounts-list">
+              <div class="loading-state">Loading accounts...</div>
+            </div>
+          </div>
+
+          <!-- Add Account Section -->
+          <div class="add-account-section">
+            <h4>Add New Account</h4>
+            <form id="x-add-account-form">
+              <div class="form-group">
+                <label for="x-account-nickname">Account Nickname</label>
+                <input
+                  type="text"
+                  id="x-account-nickname"
+                  placeholder="e.g., Personal X Account"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="x-account-api-key">API Key</label>
+                <input
+                  type="text"
+                  id="x-account-api-key"
+                  placeholder="Your X API Key"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="x-account-api-secret">API Secret</label>
+                <input
+                  type="password"
+                  id="x-account-api-secret"
+                  placeholder="Your X API Secret"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="x-account-access-token">Access Token</label>
+                <input
+                  type="text"
+                  id="x-account-access-token"
+                  placeholder="Your X Access Token"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="x-account-access-token-secret"
+                  >Access Token Secret</label
+                >
+                <input
+                  type="password"
+                  id="x-account-access-token-secret"
+                  placeholder="Your X Access Token Secret"
+                  required
+                />
+              </div>
+              <div class="wallet-help">
+                <details>
+                  <summary>How to get your X API credentials</summary>
+                  <div class="help-content">
+                    <ol>
+                      <li>
+                        Go to
+                        <a href="https://developer.x.com" target="_blank"
+                          >X Developer Portal</a
+                        >
+                      </li>
+                      <li>Create a new app or use an existing one</li>
+                      <li>
+                        Generate API Key & Secret in the "Keys and tokens" tab
+                      </li>
+                      <li>
+                        Generate Access Token & Secret with Read and Write
+                        permissions
+                      </li>
+                      <li>Copy all four credentials</li>
+                    </ol>
+                    <p>
+                      <strong>Security Note:</strong> Your credentials will be
+                      encrypted and stored securely using your system's secure
+                      storage. You can revoke access at any time from the X
+                      Developer Portal.
+                    </p>
+                    <p>
+                      <strong>Rate Limits:</strong> X allows 300 tweets per
+                      3-hour window. Meridian respects these limits
+                      automatically.
+                    </p>
+                  </div>
+                </details>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="primary-btn">Add Account</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- X Rename Account Modal -->
+      <div id="x-rename-account-modal" class="modal">
+        <div class="modal-header">
+          <h3>Rename X Account</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <form id="x-rename-account-form">
+            <div class="form-group">
+              <label for="x-rename-account-nickname">Account Nickname</label>
+              <input
+                type="text"
+                id="x-rename-account-nickname"
+                placeholder="Enter new nickname"
+                required
+              />
+            </div>
+            <div class="form-actions">
+              <button type="button" class="secondary-btn modal-cancel">
+                Cancel
+              </button>
+              <button type="submit" class="primary-btn">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Rename Account Modal -->
+      <div id="rename-account-modal" class="modal">
+        <div class="modal-header">
+          <h3>Rename Account</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <form id="rename-account-form">
+            <div class="form-group">
+              <label for="rename-account-nickname">Account Nickname</label>
+              <input
+                type="text"
+                id="rename-account-nickname"
+                placeholder="Enter new nickname"
+                required
+              />
+            </div>
+            <div class="form-actions">
+              <button type="button" class="secondary-btn modal-cancel">
+                Cancel
+              </button>
+              <button type="submit" class="primary-btn">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Upload File Modal -->
+      <div id="upload-modal" class="modal">
+        <div class="modal-header">
+          <h3>Upload File to Arweave</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="upload-content">
+            <!-- File Information -->
+            <div class="upload-section">
+              <div id="upload-file-info">
+                <!-- File info will be populated here -->
+              </div>
+            </div>
+
+            <!-- Tags Section -->
+            <div class="upload-section">
+              <h4>Tags</h4>
+              <p>
+                Add custom tags to help categorize and identify your upload on
+                Arweave.
+              </p>
+
+              <div class="tags-input">
+                <div class="form-group-inline">
+                  <input
+                    type="text"
+                    id="upload-tag-key"
+                    placeholder="Tag key (e.g., title)"
+                  />
+                  <input
+                    type="text"
+                    id="upload-tag-value"
+                    placeholder="Tag value (e.g., My Document)"
+                  />
+                  <button type="button" id="add-tag-btn" class="secondary-btn">
+                    Add Tag
+                  </button>
+                </div>
+              </div>
+
+              <div class="upload-tags-list" id="upload-tags-list">
+                <p class="no-tags">No tags added yet</p>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="secondary-btn modal-cancel">
+                Cancel
+              </button>
+              <button type="button" id="confirm-upload-btn" class="primary-btn">
+                Upload to Arweave
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Modal -->
+      <div id="export-modal" class="modal">
+        <div class="modal-header">
+          <h3>Export Resources</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="export-info">
+            <p id="export-resource-count">Ready to export resources</p>
+            <p id="export-filter-info" class="export-filter-description"></p>
+          </div>
+
+          <div class="export-options">
+            <h4>Select Export Format:</h4>
+
+            <div class="export-option">
+              <button class="export-option-btn" data-format="json">
+                <div class="export-option-header">
+                  <strong>JSON Export</strong>
+                </div>
+                <div class="export-option-description">
+                  Complete resource data with metadata, filters, and timestamps.
+                  Best for backup or re-importing.
+                </div>
+              </button>
+            </div>
+
+            <div class="export-option">
+              <button class="export-option-btn" data-format="text">
+                <div class="export-option-header">
+                  <strong>Text URLs</strong>
+                </div>
+                <div class="export-option-description">
+                  Simple text file with one URL per line. Perfect for sharing or
+                  importing into other tools.
+                </div>
+              </button>
+            </div>
+
+            <div class="export-option">
+              <button class="export-option-btn" data-format="bookmarks">
+                <div class="export-option-header">
+                  <strong>Browser Bookmarks</strong>
+                </div>
+                <div class="export-option-description">
+                  HTML bookmarks file compatible with Chrome, Firefox, Safari,
+                  and Edge. Organized by tags.
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
