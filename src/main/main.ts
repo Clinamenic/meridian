@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import * as path from 'path';
+import * as packageJson from '../../package.json';
 import { CredentialManager } from './credential-manager';
 import { DataManager } from './data-manager';
 import { MetadataExtractor } from './metadata-extractor';
@@ -8,6 +9,9 @@ import { ATProtoManager } from './atproto-manager';
 import { XManager } from './x-manager';
 import { SocialManager } from './social-manager';
 import { AccountStateManager } from './account-state-manager';
+import { TemplateManager } from './template-manager';
+import { StagingManager } from './staging-manager';
+import { MarkdownProcessor } from './markdown-processor';
 
 class MeridianApp {
   private mainWindow: BrowserWindow | null = null;
@@ -19,6 +23,9 @@ class MeridianApp {
   private xManager: XManager;
   private socialManager: SocialManager;
   private accountStateManager: AccountStateManager;
+  private templateManager: TemplateManager;
+  private stagingManager: StagingManager;
+  private markdownProcessor: MarkdownProcessor;
 
   constructor() {
     this.credentialManager = CredentialManager.getInstance();
@@ -28,6 +35,9 @@ class MeridianApp {
     this.atprotoManager = new ATProtoManager(this.dataManager);
     this.xManager = new XManager(this.dataManager);
     this.socialManager = new SocialManager();
+    this.templateManager = new TemplateManager(this.dataManager);
+    this.stagingManager = new StagingManager(this.dataManager, this.socialManager);
+    this.markdownProcessor = new MarkdownProcessor();
 
     // Initialize centralized account state manager
     this.accountStateManager = AccountStateManager.getInstance(
@@ -283,6 +293,11 @@ class MeridianApp {
       return { success: true, filesProcessed: 0 };
     });
 
+    // Archive metadata editing IPC handler
+    ipcMain.handle('archive:update-file-metadata', async (_, uuid, updates) => {
+      return await this.dataManager.updateEditableMetadata(uuid, updates);
+    });
+
     // AT Protocol IPC handlers
     ipcMain.handle('atproto:add-account', async (_, handle, password, nickname) => {
       return await this.atprotoManager.addAccount(handle, password, nickname);
@@ -390,6 +405,100 @@ class MeridianApp {
       return await this.socialManager.authenticatePlatform(platform, credentials);
     });
 
+    // Enhanced Broadcast V2 IPC handlers
+    ipcMain.handle('broadcast:load-data-v2', async () => {
+      return await this.dataManager.loadBroadcastDataV2();
+    });
+
+    // Template management
+    ipcMain.handle('broadcast:create-template', async (_, templateData) => {
+      return await this.templateManager.createTemplate(templateData);
+    });
+
+    ipcMain.handle('broadcast:update-template', async (_, id, updates) => {
+      return await this.templateManager.updateTemplate(id, updates);
+    });
+
+    ipcMain.handle('broadcast:delete-template', async (_, id) => {
+      return await this.templateManager.deleteTemplate(id);
+    });
+
+    ipcMain.handle('broadcast:get-template', async (_, id) => {
+      return await this.templateManager.getTemplate(id);
+    });
+
+    ipcMain.handle('broadcast:list-templates', async (_, filters) => {
+      return await this.templateManager.listTemplates(filters);
+    });
+
+    ipcMain.handle('broadcast:apply-template', async (_, templateId, markdownFile) => {
+      return await this.templateManager.applyTemplate(templateId, markdownFile);
+    });
+
+    ipcMain.handle('broadcast:preview-template', async (_, templateId, variables) => {
+      return await this.templateManager.previewTemplate(templateId, variables);
+    });
+
+    // Staging management
+    ipcMain.handle('broadcast:create-staged-post', async (_, data) => {
+      return await this.stagingManager.createStagedPost(data);
+    });
+
+    ipcMain.handle('broadcast:update-staged-post', async (_, id, updates) => {
+      return await this.stagingManager.updateStagedPost(id, updates);
+    });
+
+    ipcMain.handle('broadcast:delete-staged-post', async (_, id) => {
+      return await this.stagingManager.deleteStagedPost(id);
+    });
+
+    ipcMain.handle('broadcast:get-staged-post', async (_, id) => {
+      return await this.stagingManager.getStagedPost(id);
+    });
+
+    ipcMain.handle('broadcast:list-staged-posts', async (_, filters) => {
+      return await this.stagingManager.listStagedPosts(filters);
+    });
+
+    ipcMain.handle('broadcast:update-platform-content', async (_, postId, platform, content) => {
+      return await this.stagingManager.updatePlatformContent(postId, platform, content);
+    });
+
+    ipcMain.handle('broadcast:toggle-platform', async (_, postId, platform, enabled) => {
+      return await this.stagingManager.togglePlatform(postId, platform, enabled);
+    });
+
+    ipcMain.handle('broadcast:bulk-schedule', async (_, postIds, scheduledFor) => {
+      return await this.stagingManager.bulkSchedule(postIds, scheduledFor);
+    });
+
+    ipcMain.handle('broadcast:bulk-publish', async (_, postIds) => {
+      return await this.stagingManager.bulkPublish(postIds);
+    });
+
+    ipcMain.handle('broadcast:bulk-delete', async (_, postIds) => {
+      return await this.stagingManager.bulkDelete(postIds);
+    });
+
+    ipcMain.handle('broadcast:get-post-stats', async () => {
+      return await this.stagingManager.getPostStats();
+    });
+
+    // Markdown processing
+    ipcMain.handle('broadcast:scan-content-directory', async (_, directory) => {
+      return await this.markdownProcessor.scanContentDirectory(directory);
+    });
+
+    ipcMain.handle('broadcast:parse-markdown-file', async (_, filePath) => {
+      return await this.markdownProcessor.parseMarkdownFile(filePath);
+    });
+
+    ipcMain.handle('broadcast:watch-content-directory', async (_, directory) => {
+      // Note: This would need to handle the callback appropriately in a real implementation
+      // For now, we'll just return success
+      return { success: true };
+    });
+
     // Centralized Account State Management IPC handlers
     ipcMain.handle('account-state:get-state', async () => {
       return this.accountStateManager.getState();
@@ -484,6 +593,10 @@ class MeridianApp {
       } catch (error) {
         throw new Error(`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
+    });
+
+    ipcMain.handle('get-app-version', async () => {
+      return packageJson.version;
     });
   }
 }

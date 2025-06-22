@@ -1278,4 +1278,33 @@ export class ArweaveManager {
     
     return mimeTypes[ext] || 'application/octet-stream';
   }
+
+  /**
+   * Validate if a file can be uploaded to Arweave based on UUID
+   */
+  public async validateForUpload(uuid: string): Promise<{ canUpload: boolean; reason?: string }> {
+    try {
+      const file = await this.dataManager.getFileByUUID(uuid);
+      if (!file) {
+        return { canUpload: false, reason: 'File not found in registry' };
+      }
+
+      // Check if file is virtual
+      const isVirtual = file.filePath.startsWith('[VIRTUAL]');
+      if (isVirtual) {
+        return { canUpload: false, reason: 'Virtual files cannot be uploaded to Arweave' };
+      }
+
+      // Check if local file exists
+      if (!fs.existsSync(file.filePath)) {
+        return { canUpload: false, reason: 'Local file not found on disk' };
+      }
+
+      // File is valid for upload
+      return { canUpload: true };
+    } catch (error) {
+      console.error('Error validating file for upload:', error);
+      return { canUpload: false, reason: 'Validation error: ' + (error as Error).message };
+    }
+  }
 } 

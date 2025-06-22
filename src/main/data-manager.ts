@@ -562,6 +562,43 @@ export class DataManager {
     });
   }
 
+  /**
+   * Update editable metadata for an archive file
+   */
+  public async updateEditableMetadata(uuid: string, updates: import('../types').EditableMetadata): Promise<FileRegistryEntry> {
+    const file = await this.getFileByUUID(uuid);
+    if (!file) {
+      throw new Error(`File with UUID ${uuid} not found`);
+    }
+
+    // Update editable fields
+    if (updates.title !== undefined) {
+      file.title = updates.title;
+    }
+    if (updates.tags !== undefined) {
+      file.tags = updates.tags;
+    }
+    if (updates.author !== undefined) {
+      file.metadata.author = updates.author;
+    }
+    if (updates.customFields !== undefined) {
+      file.metadata.customFields = { ...file.metadata.customFields, ...updates.customFields };
+    }
+
+    // Virtual-only fields
+    const isVirtual = file.filePath.startsWith('[VIRTUAL]');
+    if (isVirtual && updates.mimeType !== undefined) {
+      file.mimeType = updates.mimeType;
+    }
+
+    // Update modification timestamp
+    file.modified = new Date().toISOString();
+
+    // Save the updated file
+    await this.addOrUpdateFile(file);
+    return file;
+  }
+
   // BROADCAST DATA MANAGEMENT
   /**
    * Load broadcast data from workspace
@@ -573,6 +610,146 @@ export class DataManager {
       drafts: [],
       accounts: {}
     });
+  }
+
+  /**
+   * Load broadcast data V2 from workspace (with migration support)
+   */
+  public async loadBroadcastDataV2(): Promise<import('../types').BroadcastDataV2> {
+    const filePath = this.getDataFilePath('broadcast.json');
+    
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      const data = JSON.parse(content);
+      
+      // Check if this is already V2 format
+      if (data.version === '2.0' && data.templates) {
+        return data as import('../types').BroadcastDataV2;
+      }
+      
+      // Migrate from V1 to V2
+      return await this.migrateBroadcastDataToV2(data as BroadcastData);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        // File doesn't exist, create new V2 format
+        const defaultData: import('../types').BroadcastDataV2 = {
+          posts: [],
+          templates: [],
+          accounts: {},
+          settings: {
+            contentDirectory: 'content',
+            autoDetectMarkdown: true,
+            defaultPlatforms: ['bluesky', 'farcaster', 'twitter']
+          },
+          version: '2.0'
+        };
+        await this.saveBroadcastDataV2(defaultData);
+        return defaultData;
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Save broadcast data V2 to workspace
+   */
+  public async saveBroadcastDataV2(data: import('../types').BroadcastDataV2): Promise<void> {
+    const filePath = this.getDataFilePath('broadcast.json');
+    await this.saveDataFile(filePath, data);
+  }
+
+  /**
+   * Migrate V1 broadcast data to V2 format
+   */
+  private async migrateBroadcastDataToV2(oldData: BroadcastData): Promise<import('../types').BroadcastDataV2> {
+    const { TemplateManager } = await import('./template-manager');
+    const templateManager = new TemplateManager(this);
+    
+    // Convert old SocialPost to StagedPost format
+    const migratedPosts: import('../types').StagedPost[] = [];
+    
+         // Migrate posts and drafts
+     const allOldPosts = [...oldData.posts, ...oldData.drafts];
+     for (const oldPost of allOldPosts) {
+       const platformContent = {} as import('../types').StagedPost['platformContent'];
+       
+       // Initialize all platforms as disabled first
+       const allPlatforms: import('../types').Platform[] = ['bluesky', 'farcaster', 'twitter', 'x'];
+       for (const platform of allPlatforms) {
+         platformContent[platform] = {
+           content: oldPost.content,
+           enabled: false,
+         };
+       }
+       
+       // Enable only the platforms that were selected
+       for (const platform of oldPost.platforms) {
+         if (platform in platformContent) {
+           platformContent[platform].enabled = true;
+         }
+       }
+      
+      const migratedPost: import('../types').StagedPost = {
+        id: oldPost.id,
+        sourceType: 'manual',
+        platformContent,
+        baseContent: oldPost.content,
+        tags: [],
+        status: this.mapLegacyStatus(oldPost.status),
+        createdAt: oldPost.createdAt,
+        updatedAt: oldPost.createdAt,
+        scheduledFor: oldPost.scheduledFor,
+        ...(oldPost.postedAt && { postResults: this.mapLegacyPostResults(oldPost.postedAt) })
+      };
+      
+      migratedPosts.push(migratedPost);
+    }
+
+    const newData: import('../types').BroadcastDataV2 = {
+      posts: migratedPosts,
+      templates: templateManager.getDefaultTemplates(),
+      accounts: oldData.accounts,
+      settings: {
+        contentDirectory: 'content',
+        autoDetectMarkdown: true,
+        defaultPlatforms: ['bluesky', 'farcaster', 'twitter']
+      },
+      version: '2.0'
+    };
+
+    // Save migrated data
+    await this.saveBroadcastDataV2(newData);
+    
+    return newData;
+  }
+
+  /**
+   * Map legacy post status to new format
+   */
+  private mapLegacyStatus(status: SocialPost['status']): import('../types').StagedPost['status'] {
+    switch (status) {
+      case 'draft': return 'staged';
+      case 'scheduled': return 'scheduled';
+      case 'posted': return 'posted';
+      case 'failed': return 'failed';
+      default: return 'staged';
+    }
+  }
+
+  /**
+   * Map legacy post results to new format
+   */
+  private mapLegacyPostResults(postedAt: { [platform: string]: string }): import('../types').StagedPost['postResults'] {
+    const results: import('../types').StagedPost['postResults'] = {};
+    
+    for (const [platform, timestamp] of Object.entries(postedAt)) {
+      results[platform] = {
+        success: true,
+        postedAt: timestamp,
+      };
+    }
+    
+    return results;
   }
 
   /**

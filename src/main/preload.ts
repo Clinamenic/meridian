@@ -55,6 +55,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateAccountNickname: (accountId: string, nickname: string) => ipcRenderer.invoke('archive:update-account-nickname', accountId, nickname),
     resolveUUID: (filePath: string) => ipcRenderer.invoke('registry:resolve-uuid', filePath),
     getFileByUUID: (uuid: string) => ipcRenderer.invoke('registry:get-file-by-uuid', uuid),
+    // Archive metadata editing
+    updateFileMetadata: (uuid: string, updates: any) => ipcRenderer.invoke('archive:update-file-metadata', uuid, updates),
   },
 
   // Broadcast APIs
@@ -159,6 +161,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('file-exists', filePath),
   readFile: (filePath: string) => 
     ipcRenderer.invoke('read-file', filePath),
+  getAppVersion: () => 
+    ipcRenderer.invoke('get-app-version'),
 });
 
 // Type definitions for the exposed API
@@ -253,6 +257,7 @@ export interface ElectronAPI {
   getFileStats: (filePath: string) => Promise<{ size: number; name: string }>;
   fileExists: (filePath: string) => Promise<boolean>;
   readFile: (filePath: string) => Promise<string>;
+  getAppVersion: () => Promise<string>;
 }
 
 declare global {

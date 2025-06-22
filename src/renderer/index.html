@@ -16,7 +16,8 @@
     <div id="landing-page" class="landing-page">
       <canvas id="marbling-canvas" class="marbling-background"></canvas>
       <div class="landing-content">
-        <h1>Welcome to Meridian</h1>
+        <h1>Meridian</h1>
+        <p class="version-text" id="version-display">v0.1.0</p>
         <p>Please select a workspace directory to begin</p>
         <button id="landing-workspace-btn" class="primary-btn">
           Select Workspace
@@ -486,6 +487,12 @@
                 <button id="new-post-btn" class="panel-header-btn">
                   New Post
                 </button>
+                <button id="new-template-btn" class="panel-header-btn">
+                  New Template
+                </button>
+                <button id="manage-templates-btn" class="panel-header-btn">
+                  Manage Templates
+                </button>
                 <button id="manage-accounts-btn" class="panel-header-btn">
                   Manage Accounts
                 </button>
@@ -508,8 +515,50 @@
                 </div>
               </div>
 
-              <div class="post-calendar" id="post-calendar">
-                <div class="loading-state">Loading posts...</div>
+              <!-- Broadcast Content Tabs -->
+              <div class="broadcast-tabs">
+                <button
+                  id="posts-tab"
+                  class="broadcast-tab active"
+                  data-tab="posts"
+                >
+                  Posts
+                </button>
+                <button
+                  id="templates-tab"
+                  class="broadcast-tab"
+                  data-tab="templates"
+                >
+                  Templates
+                </button>
+                <button
+                  id="markdown-tab"
+                  class="broadcast-tab"
+                  data-tab="markdown"
+                >
+                  Markdown Files
+                </button>
+              </div>
+
+              <!-- Posts View -->
+              <div id="posts-view" class="broadcast-view active">
+                <div class="post-calendar" id="post-calendar">
+                  <div class="loading-state">Loading posts...</div>
+                </div>
+              </div>
+
+              <!-- Templates View -->
+              <div id="templates-view" class="broadcast-view">
+                <div class="templates-container" id="templates-container">
+                  <div class="loading-state">Loading templates...</div>
+                </div>
+              </div>
+
+              <!-- Markdown Files View -->
+              <div id="markdown-view" class="broadcast-view">
+                <div class="markdown-container" id="markdown-container">
+                  <div class="loading-state">Loading markdown files...</div>
+                </div>
               </div>
             </div>
           </div>
@@ -1490,6 +1539,351 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- New Template Modal -->
+      <div id="new-template-modal" class="modal large-modal">
+        <div class="modal-header">
+          <h3>Create New Template</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <form id="new-template-form">
+            <div class="form-group">
+              <label for="template-name">Template Name</label>
+              <input
+                type="text"
+                id="template-name"
+                placeholder="e.g., Article Announcement"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="template-description">Description</label>
+              <input
+                type="text"
+                id="template-description"
+                placeholder="Brief description of when to use this template"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="template-content">Template Content</label>
+              <textarea
+                id="template-content"
+                rows="8"
+                placeholder="{{title}} by {{author}}, published {{date}}
+
+{{description}}
+
+{{url}}"
+                required
+              ></textarea>
+              <div class="field-help">
+                Use {{variable}} syntax for dynamic content. Common variables:
+                title, author, date, description, url, tags
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Platforms</label>
+              <div class="platform-checkboxes">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="platforms"
+                    value="bluesky"
+                    checked
+                  />
+                  <span class="checkmark"></span>
+                  Bluesky
+                </label>
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="platforms"
+                    value="farcaster"
+                    checked
+                  />
+                  <span class="checkmark"></span>
+                  Farcaster
+                </label>
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="platforms"
+                    value="twitter"
+                    checked
+                  />
+                  <span class="checkmark"></span>
+                  Twitter/X
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="template-tags">Tags</label>
+              <input
+                type="text"
+                id="template-tags"
+                placeholder="e.g., article, announcement, blog"
+              />
+              <div class="field-help">
+                Comma-separated tags to help organize your templates
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="secondary-btn modal-cancel">
+                Cancel
+              </button>
+              <button type="submit" class="primary-btn">Create Template</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Manage Templates Modal -->
+      <div id="manage-templates-modal" class="modal large-modal">
+        <div class="modal-header">
+          <h3>Manage Templates</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="templates-manager">
+            <div class="templates-actions">
+              <button id="create-template-btn" class="primary-btn">
+                Create New Template
+              </button>
+              <div class="templates-search">
+                <input
+                  type="text"
+                  id="templates-search"
+                  placeholder="Search templates..."
+                />
+              </div>
+            </div>
+
+            <div class="templates-list" id="templates-list">
+              <div class="loading-state">Loading templates...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apply Template Modal -->
+      <div id="apply-template-modal" class="modal large-modal">
+        <div class="modal-header">
+          <h3>Apply Template to Markdown File</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="apply-template-content">
+            <div class="form-group">
+              <label>Select Template</label>
+              <select id="template-select" required>
+                <option value="">Choose a template...</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Select Markdown File</label>
+              <select id="markdown-file-select" required>
+                <option value="">Choose a markdown file...</option>
+              </select>
+            </div>
+
+            <div
+              id="template-preview"
+              class="template-preview"
+              style="display: none"
+            >
+              <h4>Preview</h4>
+              <div class="preview-content" id="preview-content"></div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="secondary-btn modal-cancel">
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="apply-template-btn"
+                class="primary-btn"
+                disabled
+              >
+                Create Staged Post
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Archive Item Modal -->
+      <div id="edit-archive-item-modal" class="modal large-modal">
+        <div class="modal-header">
+          <h3>Archive Item Details</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <form id="edit-archive-item-form">
+            <!-- File Information Section -->
+            <div class="form-section">
+              <h4>File Information</h4>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="edit-archive-uuid">UUID</label>
+                  <input
+                    type="text"
+                    id="edit-archive-uuid"
+                    readonly
+                    class="readonly-field"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="edit-archive-filepath">File Path</label>
+                  <input
+                    type="text"
+                    id="edit-archive-filepath"
+                    readonly
+                    class="readonly-field"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="edit-archive-filesize">File Size</label>
+                  <input
+                    type="text"
+                    id="edit-archive-filesize"
+                    readonly
+                    class="readonly-field"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="edit-archive-mimetype-display">MIME Type</label>
+                  <input
+                    type="text"
+                    id="edit-archive-mimetype-display"
+                    readonly
+                    class="readonly-field"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="edit-archive-created">Created</label>
+                  <input
+                    type="text"
+                    id="edit-archive-created"
+                    readonly
+                    class="readonly-field"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="edit-archive-modified">Modified</label>
+                  <input
+                    type="text"
+                    id="edit-archive-modified"
+                    readonly
+                    class="readonly-field"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Editable Metadata Section -->
+            <div class="form-section">
+              <h4>Editable Metadata</h4>
+
+              <div class="form-group">
+                <label for="edit-archive-title">Title</label>
+                <input
+                  type="text"
+                  id="edit-archive-title"
+                  placeholder="Title"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="edit-archive-author">Author</label>
+                <input
+                  type="text"
+                  id="edit-archive-author"
+                  placeholder="Author (optional)"
+                />
+              </div>
+
+              <div class="form-group virtual-only" style="display: none">
+                <label for="edit-archive-mimetype">MIME Type</label>
+                <input
+                  type="text"
+                  id="edit-archive-mimetype"
+                  placeholder="e.g., text/markdown, image/png"
+                />
+                <div class="field-help">
+                  MIME type can only be edited for virtual files
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Tags</label>
+                <div class="modal-resource-tags">
+                  <div class="modal-resource-tag-input">
+                    <div class="tag-input-container">
+                      <input
+                        type="text"
+                        id="edit-archive-tag-input"
+                        class="tag-input"
+                        placeholder="add tag..."
+                      />
+                      <button
+                        type="button"
+                        class="add-tag-btn"
+                        id="edit-archive-add-tag-btn"
+                        disabled
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div
+                      class="tag-autocomplete modal-tag-autocomplete"
+                      id="edit-archive-tag-autocomplete"
+                      style="display: none"
+                    ></div>
+                  </div>
+                  <div class="modal-tags-list" id="edit-archive-tags-list">
+                    <!-- Tags rendered here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Arweave Uploads Section -->
+            <div
+              class="form-section"
+              id="edit-archive-arweave-section"
+              style="display: none"
+            >
+              <h4>Arweave Uploads</h4>
+              <div id="edit-archive-arweave-list">
+                <!-- Arweave uploads will be rendered here -->
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="secondary-btn modal-cancel">
+                Cancel
+              </button>
+              <button type="submit" class="primary-btn">Update Item</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

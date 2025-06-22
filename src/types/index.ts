@@ -55,6 +55,15 @@ export interface FileRegistryEntry {
   arweave_hashes: ArweaveUploadRecord[];
 }
 
+// Interface for editing archive item metadata
+export interface EditableMetadata {
+  title?: string;
+  tags?: string[];
+  author?: string;
+  customFields?: { [key: string]: any };
+  mimeType?: string; // Virtual files only
+}
+
 export interface ArweaveAccount {
   id: string;           // UUID for account
   nickname: string;     // User-defined name
@@ -96,6 +105,149 @@ export interface BroadcastData {
     farcaster?: { fid: number; username: string };
     twitter?: { username: string; userId: string };
   };
+}
+
+// Enhanced Broadcast types for staging and templates
+export interface StagedPost {
+  id: string;
+  sourceType: "manual" | "template" | "markdown";
+  sourceData?: {
+    filePath?: string;
+    templateId?: string;
+    variables?: Record<string, string>;
+  };
+  
+  // Platform-specific content variations
+  platformContent: {
+    [platform in Platform]: {
+      content: string;
+      enabled: boolean;
+      customizations?: {
+        hashtags?: string[];
+        mentions?: string[];
+        mediaAttachments?: string[];
+      };
+    };
+  };
+  
+  // Base content and metadata
+  baseContent: string;
+  title?: string;
+  description?: string;
+  tags: string[];
+  
+  // Scheduling and status
+  scheduledFor?: string;
+  status: "staged" | "scheduled" | "posting" | "posted" | "failed";
+  createdAt: string;
+  updatedAt: string;
+  
+  // Results tracking
+  postResults?: {
+    [platform: string]: {
+      success: boolean;
+      postId?: string;
+      url?: string;
+      error?: string;
+      postedAt?: string;
+    };
+  };
+}
+
+export interface PostTemplate {
+  id: string;
+  name: string;
+  description: string;
+  template: string; // Template string with {{variable}} placeholders
+  variables: TemplateVariable[];
+  platforms: Platform[];
+  createdAt: string;
+  updatedAt: string;
+  tags: string[];
+}
+
+export interface TemplateVariable {
+  key: string;
+  label: string;
+  type: "text" | "url" | "date" | "number" | "select";
+  required: boolean;
+  defaultValue?: string;
+  options?: string[]; // For select type
+  source?: "frontmatter" | "file" | "computed" | "user";
+  frontmatterKey?: string; // For frontmatter source
+}
+
+export interface MarkdownFile {
+  filePath: string;
+  relativePath: string;
+  frontmatter: Record<string, any>;
+  title: string;
+  content: string;
+  lastModified: string;
+  url?: string; // Generated URL for published content
+}
+
+export interface BroadcastDataV2 {
+  posts: StagedPost[];
+  templates: PostTemplate[];
+  accounts: {
+    bluesky?: { handle: string; did: string };
+    farcaster?: { fid: number; username: string };
+    twitter?: { username: string; userId: string };
+  };
+  settings: {
+    contentDirectory: string;
+    autoDetectMarkdown: boolean;
+    defaultPlatforms: Platform[];
+  };
+  version: string;
+}
+
+// Template and validation types
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings?: string[];
+}
+
+export interface FormattingSuggestion {
+  type: "hashtag" | "mention" | "url" | "length" | "emoji";
+  message: string;
+  suggestion?: string;
+  position?: { start: number; end: number };
+}
+
+export interface TemplateFilters {
+  tags?: string[];
+  platforms?: Platform[];
+  search?: string;
+}
+
+export interface StagingFilters {
+  status?: StagedPost["status"][];
+  platforms?: Platform[];
+  tags?: string[];
+  search?: string;
+  dateRange?: { start: string; end: string };
+}
+
+export interface CreateStagedPostData {
+  sourceType: StagedPost["sourceType"];
+  sourceData?: StagedPost["sourceData"];
+  baseContent: string;
+  title?: string;
+  description?: string;
+  tags: string[];
+  platforms: Platform[];
+  scheduledFor?: string;
+}
+
+export interface PostResult {
+  success: boolean;
+  postId?: string;
+  url?: string;
+  error?: string;
+  platform: Platform;
 }
 
 // Credential management types

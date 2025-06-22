@@ -39,6 +39,7 @@ class MeridianApp {
     if (!this.workspacePath) {
       document.getElementById('landing-page').style.display = 'flex';
       this.initializeMarblingBackground();
+      await this.loadAppVersion();
       document.getElementById('landing-workspace-btn').addEventListener('click', async () => {
         await this.selectWorkspace();
         if (this.workspacePath) {
@@ -248,7 +249,8 @@ class MeridianApp {
       } else if (e.target.classList.contains('archive-actions-item')) {
         const fileUuid = e.target.dataset.fileUuid;
         let action = 'view';
-        if (e.target.classList.contains('upload-option')) action = 'upload';
+        if (e.target.classList.contains('edit-option')) action = 'edit';
+        else if (e.target.classList.contains('upload-option')) action = 'upload';
         else if (e.target.classList.contains('locate-option')) action = 'locate';
         else if (e.target.classList.contains('refresh-option')) action = 'refresh';
         
@@ -278,6 +280,12 @@ class MeridianApp {
 
     // Setup individual archive collapse events after rendering
     this.setupArchiveCollapseEvents();
+
+    // Edit archive item form
+    document.getElementById('edit-archive-item-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await this.handleEditArchiveItem();
+    });
   }
 
   setupBroadcastEvents() {
@@ -286,10 +294,26 @@ class MeridianApp {
       this.openModal('new-post-modal');
     });
 
+    // New template button
+    document.getElementById('new-template-btn').addEventListener('click', () => {
+      this.openModal('new-template-modal');
+    });
+
+    // Manage templates button
+    document.getElementById('manage-templates-btn').addEventListener('click', () => {
+      this.openManageTemplatesModal();
+    });
+
     // New post form
     document.getElementById('new-post-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       await this.handleNewPost(e);
+    });
+
+    // New template form
+    document.getElementById('new-template-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await this.handleNewTemplate(e);
     });
 
     // Character count for posts
@@ -315,6 +339,27 @@ class MeridianApp {
         }
         // Add other platform handlers as needed
       });
+    });
+
+    // Broadcast tabs
+    document.querySelectorAll('.broadcast-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        const tabName = e.target.dataset.tab;
+        this.switchBroadcastTab(tabName);
+      });
+    });
+
+    // Apply template modal events
+    document.getElementById('template-select').addEventListener('change', () => {
+      this.updateTemplatePreview();
+    });
+
+    document.getElementById('markdown-file-select').addEventListener('change', () => {
+      this.updateTemplatePreview();
+    });
+
+    document.getElementById('apply-template-btn').addEventListener('click', () => {
+      this.applyTemplateToMarkdown();
     });
   }
 
@@ -1269,6 +1314,161 @@ class MeridianApp {
         this.removeModalTag(tag);
       });
     });
+  }
+
+  renderEditArchiveItemTags() {
+    const container = document.getElementById('edit-archive-tags-list');
+    if (!container) return;
+
+    if (!this.editArchiveItemTags || this.editArchiveItemTags.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = this.editArchiveItemTags.map(tag => `
+      <span class="resource-tag">
+        ${this.escapeHtml(tag)}
+        <button type="button" class="remove-tag-btn" data-tag="${this.escapeHtml(tag)}" title="Remove tag">×</button>
+      </span>
+    `).join('');
+
+    // Add remove tag events
+    container.querySelectorAll('.remove-tag-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const tag = e.target.dataset.tag;
+        this.removeEditArchiveItemTag(tag);
+      });
+    });
+  }
+
+  setupEditArchiveItemTagEvents() {
+    const tagInput = document.getElementById('edit-archive-tag-input');
+    const addTagBtn = document.getElementById('edit-archive-add-tag-btn');
+
+    if (!tagInput || !addTagBtn) return;
+
+    // Clear existing event listeners
+    tagInput.replaceWith(tagInput.cloneNode(true));
+    addTagBtn.replaceWith(addTagBtn.cloneNode(true));
+
+    // Get fresh references
+    const newTagInput = document.getElementById('edit-archive-tag-input');
+    const newAddTagBtn = document.getElementById('edit-archive-add-tag-btn');
+
+    newTagInput.addEventListener('input', (e) => {
+      this.showEditArchiveItemTagAutocomplete(e.target);
+      this.updateEditArchiveItemAddTagButtonState(e.target);
+    });
+
+    newTagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const tagValue = e.target.value.trim();
+        if (tagValue) {
+          this.addEditArchiveItemTag(tagValue);
+        }
+      } else if (e.key === 'Escape') {
+        this.hideEditArchiveItemTagAutocomplete();
+      }
+    });
+
+    newTagInput.addEventListener('blur', (e) => {
+      // Delay hiding to allow click on autocomplete items
+      setTimeout(() => {
+        this.hideEditArchiveItemTagAutocomplete();
+      }, 200);
+    });
+
+    newAddTagBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tagValue = newTagInput.value.trim();
+      if (tagValue) {
+        this.addEditArchiveItemTag(tagValue);
+      }
+    });
+  }
+
+  addEditArchiveItemTag(tagValue) {
+    if (!this.editArchiveItemTags) {
+      this.editArchiveItemTags = [];
+    }
+
+    const trimmedTag = tagValue.trim();
+    if (trimmedTag && !this.editArchiveItemTags.includes(trimmedTag)) {
+      this.editArchiveItemTags.push(trimmedTag);
+      this.renderEditArchiveItemTags();
+      
+      // Clear input and update button state
+      const input = document.getElementById('edit-archive-tag-input');
+      if (input) {
+        input.value = '';
+        this.updateEditArchiveItemAddTagButtonState(input);
+        this.hideEditArchiveItemTagAutocomplete();
+      }
+    }
+  }
+
+  removeEditArchiveItemTag(tagValue) {
+    if (!this.editArchiveItemTags) return;
+    
+    this.editArchiveItemTags = this.editArchiveItemTags.filter(tag => tag !== tagValue);
+    this.renderEditArchiveItemTags();
+  }
+
+  updateEditArchiveItemAddTagButtonState(input) {
+    const btn = document.getElementById('edit-archive-add-tag-btn');
+    if (!btn) return;
+    
+    const hasValue = input.value.trim().length > 0;
+    btn.disabled = !hasValue;
+  }
+
+  showEditArchiveItemTagAutocomplete(input) {
+    const value = input.value.trim();
+    const autocompleteDiv = document.getElementById('edit-archive-tag-autocomplete');
+
+    if (value.length === 0) {
+      this.hideEditArchiveItemTagAutocomplete();
+      return;
+    }
+
+    // Get existing tags to exclude from suggestions
+    const excludeTags = this.editArchiveItemTags || [];
+
+    // Get intelligent tag suggestions from archive data
+    const suggestions = this.getIntelligentArchiveTagSuggestions(value, excludeTags, 5);
+
+    if (suggestions.length === 0) {
+      this.hideEditArchiveItemTagAutocomplete();
+      return;
+    }
+
+    // Show autocomplete dropdown
+    autocompleteDiv.innerHTML = suggestions
+      .map((tag, index) => `
+        <div class="autocomplete-item" data-tag="${this.escapeHtml(tag)}" data-index="${index}">
+          <span class="autocomplete-tag-name">${this.escapeHtml(tag)}</span>
+        </div>
+      `).join('');
+
+    // Add click events to autocomplete items
+    autocompleteDiv.querySelectorAll('.autocomplete-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        const tag = e.target.closest('.autocomplete-item').dataset.tag;
+        this.addEditArchiveItemTag(tag);
+      });
+    });
+
+    autocompleteDiv.style.display = 'block';
+  }
+
+  hideEditArchiveItemTagAutocomplete() {
+    const autocompleteDiv = document.getElementById('edit-archive-tag-autocomplete');
+    if (autocompleteDiv) {
+      autocompleteDiv.style.display = 'none';
+    }
   }
 
   // Tag Management functionality
@@ -2275,6 +2475,69 @@ class MeridianApp {
     }
   }
 
+  async openEditArchiveItemModal(fileUuid) {
+    const file = this.data.archive.files.find(f => f.uuid === fileUuid);
+    if (!file) {
+      this.showError('Archive file not found');
+      return;
+    }
+
+    // Populate read-only file information fields
+    document.getElementById('edit-archive-uuid').value = file.uuid;
+    document.getElementById('edit-archive-filepath').value = file.filePath;
+    document.getElementById('edit-archive-filesize').value = this.formatFileSize(file.fileSize);
+    document.getElementById('edit-archive-mimetype-display').value = file.mimeType;
+    document.getElementById('edit-archive-created').value = new Date(file.created).toLocaleString();
+    document.getElementById('edit-archive-modified').value = new Date(file.modified).toLocaleString();
+
+    // Populate editable metadata fields
+    document.getElementById('edit-archive-title').value = file.title || '';
+    document.getElementById('edit-archive-author').value = file.metadata.author || '';
+    
+    // Check if file is virtual and show/hide MIME type field
+    const isVirtual = file.filePath.startsWith('[VIRTUAL]');
+    const mimeTypeGroup = document.querySelector('#edit-archive-item-modal .virtual-only');
+    if (isVirtual) {
+      mimeTypeGroup.style.display = 'block';
+      document.getElementById('edit-archive-mimetype').value = file.mimeType || '';
+    } else {
+      mimeTypeGroup.style.display = 'none';
+    }
+
+    // Handle Arweave uploads section
+    const arweaveSection = document.getElementById('edit-archive-arweave-section');
+    const arweaveList = document.getElementById('edit-archive-arweave-list');
+    
+    if (file.arweave_hashes && file.arweave_hashes.length > 0) {
+      arweaveSection.style.display = 'block';
+      arweaveList.innerHTML = file.arweave_hashes.map(upload => `
+        <div class="arweave-upload-item">
+          <a href="${upload.link}" target="_blank" class="arweave-upload-link">
+            ${upload.hash}
+          </a>
+          <span class="arweave-upload-timestamp">
+            ${new Date(upload.timestamp).toLocaleString()}
+          </span>
+        </div>
+      `).join('');
+    } else {
+      arweaveSection.style.display = 'none';
+    }
+
+    // Store the file UUID for the update
+    document.getElementById('edit-archive-item-form').dataset.fileUuid = fileUuid;
+
+    // Clear and populate tags
+    this.editArchiveItemTags = [...(file.tags || [])];
+    this.renderEditArchiveItemTags();
+
+    // Setup tag input events for this modal
+    this.setupEditArchiveItemTagEvents();
+
+    // Show the modal
+    this.openModal('edit-archive-item-modal');
+  }
+
   confirmRemoveResource(resourceId) {
     // Find the resource for confirmation message
     const resource = this.data.collate.resources.find(r => r.id === resourceId);
@@ -2301,6 +2564,55 @@ class MeridianApp {
     } catch (error) {
       console.error('Failed to remove resource:', error);
       this.showError('Failed to remove resource');
+    }
+  }
+
+  async handleEditArchiveItem() {
+    try {
+      const form = document.getElementById('edit-archive-item-form');
+      const fileUuid = form.dataset.fileUuid;
+      
+      if (!fileUuid) {
+        this.showError('No file selected for editing');
+        return;
+      }
+
+      // Collect form data
+      const title = document.getElementById('edit-archive-title').value.trim();
+      const author = document.getElementById('edit-archive-author').value.trim();
+      const mimeType = document.getElementById('edit-archive-mimetype').value.trim();
+      
+      if (!title) {
+        this.showError('Title is required');
+        return;
+      }
+
+      // Prepare updates object
+      const updates = {
+        title,
+        tags: this.editArchiveItemTags || [],
+        author: author || undefined,
+      };
+
+      // Add MIME type for virtual files only
+      const file = this.data.archive.files.find(f => f.uuid === fileUuid);
+      if (file && file.filePath.startsWith('[VIRTUAL]') && mimeType) {
+        updates.mimeType = mimeType;
+      }
+
+      // Update the file metadata
+      await window.electronAPI.archive.updateFileMetadata(fileUuid, updates);
+      
+      // Reload archive data to refresh the display
+      await this.loadArchiveData();
+      
+      // Close modal and show success message
+      this.closeModal();
+      this.showSuccess('Archive item updated successfully');
+      
+    } catch (error) {
+      console.error('Failed to update archive item:', error);
+      this.showError('Failed to update archive item: ' + error.message);
     }
   }
 
@@ -3079,8 +3391,8 @@ class MeridianApp {
               </button>
               <button class="archive-actions-btn" data-file-uuid="${file.uuid}" title="File options">⋮</button>
               <div class="archive-actions-menu" data-file-uuid="${file.uuid}">
+                <button class="archive-actions-item edit-option" data-file-uuid="${file.uuid}">Edit</button>
                 <button class="archive-actions-item upload-option" data-file-uuid="${file.uuid}">Upload to Arweave</button>
-                <button class="archive-actions-item view-option" data-file-uuid="${file.uuid}">View Details</button>
                 <button class="archive-actions-item locate-option" data-file-uuid="${file.uuid}">Locate File...</button>
                 <button class="archive-actions-item refresh-option" data-file-uuid="${file.uuid}">Refresh Metadata</button>
               </div>
@@ -3523,6 +3835,10 @@ class MeridianApp {
     }
 
     switch (action) {
+      case 'edit':
+        await this.openEditArchiveItemModal(fileUuid);
+        break;
+
       case 'upload':
         try {
           // Check if file still exists
@@ -3540,10 +3856,6 @@ class MeridianApp {
         }
         break;
 
-      case 'view':
-        this.showArchiveFileDetails(file);
-        break;
-
       case 'locate':
         await this.locateArchiveFile(fileUuid);
         break;
@@ -3555,25 +3867,6 @@ class MeridianApp {
       default:
         console.warn('Unknown archive action:', action);
     }
-  }
-
-  showArchiveFileDetails(file) {
-    // For now, just show an alert with file details
-    // This could be expanded to a proper modal later
-    const details = [
-      `Title: ${file.title}`,
-      `Path: ${file.filePath}`,
-      `Size: ${this.formatFileSize(file.fileSize)}`,
-      `Type: ${file.mimeType}`,
-      `UUID: ${file.uuid}`,
-      `Created: ${new Date(file.created).toLocaleString()}`,
-      `Modified: ${new Date(file.modified).toLocaleString()}`,
-      file.metadata.author ? `Author: ${file.metadata.author}` : '',
-      file.tags.length > 0 ? `Tags: ${file.tags.join(', ')}` : '',
-      file.arweave_hashes.length > 0 ? `Arweave Uploads: ${file.arweave_hashes.length}` : ''
-    ].filter(line => line).join('\n');
-
-    alert(`File Details:\n\n${details}`);
   }
 
   // Helper functions for file status and relocation
@@ -5077,6 +5370,388 @@ class MeridianApp {
     }
   }
 
+  // Template Management Methods
+  switchBroadcastTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.broadcast-tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+    // Update views
+    document.querySelectorAll('.broadcast-view').forEach(view => {
+      view.classList.remove('active');
+    });
+    document.getElementById(`${tabName}-view`).classList.add('active');
+
+    // Load data for the selected tab
+    if (tabName === 'templates') {
+      this.loadTemplatesData();
+    } else if (tabName === 'markdown') {
+      this.loadMarkdownFilesData();
+    }
+  }
+
+  async loadTemplatesData() {
+    const container = document.getElementById('templates-container');
+    try {
+      const templates = await window.electronAPI.invoke('broadcast:list-templates');
+      this.renderTemplates(templates);
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+      container.innerHTML = '<div class="loading-state">Failed to load templates</div>';
+    }
+  }
+
+  renderTemplates(templates) {
+    const container = document.getElementById('templates-container');
+    
+    if (templates.length === 0) {
+      container.innerHTML = '<div class="loading-state">No templates yet. Create your first template!</div>';
+      return;
+    }
+
+    container.innerHTML = templates.map(template => `
+      <div class="template-item" data-template-id="${template.id}">
+        <div class="template-header">
+          <div class="template-info">
+            <h4>${this.escapeHtml(template.name)}</h4>
+            <p class="template-description">${this.escapeHtml(template.description || '')}</p>
+          </div>
+          <div class="template-actions">
+            <button class="secondary-btn apply-template-btn" data-template-id="${template.id}">
+              Apply
+            </button>
+            <button class="secondary-btn edit-template-btn" data-template-id="${template.id}">
+              Edit
+            </button>
+            <button class="secondary-btn delete-template-btn" data-template-id="${template.id}">
+              Delete
+            </button>
+          </div>
+        </div>
+        
+        <div class="template-content">${this.escapeHtml(template.content)}</div>
+        
+        <div class="template-platforms">
+          ${template.platforms.map(platform => 
+            `<span class="template-platform">${platform}</span>`
+          ).join('')}
+        </div>
+        
+        ${template.tags && template.tags.length > 0 ? `
+          <div class="template-tags">
+            ${template.tags.map(tag => 
+              `<span class="template-tag">${this.escapeHtml(tag)}</span>`
+            ).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `).join('');
+
+    // Add event listeners for template actions
+    container.querySelectorAll('.apply-template-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const templateId = e.target.dataset.templateId;
+        this.openApplyTemplateModal(templateId);
+      });
+    });
+
+    container.querySelectorAll('.edit-template-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const templateId = e.target.dataset.templateId;
+        this.editTemplate(templateId);
+      });
+    });
+
+    container.querySelectorAll('.delete-template-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const templateId = e.target.dataset.templateId;
+        this.deleteTemplate(templateId);
+      });
+    });
+  }
+
+  async loadMarkdownFilesData() {
+    const container = document.getElementById('markdown-container');
+    try {
+      const files = await window.electronAPI.invoke('broadcast:scan-content-directory', 'content');
+      this.renderMarkdownFiles(files);
+    } catch (error) {
+      console.error('Failed to load markdown files:', error);
+      container.innerHTML = '<div class="loading-state">Failed to load markdown files</div>';
+    }
+  }
+
+  renderMarkdownFiles(files) {
+    const container = document.getElementById('markdown-container');
+    
+    if (files.length === 0) {
+      container.innerHTML = '<div class="loading-state">No markdown files found in content/ directory</div>';
+      return;
+    }
+
+    container.innerHTML = files.map(file => `
+      <div class="markdown-file-item" data-file-path="${file.path}">
+        <div class="markdown-file-header">
+          <div class="markdown-file-info">
+            <h4>${this.escapeHtml(file.title || file.name)}</h4>
+            <p class="markdown-file-path">${this.escapeHtml(file.path)}</p>
+          </div>
+          <div class="markdown-file-actions">
+            <button class="secondary-btn apply-to-file-btn" data-file-path="${file.path}">
+              Apply Template
+            </button>
+          </div>
+        </div>
+        
+        ${file.frontmatter ? `
+          <div class="markdown-frontmatter">${this.escapeHtml(JSON.stringify(file.frontmatter, null, 2))}</div>
+        ` : ''}
+      </div>
+    `).join('');
+
+    // Add event listeners
+    container.querySelectorAll('.apply-to-file-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const filePath = e.target.dataset.filePath;
+        this.openApplyTemplateModal(null, filePath);
+      });
+    });
+  }
+
+  async handleNewTemplate(e) {
+    try {
+      const formData = new FormData(e.target);
+      const platforms = Array.from(e.target.querySelectorAll('input[name="platforms"]:checked'))
+        .map(input => input.value);
+      
+      const tags = formData.get('template-tags')
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
+
+      const templateData = {
+        name: formData.get('template-name'),
+        description: formData.get('template-description'),
+        content: formData.get('template-content'),
+        platforms,
+        tags
+      };
+
+      const editingId = e.target.dataset.editingId;
+      
+      if (editingId) {
+        // Update existing template
+        await window.electronAPI.invoke('broadcast:update-template', editingId, templateData);
+        this.showSuccess('Template updated successfully!');
+      } else {
+        // Create new template
+        await window.electronAPI.invoke('broadcast:create-template', templateData);
+        this.showSuccess('Template created successfully!');
+      }
+      
+      this.closeModal();
+      this.resetTemplateForm();
+      
+      // Refresh templates if we're on the templates tab
+      if (document.querySelector('.broadcast-tab[data-tab="templates"]').classList.contains('active')) {
+        this.loadTemplatesData();
+      }
+      
+      // Refresh management modal if open
+      if (document.getElementById('manage-templates-modal').style.display !== 'none') {
+        this.loadTemplatesForManagement();
+      }
+    } catch (error) {
+      console.error('Failed to save template:', error);
+      this.showError('Failed to save template');
+    }
+  }
+
+  resetTemplateForm() {
+    const form = document.getElementById('new-template-form');
+    form.reset();
+    delete form.dataset.editingId;
+    
+    // Reset modal title and button text
+    document.querySelector('#new-template-modal .modal-header h3').textContent = 'Create New Template';
+    document.querySelector('#new-template-form button[type="submit"]').textContent = 'Create Template';
+  }
+
+  async openManageTemplatesModal() {
+    this.openModal('manage-templates-modal');
+    await this.loadTemplatesForManagement();
+  }
+
+  async loadTemplatesForManagement() {
+    const container = document.getElementById('templates-list');
+    try {
+      const templates = await window.electronAPI.invoke('broadcast:list-templates');
+      this.renderTemplatesForManagement(templates);
+    } catch (error) {
+      console.error('Failed to load templates for management:', error);
+      container.innerHTML = '<div class="loading-state">Failed to load templates</div>';
+    }
+  }
+
+  renderTemplatesForManagement(templates) {
+    const container = document.getElementById('templates-list');
+    
+    if (templates.length === 0) {
+      container.innerHTML = '<div class="loading-state">No templates yet. Create your first template!</div>';
+      return;
+    }
+
+    // Reuse the same template rendering logic
+    this.renderTemplates(templates);
+  }
+
+  async openApplyTemplateModal(templateId = null, filePath = null) {
+    this.openModal('apply-template-modal');
+    
+    // Load templates and markdown files
+    try {
+      const [templates, files] = await Promise.all([
+        window.electronAPI.invoke('broadcast:list-templates'),
+        window.electronAPI.invoke('broadcast:scan-content-directory', 'content')
+      ]);
+
+      // Populate template select
+      const templateSelect = document.getElementById('template-select');
+      templateSelect.innerHTML = '<option value="">Choose a template...</option>' +
+        templates.map(template => 
+          `<option value="${template.id}" ${templateId === template.id ? 'selected' : ''}>
+            ${this.escapeHtml(template.name)}
+          </option>`
+        ).join('');
+
+      // Populate markdown file select
+      const fileSelect = document.getElementById('markdown-file-select');
+      fileSelect.innerHTML = '<option value="">Choose a markdown file...</option>' +
+        files.map(file => 
+          `<option value="${file.path}" ${filePath === file.path ? 'selected' : ''}>
+            ${this.escapeHtml(file.title || file.name)}
+          </option>`
+        ).join('');
+
+      // Update preview if both are selected
+      this.updateTemplatePreview();
+    } catch (error) {
+      console.error('Failed to load data for apply template modal:', error);
+      this.showError('Failed to load template data');
+    }
+  }
+
+  async updateTemplatePreview() {
+    const templateSelect = document.getElementById('template-select');
+    const fileSelect = document.getElementById('markdown-file-select');
+    const previewDiv = document.getElementById('template-preview');
+    const previewContent = document.getElementById('preview-content');
+    const applyBtn = document.getElementById('apply-template-btn');
+
+    const templateId = templateSelect.value;
+    const filePath = fileSelect.value;
+
+    if (!templateId || !filePath) {
+      previewDiv.style.display = 'none';
+      applyBtn.disabled = true;
+      return;
+    }
+
+    try {
+      const preview = await window.electronAPI.invoke('broadcast:preview-template', templateId, { filePath });
+      previewContent.textContent = preview.content;
+      previewDiv.style.display = 'block';
+      applyBtn.disabled = false;
+    } catch (error) {
+      console.error('Failed to generate preview:', error);
+      previewContent.textContent = 'Failed to generate preview';
+      previewDiv.style.display = 'block';
+      applyBtn.disabled = true;
+    }
+  }
+
+  async applyTemplateToMarkdown() {
+    const templateSelect = document.getElementById('template-select');
+    const fileSelect = document.getElementById('markdown-file-select');
+
+    const templateId = templateSelect.value;
+    const filePath = fileSelect.value;
+
+    if (!templateId || !filePath) {
+      this.showError('Please select both a template and a markdown file');
+      return;
+    }
+
+    try {
+      const stagedPost = await window.electronAPI.invoke('broadcast:apply-template', templateId, filePath);
+      this.closeModal();
+      this.showSuccess('Staged post created successfully!');
+      
+      // Refresh posts if we're on the posts tab
+      if (document.querySelector('.broadcast-tab[data-tab="posts"]').classList.contains('active')) {
+        this.loadBroadcastData();
+      }
+    } catch (error) {
+      console.error('Failed to apply template:', error);
+      this.showError('Failed to create staged post');
+    }
+  }
+
+  async editTemplate(templateId) {
+    try {
+      const template = await window.electronAPI.invoke('broadcast:get-template', templateId);
+      
+      // Populate the new template form with existing data
+      document.getElementById('template-name').value = template.name;
+      document.getElementById('template-description').value = template.description || '';
+      document.getElementById('template-content').value = template.content;
+      document.getElementById('template-tags').value = template.tags ? template.tags.join(', ') : '';
+      
+      // Set platform checkboxes
+      document.querySelectorAll('input[name="platforms"]').forEach(checkbox => {
+        checkbox.checked = template.platforms.includes(checkbox.value);
+      });
+
+      // Store the template ID for updating
+      document.getElementById('new-template-form').dataset.editingId = templateId;
+      
+      // Change modal title and button text
+      document.querySelector('#new-template-modal .modal-header h3').textContent = 'Edit Template';
+      document.querySelector('#new-template-form button[type="submit"]').textContent = 'Update Template';
+      
+      this.openModal('new-template-modal');
+    } catch (error) {
+      console.error('Failed to load template for editing:', error);
+      this.showError('Failed to load template');
+    }
+  }
+
+  async deleteTemplate(templateId) {
+    if (!confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await window.electronAPI.invoke('broadcast:delete-template', templateId);
+      this.showSuccess('Template deleted successfully!');
+      
+      // Refresh templates
+      if (document.querySelector('.broadcast-tab[data-tab="templates"]').classList.contains('active')) {
+        this.loadTemplatesData();
+      }
+      
+      // Refresh management modal if open
+      if (document.getElementById('manage-templates-modal').style.display !== 'none') {
+        this.loadTemplatesForManagement();
+      }
+    } catch (error) {
+      console.error('Failed to delete template:', error);
+      this.showError('Failed to delete template');
+    }
+  }
+
   // ===== CENTRALIZED ACCOUNT STATE MANAGEMENT =====
 
   /**
@@ -5811,6 +6486,12 @@ class MeridianApp {
     if (this.editingResourceId) {
       this.resetResourceModal();
     }
+    
+    // Reset template form if the template modal is closing
+    const templateModal = document.getElementById('new-template-modal');
+    if (templateModal && templateModal.style.display !== 'none') {
+      this.resetTemplateForm();
+    }
   }
 
   // Utility Methods
@@ -6204,6 +6885,23 @@ class MeridianApp {
         item.classList.add('collapsed');
       }
     });
+  }
+
+  async loadAppVersion() {
+    try {
+      const version = await window.electronAPI.getAppVersion();
+      const versionDisplay = document.getElementById('version-display');
+      if (versionDisplay) {
+        versionDisplay.textContent = `v${version}`;
+      }
+    } catch (error) {
+      console.error('Failed to load app version:', error);
+      // Fallback to hardcoded version if API fails
+      const versionDisplay = document.getElementById('version-display');
+      if (versionDisplay) {
+        versionDisplay.textContent = 'v0.1.0';
+      }
+    }
   }
 }
 
