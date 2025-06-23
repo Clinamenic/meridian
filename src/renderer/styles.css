@@ -728,6 +728,19 @@ body {
   justify-content: stretch;
 }
 
+#collate-panel .panel-content {
+  padding: 0;
+  gap: 0 !important;
+}
+
+#collate-panel .panel-content .main-content-area .resource-list{
+  padding: var(--spacing-md);
+}
+
+#collate-panel .panel-content .tag-filter-list {
+  padding-right: var(--spacing-md);
+}
+
 #collate-panel .panel-header-left {
   display: flex;
   align-items: center;
