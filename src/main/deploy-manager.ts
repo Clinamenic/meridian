@@ -363,7 +363,7 @@ class DeployManager {
       "dependencies": {
         "@clack/prompts": "^0.7.0",
         "@floating-ui/dom": "^1.6.1",
-        "@napi-rs/simple-git": "^0.5.0",
+        "@napi-rs/simple-git": "^0.1.19",
         "chokidar": "^3.6.0",
         "d3": "^7.8.5",
         "esbuild": "0.19.8",
