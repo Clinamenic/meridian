@@ -59,6 +59,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateFileMetadata: (uuid: string, updates: any) => ipcRenderer.invoke('archive:update-file-metadata', uuid, updates),
   },
 
+  // Deploy APIs
+  deploy: {
+    loadData: () => ipcRenderer.invoke('deploy:load-data'),
+    saveConfig: (config: any) => ipcRenderer.invoke('deploy:save-config', config),
+    initializeQuartz: (workspacePath: string) => ipcRenderer.invoke('deploy:initialize-quartz', workspacePath),
+    buildSite: (config: any) => ipcRenderer.invoke('deploy:build-site', config),
+    previewSite: (config: any) => ipcRenderer.invoke('deploy:preview-site', config),
+    scanContent: (workspacePath: string) => ipcRenderer.invoke('deploy:scan-content', workspacePath),
+    validateContent: (workspacePath: string) => ipcRenderer.invoke('deploy:validate-content', workspacePath),
+    validateSystem: () => ipcRenderer.invoke('deploy:validate-system'),
+    deployGitHub: (config: any) => ipcRenderer.invoke('deploy:deploy-github', config),
+    exportStatic: (config: any) => ipcRenderer.invoke('deploy:export-static', config),
+    checkInitialized: (workspacePath: string) => ipcRenderer.invoke('deploy:check-initialized', workspacePath)
+  },
+
   // Broadcast APIs
   broadcast: {
     loadData: () => ipcRenderer.invoke('broadcast:load-data'),
@@ -199,6 +214,22 @@ export interface ElectronAPI {
     switchAccount: (accountId: string) => Promise<void>;
     getActiveAccount: () => Promise<ArweaveAccount | null>;
     updateAccountNickname: (accountId: string, nickname: string) => Promise<void>;
+    resolveUUID: (filePath: string) => Promise<any>;
+    getFileByUUID: (uuid: string) => Promise<any>;
+    updateFileMetadata: (uuid: string, updates: any) => Promise<void>;
+  };
+
+  deploy: {
+    loadData: () => Promise<any>;
+    saveConfig: (config: any) => Promise<void>;
+    initializeQuartz: (workspacePath: string) => Promise<void>;
+    buildSite: (config: any) => Promise<any>;
+    previewSite: (config: any) => Promise<string>;
+    scanContent: (workspacePath: string) => Promise<any>;
+    validateContent: (workspacePath: string) => Promise<any>;
+    validateSystem: () => Promise<any>;
+    deployGitHub: (config: any) => Promise<any>;
+    exportStatic: (config: any) => Promise<string>;
   };
   
   broadcast: {

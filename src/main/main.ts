@@ -12,6 +12,7 @@ import { AccountStateManager } from './account-state-manager';
 import { TemplateManager } from './template-manager';
 import { StagingManager } from './staging-manager';
 import { MarkdownProcessor } from './markdown-processor';
+import DeployManager from './deploy-manager';
 
 class MeridianApp {
   private mainWindow: BrowserWindow | null = null;
@@ -26,6 +27,7 @@ class MeridianApp {
   private templateManager: TemplateManager;
   private stagingManager: StagingManager;
   private markdownProcessor: MarkdownProcessor;
+  private deployManager: DeployManager;
 
   constructor() {
     this.credentialManager = CredentialManager.getInstance();
@@ -38,6 +40,7 @@ class MeridianApp {
     this.templateManager = new TemplateManager(this.dataManager);
     this.stagingManager = new StagingManager(this.dataManager, this.socialManager);
     this.markdownProcessor = new MarkdownProcessor();
+    this.deployManager = new DeployManager();
 
     // Initialize centralized account state manager
     this.accountStateManager = AccountStateManager.getInstance(
@@ -132,14 +135,15 @@ class MeridianApp {
         const workspacePath = result.filePaths[0]!;
         await this.dataManager.setWorkspace(workspacePath);
         await this.credentialManager.setWorkspace(workspacePath);
+                  this.deployManager.setWorkspace(workspacePath);
         
         // Initialize centralized account state detection
         await this.accountStateManager.initializeForWorkspace(workspacePath);
         
-        return { success: true, path: workspacePath };
+        return workspacePath;
       }
 
-      return { success: false };
+      return null;
     });
 
     ipcMain.handle('get-workspace', () => {

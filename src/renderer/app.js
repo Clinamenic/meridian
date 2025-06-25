@@ -6,6 +6,7 @@ class MeridianApp {
     this.data = {
       collate: null,
       archive: null,
+      deploy: null,
       broadcast: null,
     };
     
@@ -119,6 +120,7 @@ class MeridianApp {
     // Tool-specific events
     this.setupCollateEvents();
     this.setupArchiveEvents();
+    this.setupDeployEvents();
     this.setupBroadcastEvents();
     this.setupUploadEvents();
     this.setupGlobalSearchEvents();
@@ -171,42 +173,60 @@ class MeridianApp {
 
   setupCollateEvents() {
     // Add resources button (combined modal)
-    document.getElementById('add-resources-btn').addEventListener('click', () => {
-      this.openAddResourcesModal();
-    });
+    const addResourcesBtn = document.getElementById('add-resources-btn');
+    if (addResourcesBtn) {
+      addResourcesBtn.addEventListener('click', () => {
+        this.openAddResourcesModal();
+      });
+    }
 
     // Add resource form
-    document.getElementById('add-resource-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      await this.handleAddResource();
-    });
+    const addResourceForm = document.getElementById('add-resource-form');
+    if (addResourceForm) {
+      addResourceForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleAddResource();
+      });
+    }
 
     // Extract metadata button
-    document.getElementById('extract-metadata-btn').addEventListener('click', async () => {
-      await this.extractMetadata();
-    });
+    const extractMetadataBtn = document.getElementById('extract-metadata-btn');
+    if (extractMetadataBtn) {
+      extractMetadataBtn.addEventListener('click', async () => {
+        await this.extractMetadata();
+      });
+    }
 
     // Setup tag autocomplete for resource tags input
     this.setupResourceTagsAutocomplete();
 
     // Search functionality
-    document.getElementById('resource-search').addEventListener('input', (e) => {
-      this.currentSearchTerm = e.target.value;
-      this.applyAllFilters();
-    });
+    const resourceSearch = document.getElementById('resource-search');
+    if (resourceSearch) {
+      resourceSearch.addEventListener('input', (e) => {
+        this.currentSearchTerm = e.target.value;
+        this.applyAllFilters();
+      });
+    }
 
     // Filter logic control
     this.initializeFilterLogic();
 
     // Clear filters button
-    document.getElementById('clear-filters-btn').addEventListener('click', () => {
-      this.clearAllFilters();
-    });
+    const clearFiltersBtn = document.getElementById('clear-filters-btn');
+    if (clearFiltersBtn) {
+      clearFiltersBtn.addEventListener('click', () => {
+        this.clearAllFilters();
+      });
+    }
 
     // Global collapse/expand button
-    document.getElementById('collapse-all-btn').addEventListener('click', () => {
-      this.toggleAllResourcesCollapse();
-    });
+    const collapseAllBtn = document.getElementById('collapse-all-btn');
+    if (collapseAllBtn) {
+      collapseAllBtn.addEventListener('click', () => {
+        this.toggleAllResourcesCollapse();
+      });
+    }
 
     // Bulk add events
     this.setupBulkAddEvents();
@@ -217,28 +237,40 @@ class MeridianApp {
 
   setupArchiveEvents() {
     // Upload file button
-    document.getElementById('upload-file-btn').addEventListener('click', async () => {
-      await this.uploadFile();
-    });
+    const uploadFileBtn = document.getElementById('upload-file-btn');
+    if (uploadFileBtn) {
+      uploadFileBtn.addEventListener('click', async () => {
+        await this.uploadFile();
+      });
+    }
 
     // Setup wallet button - now opens account management modal
-    document.getElementById('setup-wallet-btn').addEventListener('click', () => {
-      this.openArweaveAccountsModal();
-    });
+    const setupWalletBtn = document.getElementById('setup-wallet-btn');
+    if (setupWalletBtn) {
+      setupWalletBtn.addEventListener('click', () => {
+        this.openArweaveAccountsModal();
+      });
+    }
 
     // Archive search functionality
-    document.getElementById('archive-search').addEventListener('input', (e) => {
-      this.currentArchiveSearchTerm = e.target.value;
-      this.applyArchiveFilters();
-    });
+    const archiveSearch = document.getElementById('archive-search');
+    if (archiveSearch) {
+      archiveSearch.addEventListener('input', (e) => {
+        this.currentArchiveSearchTerm = e.target.value;
+        this.applyArchiveFilters();
+      });
+    }
 
     // Archive filter logic control
     this.initializeArchiveFilterLogic();
 
     // Archive clear filters button
-    document.getElementById('archive-clear-filters-btn').addEventListener('click', () => {
-      this.clearAllArchiveFilters();
-    });
+    const archiveClearFiltersBtn = document.getElementById('archive-clear-filters-btn');
+    if (archiveClearFiltersBtn) {
+      archiveClearFiltersBtn.addEventListener('click', () => {
+        this.clearAllArchiveFilters();
+      });
+    }
 
     // Archive actions dropdown handling
     document.addEventListener('click', (e) => {
@@ -274,52 +306,76 @@ class MeridianApp {
     this.setupArchiveTagInputEvents();
 
     // Archive collapse/expand functionality
-    document.getElementById('archive-collapse-all-btn').addEventListener('click', () => {
-      this.toggleAllArchiveFilesCollapse();
-    });
+    const archiveCollapseAllBtn = document.getElementById('archive-collapse-all-btn');
+    if (archiveCollapseAllBtn) {
+      archiveCollapseAllBtn.addEventListener('click', () => {
+        this.toggleAllArchiveFilesCollapse();
+      });
+    }
 
     // Setup individual archive collapse events after rendering
     this.setupArchiveCollapseEvents();
 
     // Edit archive item form
-    document.getElementById('edit-archive-item-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      await this.handleEditArchiveItem();
-    });
+    const editArchiveItemForm = document.getElementById('edit-archive-item-form');
+    if (editArchiveItemForm) {
+      editArchiveItemForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleEditArchiveItem();
+      });
+    }
   }
 
   setupBroadcastEvents() {
     // New post button
-    document.getElementById('new-post-btn').addEventListener('click', () => {
-      this.openModal('new-post-modal');
-    });
+    const newPostBtn = document.getElementById('new-post-btn');
+    if (newPostBtn) {
+      newPostBtn.addEventListener('click', () => {
+        this.openModal('new-post-modal');
+      });
+    }
 
     // New template button
-    document.getElementById('new-template-btn').addEventListener('click', () => {
-      this.openModal('new-template-modal');
-    });
+    const newTemplateBtn = document.getElementById('new-template-btn');
+    if (newTemplateBtn) {
+      newTemplateBtn.addEventListener('click', () => {
+        this.openModal('new-template-modal');
+      });
+    }
 
     // Manage templates button
-    document.getElementById('manage-templates-btn').addEventListener('click', () => {
-      this.openManageTemplatesModal();
-    });
+    const manageTemplatesBtn = document.getElementById('manage-templates-btn');
+    if (manageTemplatesBtn) {
+      manageTemplatesBtn.addEventListener('click', () => {
+        this.openManageTemplatesModal();
+      });
+    }
 
     // New post form
-    document.getElementById('new-post-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      await this.handleNewPost(e);
-    });
+    const newPostForm = document.getElementById('new-post-form');
+    if (newPostForm) {
+      newPostForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleNewPost(e);
+      });
+    }
 
     // New template form
-    document.getElementById('new-template-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      await this.handleNewTemplate(e);
-    });
+    const newTemplateForm = document.getElementById('new-template-form');
+    if (newTemplateForm) {
+      newTemplateForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleNewTemplate(e);
+      });
+    }
 
     // Character count for posts
-    document.getElementById('post-content').addEventListener('input', (e) => {
-      this.updateCharacterCount(e.target.value);
-    });
+    const postContent = document.getElementById('post-content');
+    if (postContent) {
+      postContent.addEventListener('input', (e) => {
+        this.updateCharacterCount(e.target.value);
+      });
+    }
 
     // Platform checkboxes
     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
@@ -350,17 +406,61 @@ class MeridianApp {
     });
 
     // Apply template modal events
-    document.getElementById('template-select').addEventListener('change', () => {
-      this.updateTemplatePreview();
-    });
+    const templateSelect = document.getElementById('template-select');
+    if (templateSelect) {
+      templateSelect.addEventListener('change', () => {
+        this.updateTemplatePreview();
+      });
+    }
 
-    document.getElementById('markdown-file-select').addEventListener('change', () => {
-      this.updateTemplatePreview();
-    });
+    const markdownFileSelect = document.getElementById('markdown-file-select');
+    if (markdownFileSelect) {
+      markdownFileSelect.addEventListener('change', () => {
+        this.updateTemplatePreview();
+      });
+    }
 
-    document.getElementById('apply-template-btn').addEventListener('click', () => {
-      this.applyTemplateToMarkdown();
-    });
+    const applyTemplateBtn = document.getElementById('apply-template-btn');
+    if (applyTemplateBtn) {
+      applyTemplateBtn.addEventListener('click', () => {
+        this.applyTemplateToMarkdown();
+      });
+    }
+  }
+
+  // Deploy Tool Events
+  setupDeployEvents() {
+    // Initialize Quartz button
+    const initQuartzBtn = document.getElementById('init-quartz-btn');
+    if (initQuartzBtn) {
+      initQuartzBtn.addEventListener('click', async () => {
+        await this.openQuartzInitModal();
+      });
+    }
+
+    // Build site button
+    const buildSiteBtn = document.getElementById('build-site-btn');
+    if (buildSiteBtn) {
+      buildSiteBtn.addEventListener('click', async () => {
+        await this.buildSite();
+      });
+    }
+
+    // Preview site button
+    const previewSiteBtn = document.getElementById('preview-site-btn');
+    if (previewSiteBtn) {
+      previewSiteBtn.addEventListener('click', async () => {
+        await this.previewSite();
+      });
+    }
+
+    // Deploy site button
+    const deploySiteBtn = document.getElementById('deploy-site-btn');
+    if (deploySiteBtn) {
+      deploySiteBtn.addEventListener('click', async () => {
+        await this.deploySite();
+      });
+    }
   }
 
   setupUploadEvents() {
@@ -460,26 +560,84 @@ class MeridianApp {
   }
 
   async selectWorkspace() {
+    console.log('[DEBUG] selectWorkspace() called');
     try {
       this.updateFooterStatus('Selecting workspace...', false);
       
+      console.log('[DEBUG] Calling window.electronAPI.selectWorkspace()');
       const result = await window.electronAPI.selectWorkspace();
-      if (result.success) {
-        this.workspacePath = result.path;
+      console.log('[DEBUG] selectWorkspace result:', result);
+      
+      if (result) {
+        console.log('[DEBUG] Workspace selection successful, path:', result);
+        this.workspacePath = result;
         await this.updateWorkspaceIndicator();
+        
+        // Hide landing page and show tools interface
+        const landingPage = document.getElementById('landing-page');
+        console.log('[DEBUG] Landing page element:', landingPage);
+        if (landingPage) {
+          // Check if landing page is actually visible (using computed style)
+          const computedStyle = window.getComputedStyle(landingPage);
+          const isVisible = computedStyle.display !== 'none';
+          console.log('[DEBUG] Landing page computed display:', computedStyle.display);
+          console.log('[DEBUG] Landing page is visible:', isVisible);
+          if (isVisible) {
+            console.log('[DEBUG] Hiding landing page');
+            landingPage.style.display = 'none';
+            this.cleanupMarblingBackground();
+            console.log('[DEBUG] Landing page hidden, new display:', landingPage.style.display);
+          }
+        }
+        
         this.updateFooterStatus('Loading workspace data...', false);
-        await this.loadToolData();
+        
+        // Check tool panels and tabs
+        const allTabs = document.querySelectorAll('.tab-btn');
+        const allPanels = document.querySelectorAll('.tool-panel');
+        console.log('[DEBUG] Found tabs:', allTabs.length, 'Found panels:', allPanels.length);
+        
+        // Ensure a tool is active before loading data
+        const activeTab = document.querySelector('.tab-btn.active');
+        const activePanel = document.querySelector('.tool-panel.active');
+        console.log('[DEBUG] Active tab before tool activation:', activeTab);
+        console.log('[DEBUG] Active panel before tool activation:', activePanel);
+        
+        if (!activeTab) {
+          console.log('[DEBUG] No active tool, activating Collate tool');
+          await this.switchTool('collate');
+          
+          // Verify activation worked
+          const newActiveTab = document.querySelector('.tab-btn.active');
+          const newActivePanel = document.querySelector('.tool-panel.active');
+          console.log('[DEBUG] Active tab after switchTool:', newActiveTab);
+          console.log('[DEBUG] Active panel after switchTool:', newActivePanel);
+        } else {
+          console.log('[DEBUG] Active tool found:', activeTab.dataset.tool);
+          await this.loadToolData();
+        }
+        
+        // Check final state
+        const finalActiveTab = document.querySelector('.tab-btn.active');
+        const finalActivePanel = document.querySelector('.tool-panel.active');
+        const finalLandingPage = document.getElementById('landing-page');
+        console.log('[DEBUG] FINAL STATE:');
+        console.log('[DEBUG] - Active tab:', finalActiveTab);
+        console.log('[DEBUG] - Active panel:', finalActivePanel);
+        console.log('[DEBUG] - Landing page display:', finalLandingPage ? window.getComputedStyle(finalLandingPage).display : 'not found');
         
         // Account state initialization happens automatically in the backend
         this.updateFooterStatus('Detecting accounts...', false);
         await this.waitForAccountStateInitialization();
         
         this.updateFooterStatus('Ready', false);
+        console.log('[DEBUG] selectWorkspace() completed successfully');
       } else {
+        console.log('[DEBUG] Workspace selection was cancelled');
         this.updateFooterStatus('Workspace selection cancelled', false);
       }
     } catch (error) {
-      console.error('Failed to select workspace:', error);
+      console.error('[DEBUG] Failed to select workspace:', error);
       this.showError('Failed to select workspace');
       this.updateFooterStatus('Error selecting workspace', true);
     }
@@ -615,35 +773,75 @@ class MeridianApp {
 
   // Tool Management
   async switchTool(toolName) {
+    console.log(`[DEBUG switchTool] Starting switchTool to: ${toolName}`);
+    
     // Update active tab
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.tool === toolName);
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    console.log(`[DEBUG switchTool] Found ${tabButtons.length} tab buttons`);
+    
+    // Log all tab buttons and their current state
+    tabButtons.forEach((btn, index) => {
+      console.log(`[DEBUG switchTool] Tab ${index}: tool="${btn.dataset.tool}", active="${btn.classList.contains('active')}"`);
+    });
+    
+    tabButtons.forEach(btn => {
+      const isActive = btn.dataset.tool === toolName;
+      const wasActive = btn.classList.contains('active');
+      btn.classList.toggle('active', isActive);
+      if (isActive) {
+        console.log(`[DEBUG switchTool] Activated tab: ${btn.dataset.tool} (was ${wasActive ? 'active' : 'inactive'})`);
+      }
     });
 
     // Update active panel
-    document.querySelectorAll('.tool-panel').forEach(panel => {
-      panel.classList.toggle('active', panel.id === `${toolName}-panel`);
+    const toolPanels = document.querySelectorAll('.tool-panel');
+    console.log(`[DEBUG switchTool] Found ${toolPanels.length} tool panels`);
+    
+    // Log all panels and their current state
+    toolPanels.forEach((panel, index) => {
+      console.log(`[DEBUG switchTool] Panel ${index}: id="${panel.id}", active="${panel.classList.contains('active')}"`);
+    });
+    
+    toolPanels.forEach(panel => {
+      const isActive = panel.id === `${toolName}-panel`;
+      const wasActive = panel.classList.contains('active');
+      panel.classList.toggle('active', isActive);
+      if (isActive) {
+        console.log(`[DEBUG switchTool] Activated panel: ${panel.id} (was ${wasActive ? 'active' : 'inactive'})`);
+      }
     });
 
     this.currentTool = toolName;
+    console.log(`[DEBUG switchTool] Set currentTool to: ${this.currentTool}`);
     
     // Load data for the selected tool
-    console.log(`[Tool] Switching to ${toolName}, loading data...`);
+    console.log(`[DEBUG switchTool] Loading data for tool: ${toolName}`);
     try {
       switch (toolName) {
         case 'collate':
+          console.log(`[DEBUG switchTool] Loading collate data...`);
           await this.loadCollateData();
+          console.log(`[DEBUG switchTool] Collate data loaded successfully`);
           break;
         case 'archive':
+          console.log(`[DEBUG switchTool] Loading archive data...`);
           await this.loadArchiveData();
+          console.log(`[DEBUG switchTool] Archive data loaded successfully`);
+          break;
+        case 'deploy':
+          console.log(`[DEBUG switchTool] Loading deploy data...`);
+          await this.loadDeployData();
+          console.log(`[DEBUG switchTool] Deploy data loaded successfully`);
           break;
         case 'broadcast':
+          console.log(`[DEBUG switchTool] Loading broadcast data...`);
           await this.loadBroadcastData();
+          console.log(`[DEBUG switchTool] Broadcast data loaded successfully`);
           break;
       }
-      console.log(`[Tool] Successfully loaded ${toolName} data`);
+      console.log(`[DEBUG switchTool] Successfully completed switchTool to ${toolName}`);
     } catch (error) {
-      console.error(`[Tool] Failed to load ${toolName} data:`, error);
+      console.error(`[DEBUG switchTool] Failed to load ${toolName} data:`, error);
       this.showError(`Failed to load ${toolName} data`);
     }
   }
@@ -659,6 +857,9 @@ class MeridianApp {
         break;
       case 'archive':
         await this.loadArchiveData();
+        break;
+      case 'deploy':
+        await this.loadDeployData();
         break;
       case 'broadcast':
         await this.loadBroadcastData();
@@ -2487,8 +2688,8 @@ class MeridianApp {
     document.getElementById('edit-archive-filepath').value = file.filePath;
     document.getElementById('edit-archive-filesize').value = this.formatFileSize(file.fileSize);
     document.getElementById('edit-archive-mimetype-display').value = file.mimeType;
-    document.getElementById('edit-archive-created').value = new Date(file.created).toLocaleString();
-    document.getElementById('edit-archive-modified').value = new Date(file.modified).toLocaleString();
+    document.getElementById('edit-archive-created').value = this.formatUTCTimestamp(file.created);
+    document.getElementById('edit-archive-modified').value = this.formatUTCTimestamp(file.modified);
 
     // Populate editable metadata fields
     document.getElementById('edit-archive-title').value = file.title || '';
@@ -2512,12 +2713,12 @@ class MeridianApp {
       arweaveSection.style.display = 'block';
       arweaveList.innerHTML = file.arweave_hashes.map(upload => `
         <div class="arweave-upload-item">
-          <a href="${upload.link}" target="_blank" class="arweave-upload-link">
-            ${upload.hash}
-          </a>
           <span class="arweave-upload-timestamp">
-            ${new Date(upload.timestamp).toLocaleString()}
+            ${this.formatUTCTimestamp(upload.timestamp)} - 
           </span>
+          <a href="${upload.link}" target="_blank" class="arweave-upload-link" title="${upload.hash}">
+            ${this.truncateHash(upload.hash)}
+          </a>
         </div>
       `).join('');
     } else {
@@ -3411,7 +3612,7 @@ class MeridianApp {
           </div>
           <div class="archive-metadata-item">
             <span class="archive-metadata-label">Modified:</span>
-            <span class="archive-metadata-value">${new Date(file.modified).toLocaleDateString()}</span>
+            <span class="archive-metadata-value">${this.formatUTCTimestamp(file.modified)}</span>
           </div>
           ${file.metadata.author ? `
             <div class="archive-metadata-item">
@@ -3434,19 +3635,10 @@ class MeridianApp {
             <div class="archive-hash-list collapsed" data-file-uuid="${file.uuid}">
               ${file.arweave_hashes.map(hash => `
                 <div class="archive-hash-item">
-                  <a href="${hash.link}" class="archive-hash-link" target="_blank" title="View on Arweave">
-                    ${hash.hash}
+                  <span class="archive-hash-timestamp">${this.formatUTCTimestamp(hash.timestamp)} - </span>
+                  <a href="${hash.link}" class="archive-hash-link" target="_blank" title="${hash.hash}">
+                    ${this.truncateHash(hash.hash)}
                   </a>
-                  <span class="archive-hash-timestamp"> - ${new Date(hash.timestamp).toLocaleString('en-US', {
-                    year: 'numeric',
-                    month: '2-digit', 
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: true,
-                    timeZoneName: 'short'
-                  })}</span>
                 </div>
               `).join('')}
             </div>
@@ -3882,7 +4074,7 @@ class MeridianApp {
 
   getFileStatusIndicator(filePath) {
     if (filePath.startsWith('[VIRTUAL]')) {
-      return '<span class="file-status-indicator virtual" title="Virtual file - needs to be located">⚠</span>';
+      return '<span class="file-status-indicator virtual" title="Virtual file - needs to be located">!</span>';
     } else {
       return '<span class="file-status-indicator physical" title="Physical file path"></span>';
     }
@@ -4324,6 +4516,695 @@ class MeridianApp {
     } catch (error) {
       console.error('Failed to check balance:', error);
       this.showError('Failed to check wallet balance');
+    }
+  }
+
+  // ===== DEPLOY TOOL METHODS =====
+
+  async loadDeployData() {
+    try {
+      // Check if workspace is connected
+      if (!this.workspacePath) {
+        this.renderDeployNoWorkspace();
+        return;
+      }
+
+      this.data.deploy = await window.electronAPI.deploy.loadData();
+      this.renderDeployStatus();
+    } catch (error) {
+      console.error('Failed to load deploy data:', error);
+      this.showError('Failed to load deployment configuration');
+    }
+  }
+
+  renderDeployNoWorkspace() {
+    const container = document.getElementById('deploy-content');
+    container.innerHTML = `
+      <div class="no-workspace-state">
+        <div class="no-workspace-icon">Deploy</div>
+        <h3>No Workspace Selected</h3>
+        <p>Select a workspace to deploy your digital garden.</p>
+        <button class="primary-btn" id="deploy-select-workspace-btn">Select Workspace</button>
+      </div>
+    `;
+    
+    document.getElementById('deploy-select-workspace-btn').addEventListener('click', async () => {
+      await this.selectWorkspace();
+    });
+  }
+
+  async renderDeployStatus() {
+    try {
+      const container = document.getElementById('deploy-content');
+      if (!container) return;
+
+      // Check if workspace is connected
+      if (!this.workspacePath) {
+        this.renderDeployNoWorkspace();
+        return;
+      }
+
+      // Scan workspace content
+      const contentSummary = await window.electronAPI.deploy.scanContent(this.workspacePath);
+      
+      // Check if Quartz is initialized by looking for .quartz directory
+      const isQuartzInitialized = await this.checkQuartzInitialized();
+      
+      container.innerHTML = `
+        <div class="deploy-main-content">
+          <div class="deploy-status-section">
+          
+            <div class="project-status-card">
+                              <h3>Quartz Project Status</h3>
+              <div class="status-info">
+                <div class="status-item">
+                  <span class="status-label">Status:</span>
+                  <span class="status-value ${isQuartzInitialized ? 'ready' : 'not-initialized'}">${isQuartzInitialized ? 'Ready' : 'Not Initialized'}</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">File Types:</span>
+                  <span class="status-value">${this.formatFileTypeCounts(contentSummary.fileTypes)}</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">Total Size:</span>
+                  <span class="status-value">${this.formatFileSize(contentSummary.totalSize)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="content-summary-card">
+                              <h3>Content Project Status</h3>
+              <div class="content-stats">
+                <div class="stat-item">
+                  <div class="stat-number">${contentSummary.markdownFiles}</div>
+                  <div class="stat-label">Markdown Files</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">${contentSummary.imageFiles}</div>
+                  <div class="stat-label">Images</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">${contentSummary.directories.length}</div>
+                  <div class="stat-label">Directories</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">${contentSummary.hasFrontmatter}</div>
+                  <div class="stat-label">With Frontmatter</div>
+                </div>
+              </div>
+              ${contentSummary.hasObsidianFiles ? '<p class="content-note">Obsidian-style links detected - will be converted automatically</p>' : ''}
+            </div>
+
+            <div class="deploy-workflow-card">
+                              <h3>Deployment Workflow</h3>
+              <div class="workflow-steps">
+                <div class="workflow-step ${isQuartzInitialized ? 'completed' : ''}">
+                  <div class="step-number">1</div>
+                  <div class="step-content">
+                    <h4>Initialize Quartz Project</h4>
+                    <p>Set up Quartz static site generator with your content</p>
+                    <button class="${isQuartzInitialized ? 'secondary-btn' : 'primary-btn'}" id="init-workflow-btn" ${isQuartzInitialized ? 'disabled' : ''}>
+                      ${isQuartzInitialized ? 'Project Initialized' : 'Initialize Project'}
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="workflow-step ${isQuartzInitialized ? '' : 'disabled'}">
+                  <div class="step-number">2</div>
+                  <div class="step-content">
+                    <h4>Build & Preview</h4>
+                    <p>Generate your site and preview locally</p>
+                    <div class="build-preview-actions">
+                      <button class="secondary-btn" id="build-workflow-btn" ${isQuartzInitialized ? '' : 'disabled'}>Build Site</button>
+                      <button class="secondary-btn" id="preview-workflow-btn" ${isQuartzInitialized ? '' : 'disabled'}>Preview Site</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="workflow-step ${isQuartzInitialized ? '' : 'disabled'}">
+                  <div class="step-number">3</div>
+                  <div class="step-content">
+                    <h4>Deploy to GitHub Pages</h4>
+                    <p>Publish your site to the web</p>
+                    <button class="secondary-btn" id="deploy-workflow-btn" ${isQuartzInitialized ? '' : 'disabled'}>Deploy Site</button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Build Logs Section -->
+              <div class="build-logs-section" id="build-logs-section" style="display: none;">
+                <div class="section-header">
+                  <h4>📋 Build Logs</h4>
+                  <button class="collapse-btn" id="build-logs-toggle">Hide</button>
+                </div>
+                <div class="build-logs-content">
+                  <pre id="build-logs-output"></pre>
+                </div>
+              </div>
+              
+              <!-- Preview Section -->
+              <div class="preview-section" id="preview-section" style="display: none;">
+                <div class="section-header">
+                  <h4>Site Preview</h4>
+                  <div class="preview-controls">
+                    <span class="preview-status" id="preview-status">Server: Stopped</span>
+                    <button class="secondary-btn" id="open-external-btn">Open in Browser</button>
+                    <button class="collapse-btn" id="preview-toggle">Hide</button>
+                  </div>
+                </div>
+                <div class="preview-content">
+                  <webview id="site-preview" src="about:blank" style="width: 100%; height: 400px; border: 1px solid var(--surface-border);"></webview>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Add event listeners for workflow buttons
+      const initBtn = document.getElementById('init-workflow-btn');
+      if (initBtn && !isQuartzInitialized) {
+        initBtn.addEventListener('click', async () => {
+          await this.initializeQuartzProject();
+        });
+      }
+      
+      const buildBtn = document.getElementById('build-workflow-btn');
+      if (buildBtn && isQuartzInitialized) {
+        buildBtn.addEventListener('click', async () => {
+          await this.buildSiteWithLogs();
+        });
+      }
+      
+      const previewBtn = document.getElementById('preview-workflow-btn');
+      if (previewBtn && isQuartzInitialized) {
+        previewBtn.addEventListener('click', async () => {
+          await this.previewSiteIntegrated();
+        });
+      }
+      
+      const deployBtn = document.getElementById('deploy-workflow-btn');
+      if (deployBtn && isQuartzInitialized) {
+        deployBtn.addEventListener('click', async () => {
+          await this.deploySite();
+        });
+      }
+      
+      // Add event listeners for preview controls
+      this.setupPreviewControls();
+      
+    } catch (error) {
+      console.error('Failed to render deploy status:', error);
+      container.innerHTML = `
+        <div class="error-state">
+          <h3>Error Loading Deploy Status</h3>
+          <p>${error.message}</p>
+          <button class="secondary-btn" onclick="meridianApp.renderDeployStatus()">Retry</button>
+        </div>
+      `;
+    }
+  }
+
+  async checkQuartzInitialized() {
+    try {
+      if (!this.workspacePath) {
+        return false;
+      }
+      
+      // Use the new backend API to check if Quartz is properly initialized
+      return await window.electronAPI.deploy.checkInitialized(this.workspacePath);
+    } catch (error) {
+      console.error('Error checking Quartz initialization:', error);
+      return false;
+    }
+  }
+
+  async initializeQuartzProject() {
+    try {
+      this.updateFooterStatus('Initializing Quartz project...', false);
+      
+      await window.electronAPI.deploy.initializeQuartz(this.workspacePath);
+      
+      this.showSuccess('Quartz project initialized successfully!');
+      this.updateFooterStatus('Ready', false);
+      
+      // Refresh the deploy status
+      await this.renderDeployStatus();
+      
+    } catch (error) {
+      console.error('Failed to initialize Quartz project:', error);
+      this.showError(`Failed to initialize project: ${error.message}`);
+      this.updateFooterStatus('Ready', false);
+    }
+  }
+
+  async buildSite() {
+    try {
+      this.updateFooterStatus('Building site...', false);
+      
+      const buildResult = await window.electronAPI.deploy.buildSite({
+        workspacePath: this.workspacePath
+      });
+      
+      if (buildResult.status === 'success') {
+        this.showSuccess(`Site built successfully! Processed ${buildResult.filesProcessed} files in ${buildResult.duration}ms`);
+      } else {
+        this.showError(`Build failed: ${buildResult.errors?.join(', ') || 'Unknown error'}`);
+      }
+      
+      this.updateFooterStatus('Ready', false);
+      
+    } catch (error) {
+      console.error('Failed to build site:', error);
+      this.showError(`Build failed: ${error.message}`);
+      this.updateFooterStatus('Ready', false);
+    }
+  }
+
+  async buildSiteWithLogs() {
+    try {
+      this.updateFooterStatus('Building site...', false);
+      
+      // Show build logs section
+      this.showBuildLogs();
+      this.appendBuildLog('Starting build process...');
+      
+      const buildResult = await window.electronAPI.deploy.buildSite({
+        workspacePath: this.workspacePath
+      });
+      
+      if (buildResult.status === 'success') {
+        this.appendBuildLog('Build completed successfully!');
+        this.appendBuildLog(`Processed ${buildResult.filesProcessed} files in ${buildResult.duration}ms`);
+        if (buildResult.output) {
+          this.appendBuildLog('--- Build Output ---');
+          this.appendBuildLog(buildResult.output);
+        }
+        this.showSuccess(`Site built successfully!`);
+      } else {
+        this.appendBuildLog('Build failed!');
+        if (buildResult.errors) {
+          buildResult.errors.forEach(error => this.appendBuildLog(`Error: ${error}`));
+        }
+        this.showError(`Build failed: ${buildResult.errors?.join(', ') || 'Unknown error'}`);
+      }
+      
+      this.updateFooterStatus('Ready', false);
+      
+    } catch (error) {
+      console.error('Failed to build site:', error);
+      this.appendBuildLog(`Build failed: ${error.message}`);
+      this.showError(`Build failed: ${error.message}`);
+      this.updateFooterStatus('Ready', false);
+    }
+  }
+
+  async previewSiteIntegrated() {
+    try {
+      this.updateFooterStatus('Starting preview server...', false);
+      
+      const previewUrl = await window.electronAPI.deploy.previewSite({
+        workspacePath: this.workspacePath
+      });
+      
+      // Show preview section and load the site
+      this.showPreviewSection(previewUrl);
+      
+      this.showSuccess(`Preview server started at ${previewUrl}`);
+      this.updateFooterStatus('Ready', false);
+      
+    } catch (error) {
+      console.error('Failed to start preview:', error);
+      this.showError(`Preview failed: ${error.message}`);
+      this.updateFooterStatus('Ready', false);
+    }
+  }
+
+  showBuildLogs() {
+    const logsSection = document.getElementById('build-logs-section');
+    if (logsSection) {
+      logsSection.style.display = 'block';
+      // Clear previous logs
+      const output = document.getElementById('build-logs-output');
+      if (output) {
+        output.textContent = '';
+      }
+    }
+  }
+
+  appendBuildLog(message) {
+    const output = document.getElementById('build-logs-output');
+    if (output) {
+      const timestamp = new Date().toLocaleTimeString();
+      output.textContent += `[${timestamp}] ${message}\n`;
+      output.scrollTop = output.scrollHeight;
+    }
+  }
+
+  showPreviewSection(previewUrl) {
+    const previewSection = document.getElementById('preview-section');
+    const webview = document.getElementById('site-preview');
+    const status = document.getElementById('preview-status');
+    
+    if (previewSection) {
+      previewSection.style.display = 'block';
+    }
+    
+    if (webview) {
+      // Wait a moment for the server to start, then load the preview
+      setTimeout(() => {
+        webview.src = previewUrl;
+      }, 2000);
+    }
+    
+    if (status) {
+      status.textContent = `Server: Running (${previewUrl})`;
+      status.className = 'preview-status active';
+    }
+  }
+
+  setupPreviewControls() {
+    // Build logs toggle
+    const buildLogsToggle = document.getElementById('build-logs-toggle');
+    if (buildLogsToggle) {
+      buildLogsToggle.addEventListener('click', () => {
+        const logsSection = document.getElementById('build-logs-section');
+        if (logsSection) {
+          logsSection.style.display = 'none';
+        }
+      });
+    }
+    
+    // Preview toggle
+    const previewToggle = document.getElementById('preview-toggle');
+    if (previewToggle) {
+      previewToggle.addEventListener('click', () => {
+        const previewSection = document.getElementById('preview-section');
+        if (previewSection) {
+          previewSection.style.display = 'none';
+        }
+      });
+    }
+    
+    // Open in external browser
+    const openExternalBtn = document.getElementById('open-external-btn');
+    if (openExternalBtn) {
+      openExternalBtn.addEventListener('click', async () => {
+        const webview = document.getElementById('site-preview');
+        if (webview && webview.src !== 'about:blank') {
+          await window.electronAPI.openExternal(webview.src);
+        }
+      });
+    }
+  }
+
+  async previewSite() {
+    try {
+      this.updateFooterStatus('Starting preview server...', false);
+      
+      const previewUrl = await window.electronAPI.deploy.previewSite({
+        workspacePath: this.workspacePath
+      });
+      
+      // Open preview in external browser
+      await window.electronAPI.openExternal(previewUrl);
+      
+      this.showSuccess(`Preview server started at ${previewUrl}`);
+      this.updateFooterStatus('Ready', false);
+      
+    } catch (error) {
+      console.error('Failed to start preview:', error);
+      this.showError(`Preview failed: ${error.message}`);
+      this.updateFooterStatus('Ready', false);
+    }
+  }
+
+  async deploySite() {
+    try {
+      // Open deployment configuration modal
+      this.openDeploymentModal();
+      
+    } catch (error) {
+      console.error('Failed to open deployment modal:', error);
+      this.showError(`Deployment setup failed: ${error.message}`);
+    }
+  }
+
+  openDeploymentModal() {
+    // Create and show deployment configuration modal
+    const modalHtml = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Deploy to GitHub Pages</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="deploy-config-form">
+            <div class="form-group">
+              <label for="github-repo">GitHub Repository</label>
+              <input type="text" id="github-repo" placeholder="username/repository-name" required>
+              <small>Enter your GitHub repository in the format: username/repository-name</small>
+            </div>
+            
+            <div class="form-group">
+              <label for="github-branch">Deployment Branch</label>
+              <select id="github-branch">
+                <option value="main">main</option>
+                <option value="gh-pages">gh-pages</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="custom-domain">Custom Domain (Optional)</label>
+              <input type="text" id="custom-domain" placeholder="example.com">
+              <small>Leave empty to use GitHub Pages default domain</small>
+            </div>
+            
+            <div class="form-group">
+              <label for="github-token">GitHub Personal Access Token</label>
+              <input type="password" id="github-token" placeholder="ghp_..." required>
+              <small>Required for repository setup and deployment</small>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="secondary-btn modal-cancel">Cancel</button>
+          <button type="submit" form="deploy-config-form" class="primary-btn">Deploy Site</button>
+        </div>
+      </div>
+    `;
+    
+    const modal = document.getElementById('modal-overlay');
+    modal.innerHTML = modalHtml;
+    modal.style.display = 'flex';
+    
+    // Handle form submission
+    document.getElementById('deploy-config-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await this.handleDeploySubmit();
+    });
+  }
+
+  async handleDeploySubmit() {
+    try {
+      const repository = document.getElementById('github-repo').value.trim();
+      const branch = document.getElementById('github-branch').value;
+      const customDomain = document.getElementById('custom-domain').value.trim();
+      const token = document.getElementById('github-token').value.trim();
+      
+      if (!repository || !token) {
+        this.showError('Please fill in all required fields');
+        return;
+      }
+      
+      this.closeModal();
+      this.updateFooterStatus('Deploying to GitHub Pages...', false);
+      
+      const deployResult = await window.electronAPI.deploy.deployGitHub({
+        workspacePath: this.workspacePath,
+        deployment: {
+          provider: 'github-pages',
+          repository,
+          branch,
+          customDomain: customDomain || undefined,
+          useGitHubActions: true,
+          personalAccessToken: token
+        }
+      });
+      
+      if (deployResult.success) {
+        this.showSuccess(`Site deployed successfully! Visit: ${deployResult.url}`);
+      } else {
+        this.showError(`Deployment failed: ${deployResult.error}`);
+      }
+      
+      this.updateFooterStatus('Ready', false);
+      
+    } catch (error) {
+      console.error('Deployment failed:', error);
+      this.showError(`Deployment failed: ${error.message}`);
+      this.updateFooterStatus('Ready', false);
+    }
+  }
+
+  async openQuartzInitModal() {
+    try {
+      // Check current initialization status
+      const isInitialized = await this.checkQuartzInitialized();
+      
+      // Populate modal content based on status
+      this.populateQuartzInitModal(isInitialized);
+      
+      // Open the modal
+      this.openModal('quartz-init-modal');
+      
+    } catch (error) {
+      console.error('Failed to open Quartz initialization modal:', error);
+      this.showError(`Failed to open initialization modal: ${error.message}`);
+    }
+  }
+
+  populateQuartzInitModal(isInitialized) {
+    const content = document.getElementById('quartz-init-content');
+    if (!content) return;
+
+    if (isInitialized) {
+      // Project is already initialized - show reinitialize options
+      content.innerHTML = `
+        <div class="deploy-system-requirements">
+          <div class="system-check-header">
+            <h3>Warning: Quartz Project Already Initialized</h3>
+            <p>A Quartz project already exists in your workspace. Reinitializing will completely remove the existing installation and start fresh.</p>
+          </div>
+          
+          <div class="deploy-warnings">
+            <div class="warnings-header">
+              <h3>Warning: This action will:</h3>
+            </div>
+            <div class="system-warnings">
+              <div class="system-issue warning">
+                <div class="issue-icon">!</div>
+                <div class="issue-text">Delete the entire .quartz directory and all its contents</div>
+              </div>
+              <div class="system-issue warning">
+                <div class="issue-icon">!</div>
+                <div class="issue-text">Remove all installed dependencies (requires re-download)</div>
+              </div>
+              <div class="system-issue warning">
+                <div class="issue-icon">!</div>
+                <div class="issue-text">Clear any build cache and local configurations</div>
+              </div>
+              <div class="system-issue warning">
+                <div class="issue-icon">⏱</div>
+                <div class="issue-text">Take several minutes to complete (downloads ~200MB)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="system-actions">
+            <p><strong>Are you sure you want to reinitialize the Quartz project?</strong></p>
+            <div class="form-actions">
+              <button type="button" class="secondary-btn" id="quartz-cancel-btn">Cancel</button>
+              <button type="button" class="primary-btn" id="quartz-reinit-btn" style="background-color: var(--warning-color);">
+                Reinitialize Project
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      // Project is not initialized - show first-time setup
+      content.innerHTML = `
+        <div class="deploy-system-requirements">
+          <div class="system-check-header">
+            <h3>Initialize Quartz Project</h3>
+            <p>Set up Quartz static site generator to transform your workspace content into a beautiful website.</p>
+          </div>
+          
+          <div class="deploy-progress">
+            <div class="progress-header">
+              <h4>What will happen:</h4>
+            </div>
+            <div class="progress-steps">
+              <div class="progress-step">
+                <span>1. Download Quartz framework (~200MB)</span>
+              </div>
+              <div class="progress-step">
+                <span>2. Install dependencies and configure for Meridian</span>
+              </div>
+              <div class="progress-step">
+                <span>3. Generate configuration files for your workspace</span>
+              </div>
+              <div class="progress-step">
+                <span>4. Set up build pipeline for static site generation</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="system-actions">
+            <p><strong>This process typically takes 2-5 minutes depending on your internet connection.</strong></p>
+            <div class="form-actions">
+              <button type="button" class="secondary-btn" id="quartz-cancel-btn">Cancel</button>
+              <button type="button" class="primary-btn" id="quartz-init-btn-modal">
+                Initialize Quartz Project
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Add event listeners for modal buttons
+    this.setupQuartzInitModalEvents();
+  }
+
+  setupQuartzInitModalEvents() {
+    // Cancel button
+    const cancelBtn = document.getElementById('quartz-cancel-btn');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        this.closeModal();
+      });
+    }
+
+    // Initialize button (first time)
+    const initBtn = document.getElementById('quartz-init-btn-modal');
+    if (initBtn) {
+      initBtn.addEventListener('click', async () => {
+        this.closeModal();
+        await this.initializeQuartzProject();
+      });
+    }
+
+    // Reinitialize button (already initialized)
+    const reinitBtn = document.getElementById('quartz-reinit-btn');
+    if (reinitBtn) {
+      reinitBtn.addEventListener('click', async () => {
+        this.closeModal();
+        await this.reinitializeQuartzProject();
+      });
+    }
+  }
+
+  async reinitializeQuartzProject() {
+    try {
+      this.updateFooterStatus('Reinitializing Quartz project...', false);
+      
+      // Show additional warning in the console
+      console.warn('Reinitializing Quartz project - this will delete existing installation');
+      
+      await window.electronAPI.deploy.initializeQuartz(this.workspacePath);
+      
+      this.showSuccess('Quartz project reinitialized successfully!');
+      this.updateFooterStatus('Ready', false);
+      
+      // Refresh the deploy status
+      await this.renderDeployStatus();
+      
+    } catch (error) {
+      console.error('Failed to reinitialize Quartz project:', error);
+      this.showError(`Failed to reinitialize project: ${error.message}`);
+      this.updateFooterStatus('Ready', false);
     }
   }
 
@@ -6509,6 +7390,32 @@ class MeridianApp {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
+  formatFileTypeCounts(fileTypes) {
+    if (!fileTypes || Object.keys(fileTypes).length === 0) {
+      return 'No files detected';
+    }
+    
+    // Sort file types by count (descending) and then alphabetically
+    const sortedTypes = Object.entries(fileTypes)
+      .sort(([a, countA], [b, countB]) => {
+        if (countB !== countA) return countB - countA;
+        return a.localeCompare(b);
+      })
+      .slice(0, 5); // Show top 5 file types
+    
+    const formatted = sortedTypes.map(([ext, count]) => {
+      const displayExt = ext === '(no ext)' ? 'no ext' : ext.replace('.', '');
+      return `${count} ${displayExt}`;
+    }).join(', ');
+    
+    const totalTypes = Object.keys(fileTypes).length;
+    if (totalTypes > 5) {
+      return `${formatted} (+${totalTypes - 5} more)`;
+    }
+    
+    return formatted;
+  }
+
   showSuccess(message) {
     this.showNotification(message, 'success');
   }
@@ -6902,6 +7809,32 @@ class MeridianApp {
         versionDisplay.textContent = 'v0.1.0';
       }
     }
+  }
+
+  formatUTCTimestamp(timestamp) {
+    if (!timestamp) return 'Unknown';
+    
+    try {
+      const date = new Date(timestamp);
+      
+      // Ensure the date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      
+      // Format as UTC with clear UTC indication
+      return date.toISOString().replace('T', ' ').replace('.000Z', ' UTC').replace(/\.\d{3}Z$/, ' UTC');
+    } catch (error) {
+      console.warn('Error formatting timestamp:', timestamp, error);
+      return 'Invalid Date';
+    }
+  }
+
+  truncateHash(hash) {
+    if (!hash || hash.length <= 16) return hash;
+    
+    // Show first 8 and last 8 characters with ellipsis
+    return `${hash.substring(0, 8)}...${hash.substring(hash.length - 8)}`;
   }
 }
 

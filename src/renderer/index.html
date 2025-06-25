@@ -71,6 +71,10 @@
             <span class="tab-icon"></span>
             <span class="tab-label">Archive</span>
           </button>
+          <button class="tab-btn" data-tool="deploy">
+            <span class="tab-icon"></span>
+            <span class="tab-label">Deploy</span>
+          </button>
           <button class="tab-btn" data-tool="broadcast">
             <span class="tab-icon"></span>
             <span class="tab-label">Broadcast</span>
@@ -287,10 +291,32 @@
                       width="16"
                       height="16"
                       viewBox="0 0 24 24"
-                      fill="currentColor"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
                       <path
-                        d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z"
+                        d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <polyline
+                        points="17,8 12,3 7,8"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <line
+                        x1="12"
+                        y1="3"
+                        x2="12"
+                        y2="15"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
                       />
                     </svg>
                   </button>
@@ -302,11 +328,26 @@
                     <svg
                       width="16"
                       height="16"
-                      viewBox="0 0 24 24"
+                      viewBox="0 0 134.9 135.4"
                       fill="currentColor"
                     >
                       <path
-                        d="M13,9V7.5A2.5,2.5 0 0,0 10.5,5A2.5,2.5 0 0,0 8,7.5V9A2,2 0 0,0 6,11V16A2,2 0 0,0 8,18H15A2,2 0 0,0 17,16V11A2,2 0 0,0 15,9H13M12.5,16A1.5,1.5 0 0,1 11,14.5A1.5,1.5 0 0,1 12.5,13A1.5,1.5 0 0,1 14,14.5A1.5,1.5 0 0,1 12.5,16M10,9V7.5A0.5,0.5 0 0,1 10.5,7A0.5,0.5 0 0,1 11,7.5V9H10Z"
+                        d="M77.6,91.5c-0.3-0.6-0.6-1.3-0.8-2.1c-0.2-0.8-0.4-1.6-0.5-2.5c-0.7,0.8-1.5,1.5-2.4,2.2
+                        c-0.9,0.7-1.9,1.3-3,1.8c-1.1,0.5-2.3,0.9-3.7,1.2c-1.3,0.3-2.8,0.4-4.4,0.4c-2.5,0-4.9-0.4-7-1.1c-2.1-0.7-3.9-1.8-5.5-3.1
+                        c-1.5-1.3-2.7-2.9-3.6-4.7c-0.9-1.8-1.3-3.8-1.3-5.9c0-5.2,1.9-9.3,5.8-12.1c3.9-2.9,9.7-4.3,17.4-4.3h7.1v-2.9
+                        c0-2.4-0.8-4.3-2.3-5.7c-1.6-1.4-3.8-2.1-6.7-2.1c-2.6,0-4.5,0.6-5.7,1.7c-1.2,1.1-1.8,2.6-1.8,4.5H46.5c0-2.1,0.5-4.1,1.4-6
+                        c0.9-1.9,2.3-3.6,4.1-5c1.8-1.4,4-2.6,6.6-3.4c2.6-0.8,5.5-1.3,8.9-1.3c3,0,5.8,0.4,8.4,1.1c2.6,0.7,4.8,1.8,6.7,3.3
+                        c1.9,1.4,3.4,3.2,4.4,5.4c1.1,2.2,1.6,4.7,1.6,7.6v21.3c0,2.7,0.2,4.9,0.5,6.6c0.3,1.7,0.8,3.2,1.5,4.5v0.8H77.6z M65.5,82.6
+                        c1.3,0,2.5-0.2,3.6-0.5c1.1-0.3,2.1-0.7,3-1.2c0.9-0.5,1.6-1,2.3-1.7c0.6-0.6,1.1-1.3,1.5-1.9v-8.5h-6.5c-2,0-3.7,0.2-5.1,0.6
+                        c-1.4,0.4-2.6,0.9-3.4,1.6c-0.9,0.7-1.5,1.5-2,2.5c-0.4,1-0.6,2-0.6,3.1c0,1.7,0.6,3.1,1.8,4.3C61.2,82,63,82.6,65.5,82.6z"
+                      />
+                      <circle
+                        cx="67.3"
+                        cy="68.1"
+                        r="61.7"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="9.6521"
                       />
                     </svg>
                   </button>
@@ -479,22 +520,263 @@
             </div>
           </div>
 
+          <!-- Deploy Panel -->
+          <div id="deploy-panel" class="tool-panel">
+            <div class="panel-header">
+              <div class="panel-actions">
+                <button
+                  id="init-quartz-btn"
+                  class="panel-header-icon-btn"
+                  title="Initialize Quartz"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 2L2 7l10 5 10-5-10-5z"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M2 17l10 5 10-5"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M2 12l10 5 10-5"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+                <button
+                  id="build-site-btn"
+                  class="panel-header-icon-btn"
+                  title="Build Site"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <rect
+                      x="3"
+                      y="3"
+                      width="18"
+                      height="18"
+                      rx="2"
+                      ry="2"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      fill="none"
+                    />
+                    <path
+                      d="M9 9h6v6H9z"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      fill="none"
+                    />
+                  </svg>
+                </button>
+                <button
+                  id="preview-site-btn"
+                  class="panel-header-icon-btn"
+                  title="Preview Site"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="3"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                  </svg>
+                </button>
+                <button
+                  id="deploy-site-btn"
+                  class="panel-header-icon-btn"
+                  title="Deploy Site"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <polyline
+                      points="17,8 12,3 7,8"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <line
+                      x1="12"
+                      y1="3"
+                      x2="12"
+                      y2="15"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="panel-content">
+              <div id="deploy-content"></div>
+            </div>
+          </div>
+
           <!-- Broadcast Panel -->
           <div id="broadcast-panel" class="tool-panel">
             <div class="panel-header">
-              <h2>Social Media Scheduler</h2>
               <div class="panel-actions">
-                <button id="new-post-btn" class="panel-header-btn">
-                  New Post
+                <button
+                  id="new-post-btn"
+                  class="panel-header-icon-btn"
+                  title="New Post"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 5v14"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M5 12h14"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
                 </button>
-                <button id="new-template-btn" class="panel-header-btn">
-                  New Template
+                <button
+                  id="manage-templates-btn"
+                  class="panel-header-icon-btn"
+                  title="Manage Templates"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <polyline
+                      points="14,2 14,8 20,8"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <line
+                      x1="16"
+                      y1="13"
+                      x2="8"
+                      y2="13"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <line
+                      x1="16"
+                      y1="17"
+                      x2="8"
+                      y2="17"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <polyline
+                      points="10,9 9,9 8,9"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
                 </button>
-                <button id="manage-templates-btn" class="panel-header-btn">
-                  Manage Templates
-                </button>
-                <button id="manage-accounts-btn" class="panel-header-btn">
-                  Manage Accounts
+                <button
+                  id="manage-accounts-btn"
+                  class="panel-header-icon-btn"
+                  title="Manage Accounts"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <circle
+                      cx="12"
+                      cy="7"
+                      r="4"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -1542,132 +1824,142 @@
         </div>
       </div>
 
-      <!-- New Template Modal -->
-      <div id="new-template-modal" class="modal large-modal">
-        <div class="modal-header">
-          <h3>Create New Template</h3>
-          <button class="modal-close">&times;</button>
-        </div>
-        <div class="modal-content">
-          <form id="new-template-form">
-            <div class="form-group">
-              <label for="template-name">Template Name</label>
-              <input
-                type="text"
-                id="template-name"
-                placeholder="e.g., Article Announcement"
-                required
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="template-description">Description</label>
-              <input
-                type="text"
-                id="template-description"
-                placeholder="Brief description of when to use this template"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="template-content">Template Content</label>
-              <textarea
-                id="template-content"
-                rows="8"
-                placeholder="{{title}} by {{author}}, published {{date}}
-
-{{description}}
-
-{{url}}"
-                required
-              ></textarea>
-              <div class="field-help">
-                Use {{variable}} syntax for dynamic content. Common variables:
-                title, author, date, description, url, tags
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>Platforms</label>
-              <div class="platform-checkboxes">
-                <label class="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="platforms"
-                    value="bluesky"
-                    checked
-                  />
-                  <span class="checkmark"></span>
-                  Bluesky
-                </label>
-                <label class="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="platforms"
-                    value="farcaster"
-                    checked
-                  />
-                  <span class="checkmark"></span>
-                  Farcaster
-                </label>
-                <label class="checkbox-label">
-                  <input
-                    type="checkbox"
-                    name="platforms"
-                    value="twitter"
-                    checked
-                  />
-                  <span class="checkmark"></span>
-                  Twitter/X
-                </label>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="template-tags">Tags</label>
-              <input
-                type="text"
-                id="template-tags"
-                placeholder="e.g., article, announcement, blog"
-              />
-              <div class="field-help">
-                Comma-separated tags to help organize your templates
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <button type="button" class="secondary-btn modal-cancel">
-                Cancel
-              </button>
-              <button type="submit" class="primary-btn">Create Template</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Manage Templates Modal -->
+      <!-- Manage Templates Modal (Consolidated) -->
       <div id="manage-templates-modal" class="modal large-modal">
         <div class="modal-header">
           <h3>Manage Templates</h3>
           <button class="modal-close">&times;</button>
         </div>
+
+        <!-- Modal Subheader for Tabs -->
+        <div class="modal-subheader">
+          <div class="modal-tab-navigation">
+            <button class="modal-tab-btn active" data-tab="list">
+              Templates
+            </button>
+            <button class="modal-tab-btn" data-tab="create">Create New</button>
+          </div>
+        </div>
+
         <div class="modal-content">
-          <div class="templates-manager">
-            <div class="templates-actions">
-              <button id="create-template-btn" class="primary-btn">
-                Create New Template
-              </button>
-              <div class="templates-search">
-                <input
-                  type="text"
-                  id="templates-search"
-                  placeholder="Search templates..."
-                />
+          <!-- Tab Content -->
+          <div class="modal-tab-content">
+            <!-- Templates List Tab -->
+            <div id="list-tab" class="modal-tab-panel active">
+              <div class="templates-manager">
+                <div class="templates-actions">
+                  <div class="templates-search">
+                    <input
+                      type="text"
+                      id="templates-search"
+                      placeholder="Search templates..."
+                    />
+                  </div>
+                </div>
+
+                <div class="templates-list" id="templates-list">
+                  <div class="loading-state">Loading templates...</div>
+                </div>
               </div>
             </div>
 
-            <div class="templates-list" id="templates-list">
-              <div class="loading-state">Loading templates...</div>
+            <!-- Create New Template Tab -->
+            <div id="create-tab" class="modal-tab-panel">
+              <form id="new-template-form">
+                <div class="form-group">
+                  <label for="template-name">Template Name</label>
+                  <input
+                    type="text"
+                    id="template-name"
+                    placeholder="e.g., Article Announcement"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="template-description">Description</label>
+                  <input
+                    type="text"
+                    id="template-description"
+                    placeholder="Brief description of when to use this template"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="template-content">Template Content</label>
+                  <textarea
+                    id="template-content"
+                    rows="8"
+                    placeholder="{{title}} by {{author}}, published {{date}}
+
+{{description}}
+
+{{url}}"
+                    required
+                  ></textarea>
+                  <div class="field-help">
+                    Use {{variable}} syntax for dynamic content. Common
+                    variables: title, author, date, description, url, tags
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Platforms</label>
+                  <div class="platform-checkboxes">
+                    <label class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        name="platforms"
+                        value="bluesky"
+                        checked
+                      />
+                      <span class="checkmark"></span>
+                      Bluesky
+                    </label>
+                    <label class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        name="platforms"
+                        value="farcaster"
+                        checked
+                      />
+                      <span class="checkmark"></span>
+                      Farcaster
+                    </label>
+                    <label class="checkbox-label">
+                      <input
+                        type="checkbox"
+                        name="platforms"
+                        value="twitter"
+                        checked
+                      />
+                      <span class="checkmark"></span>
+                      Twitter/X
+                    </label>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="template-tags">Tags</label>
+                  <input
+                    type="text"
+                    id="template-tags"
+                    placeholder="e.g., article, announcement, blog"
+                  />
+                  <div class="field-help">
+                    Comma-separated tags to help organize your templates
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button type="button" class="secondary-btn modal-cancel">
+                    Cancel
+                  </button>
+                  <button type="submit" class="primary-btn">
+                    Create Template
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -1717,6 +2009,19 @@
                 Create Staged Post
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quartz Initialization Modal -->
+      <div id="quartz-init-modal" class="modal">
+        <div class="modal-header">
+          <h3>Quartz Project Initialization</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div id="quartz-init-content">
+            <!-- Content will be dynamically populated based on initialization status -->
           </div>
         </div>
       </div>

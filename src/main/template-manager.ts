@@ -263,7 +263,7 @@ export class TemplateManager {
         id: 'project-update',
         name: 'Project Update',
         description: 'Share updates about ongoing projects',
-        template: `🚀 {{title}}
+                  template: `{{title}}
 
 {{description}}
 
