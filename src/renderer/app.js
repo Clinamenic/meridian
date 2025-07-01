@@ -1,3 +1,6 @@
+// Import modular system
+import { ModuleLoader } from './modules/ModuleLoader.js';
+
 // ===== UNIFIED TAG AUTOCOMPLETE SYSTEM =====
 /**
  * Unified TagAutocomplete class to replace all duplicate tag autocomplete implementations
@@ -144,12 +147,27 @@ class MeridianApp {
     // Tag autocomplete instances (will be initialized when DOM is ready)
     this.tagAutocompleteInstances = {};
 
+    // Initialize modular system
+    this.moduleLoader = new ModuleLoader(this);
+    this.modules = this.moduleLoader.modules;
+    this.eventBus = this.moduleLoader.eventBus;
+
     this.init();
   }
 
   async init() {
     await this.setupEventListeners();
     await this.checkWorkspace();
+    
+    // Initialize modular system
+    try {
+      console.log('[App] Initializing modular system...');
+      await this.moduleLoader.initializeAll();
+      console.log('[App] Modular system initialized successfully');
+    } catch (error) {
+      console.error('[App] Failed to initialize modular system:', error);
+      // Continue with initialization even if modular system fails
+    }
     
     // Show landing page if no workspace is selected
     if (!this.workspacePath) {
@@ -1494,6 +1512,13 @@ class MeridianApp {
 
   // ===== UNIFIED TAG AUTOCOMPLETE SETUP =====
   
+  /**
+   * Get the TagManager module
+   */
+  getTagManager() {
+    return this.moduleLoader.getModule('tagManager');
+  }
+  
   setupResourceTagsAutocomplete() {
     // Initialize modal tags array
     this.modalTags = [];
@@ -1512,6 +1537,12 @@ class MeridianApp {
           this.addModalTag(tagValue);
         }
       });
+    }
+    
+    // Re-initialize tag autocomplete through the module
+    const tagManager = this.getTagManager();
+    if (tagManager) {
+      tagManager.initializeResourceTagAutocompletion();
     }
   }
   
