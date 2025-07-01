@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
-import { TemplateVariable, MarkdownFile, ValidationResult } from '../types';
+import { TemplateVariable, MarkdownFile, ValidationResult, ValidationError } from '../types';
 
 export class TemplateEngine {
   private variableRegex = /\{\{(\w+)\}\}/g;
@@ -89,39 +89,53 @@ export class TemplateEngine {
    * Validate template syntax
    */
   validateTemplate(template: string): ValidationResult {
-    const errors: string[] = [];
-    const warnings: string[] = [];
+    const errors: ValidationError[] = [];
 
     // Check for malformed variable syntax
     const malformedMatches = template.match(/\{[^{]|\}[^}]|\{[^}]*$|^[^{]*\}/g);
     if (malformedMatches) {
-      errors.push('Template contains malformed variable syntax. Use {{variable}} format.');
+      errors.push({
+        field: 'template',
+        message: 'Template contains malformed variable syntax. Use {{variable}} format.',
+        code: 'MALFORMED_SYNTAX'
+      });
     }
 
     // Check for empty variables
     const emptyMatches = template.match(/\{\{\s*\}\}/g);
     if (emptyMatches) {
-      errors.push('Template contains empty variables {{}}.');
+      errors.push({
+        field: 'template',
+        message: 'Template contains empty variables {{}}.',
+        code: 'EMPTY_VARIABLES'
+      });
     }
 
     // Check for nested variables
     const nestedMatches = template.match(/\{\{[^}]*\{\{[^}]*\}\}[^}]*\}\}/g);
     if (nestedMatches) {
-      warnings.push('Template may contain nested variables which are not supported.');
+      errors.push({
+        field: 'template',
+        message: 'Template may contain nested variables which are not supported.',
+        code: 'NESTED_VARIABLES'
+      });
     }
 
     // Extract and validate variable names
     const variables = this.parseTemplate(template);
     for (const variable of variables) {
       if (variable.key && !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(variable.key)) {
-        errors.push(`Invalid variable name: ${variable.key}. Use alphanumeric characters and underscores only.`);
+        errors.push({
+          field: 'variable',
+          message: `Invalid variable name: ${variable.key}. Use alphanumeric characters and underscores only.`,
+          code: 'INVALID_VARIABLE_NAME'
+        });
       }
     }
 
     return {
       isValid: errors.length === 0,
-      errors,
-      warnings,
+      errors
     };
   }
 

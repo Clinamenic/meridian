@@ -206,8 +206,13 @@ export interface BroadcastDataV2 {
 // Template and validation types
 export interface ValidationResult {
   isValid: boolean;
-  errors: string[];
-  warnings?: string[];
+  errors: ValidationError[];
+}
+
+export interface ValidationError {
+  field: string;
+  message: string;
+  code: string;
 }
 
 export interface FormattingSuggestion {
@@ -256,6 +261,12 @@ export interface CredentialStore {
   farcaster?: { appKey: string; jwt: string };
   twitter?: { accessToken: string; refreshToken: string };
   arweave?: { walletJWK: string };
+  github?: { 
+    token: string; 
+    tokenType: "classic" | "fine-grained" | "github-app";
+    repositories?: string[];
+    expiresAt?: string;
+  };
 }
 
 // Application state types
@@ -309,7 +320,76 @@ export interface FarcasterCast {
 }
 
 // Utility types
-export type Platform = "bluesky" | "farcaster" | "twitter" | "x";
+export type Platform = "bluesky" | "farcaster" | "twitter" | "x" | "github";
 export type ToolName = "collate" | "archive" | "broadcast";
 export type PostStatus = "draft" | "scheduled" | "posted" | "failed";
-export type UploadStatus = "pending" | "confirmed" | "failed"; 
+export type UploadStatus = "pending" | "confirmed" | "failed";
+
+export interface SiteSettings {
+  version: string;
+  lastModified: string;
+  site: {
+    baseUrl?: string;
+    customDomain?: string;
+    title: string;
+    description?: string;
+    author?: string;
+  };
+  quartz: {
+    enableSPA: boolean;
+    enablePopovers: boolean;
+    theme: {
+      mode: 'auto' | 'light' | 'dark';
+      primaryColor?: string;
+    };
+  };
+  deployment: {
+    provider?: string | null;
+    repository?: string | null;
+    branch: string;
+    customCNAME: boolean;
+  };
+  metadata: {
+    createdAt: string;
+    workspacePath: string;
+  };
+}
+
+// GitHub integration types
+export interface GitHubAccount {
+  id: string; // UUID
+  nickname: string; // User-defined name
+  username: string; // GitHub username
+  tokenType: "classic" | "fine-grained" | "github-app";
+  repositories: string[]; // Accessible repos for fine-grained
+  expiresAt?: string; // Token expiration
+  createdAt: string;
+  lastUsed: string;
+}
+
+export interface TokenValidationResult {
+  isValid: boolean;
+  tokenType: "classic" | "fine-grained" | "github-app";
+  username: string;
+  scopes: string[];
+  repositories: string[];
+  expiresAt?: string;
+  securityWarnings: string[];
+  recommendations: string[];
+}
+
+export interface GitHubDeployConfig {
+  workspacePath: string;
+  githubAccountId?: string;
+  repositoryName?: string;
+  customDomain?: string;
+  branch?: string;
+}
+
+export interface DeployResult {
+  success: boolean;
+  url?: string;
+  repository?: string;
+  message?: string;
+  error?: string;
+} 

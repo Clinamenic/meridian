@@ -523,139 +523,40 @@
           <!-- Deploy Panel -->
           <div id="deploy-panel" class="tool-panel">
             <div class="panel-header">
-              <div class="panel-actions">
-                <button
-                  id="init-quartz-btn"
-                  class="panel-header-icon-btn"
-                  title="Initialize Quartz"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
+              <div class="panel-header-left">
+                <div class="panel-title">
+                  <span id="deploy-site-status">Site Status: Ready</span>
+                </div>
+              </div>
+              <div class="panel-header-right">
+                <div class="panel-actions">
+                  <button
+                    id="site-settings-btn"
+                    class="panel-header-icon-btn"
+                    title="Site Settings"
                   >
-                    <path
-                      d="M12 2L2 7l10 5 10-5-10-5z"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      d="M2 17l10 5 10-5"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      d="M2 12l10 5 10-5"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </button>
-                <button
-                  id="build-site-btn"
-                  class="panel-header-icon-btn"
-                  title="Build Site"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect
-                      x="3"
-                      y="3"
-                      width="18"
-                      height="18"
-                      rx="2"
-                      ry="2"
-                      stroke="currentColor"
-                      stroke-width="2"
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
                       fill="none"
-                    />
-                    <path
-                      d="M9 9h6v6H9z"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      fill="none"
-                    />
-                  </svg>
-                </button>
-                <button
-                  id="preview-site-btn"
-                  class="panel-header-icon-btn"
-                  title="Preview Site"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="3"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    />
-                  </svg>
-                </button>
-                <button
-                  id="deploy-site-btn"
-                  class="panel-header-icon-btn"
-                  title="Deploy Site"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <polyline
-                      points="17,8 12,3 7,8"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <line
-                      x1="12"
-                      y1="3"
-                      x2="12"
-                      y2="15"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </button>
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      />
+                      <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="panel-content">
@@ -856,6 +757,17 @@
               <button id="workspace-dropdown-btn" class="footer-dropdown-btn">
                 <span id="footer-workspace-path" class="footer-value"
                   >Not selected</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <div class="github-status-footer">
+            <span class="footer-label">GitHub:</span>
+            <div class="footer-dropdown">
+              <button id="github-dropdown-btn" class="footer-dropdown-btn">
+                <span id="footer-github-status" class="footer-value"
+                  >Not connected</span
                 >
               </button>
             </div>
@@ -2189,6 +2101,28 @@
               <button type="submit" class="primary-btn">Update Item</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- GitHub Accounts Modal -->
+      <div id="github-accounts-modal" class="modal">
+        <div class="modal-header">
+          <h3>GitHub Accounts</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <!-- Content will be dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Add GitHub Account Modal -->
+      <div id="add-github-account-modal" class="modal">
+        <div class="modal-header">
+          <h3>Add GitHub Account</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <!-- Content will be dynamically populated -->
         </div>
       </div>
     </div>

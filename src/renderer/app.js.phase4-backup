@@ -1680,55 +1680,48 @@ class MeridianApp {
   }
 
   setupEditArchiveItemTagEvents() {
-    // Initialize unified edit archive item tag autocompletion
-    this.initializeEditArchiveItemTagAutocompletion();
-    
+    const tagInput = document.getElementById('edit-archive-tag-input');
     const addTagBtn = document.getElementById('edit-archive-add-tag-btn');
 
-    if (!addTagBtn) return;
-
-    // Clear existing event listeners
-    addTagBtn.replaceWith(addTagBtn.cloneNode(true));
-
-    // Get fresh reference
-    const newAddTagBtn = document.getElementById('edit-archive-add-tag-btn');
-
-    newAddTagBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const tagInput = document.getElementById('edit-archive-tag-input');
-      const tagValue = tagInput?.value.trim();
-      if (tagValue) {
-        this.addEditArchiveItemTag(tagValue);
-      }
-    });
-  }
-
-  initializeEditArchiveItemTagAutocompletion() {
-    // Clean up any existing edit archive item tag autocomplete instance
-    if (this.editArchiveItemTagAutocomplete) {
-      this.editArchiveItemTagAutocomplete.cleanup && this.editArchiveItemTagAutocomplete.cleanup();
-    }
-
-    const tagInput = document.getElementById('edit-archive-tag-input');
-    if (!tagInput) return;
+    if (!tagInput || !addTagBtn) return;
 
     // Clear existing event listeners
     tagInput.replaceWith(tagInput.cloneNode(true));
-    const newTagInput = document.getElementById('edit-archive-tag-input');
+    addTagBtn.replaceWith(addTagBtn.cloneNode(true));
 
-    this.editArchiveItemTagAutocomplete = new TagAutocomplete({
-      inputSelector: '#edit-archive-tag-input',
-      autocompleteSelector: '#edit-archive-tag-autocomplete',
-      getSuggestions: (inputValue) => {
-        // Get existing tags to exclude from suggestions
-        const excludeTags = this.editArchiveItemTags || [];
-        return this.getIntelligentArchiveTagSuggestions(inputValue, excludeTags, 5);
-      },
-      onTagSelect: (tagValue) => {
+    // Get fresh references
+    const newTagInput = document.getElementById('edit-archive-tag-input');
+    const newAddTagBtn = document.getElementById('edit-archive-add-tag-btn');
+
+    newTagInput.addEventListener('input', (e) => {
+      this.showEditArchiveItemTagAutocomplete(e.target);
+      this.updateEditArchiveItemAddTagButtonState(e.target);
+    });
+
+    newTagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const tagValue = e.target.value.trim();
+        if (tagValue) {
+          this.addEditArchiveItemTag(tagValue);
+        }
+      } else if (e.key === 'Escape') {
+        this.hideEditArchiveItemTagAutocomplete();
+      }
+    });
+
+    newTagInput.addEventListener('blur', (e) => {
+      // Delay hiding to allow click on autocomplete items
+      setTimeout(() => {
+        this.hideEditArchiveItemTagAutocomplete();
+      }, 200);
+    });
+
+    newAddTagBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const tagValue = newTagInput.value.trim();
+      if (tagValue) {
         this.addEditArchiveItemTag(tagValue);
-      },
-      onInputChange: (input) => {
-        this.updateEditArchiveItemAddTagButtonState(input);
       }
     });
   }
@@ -1748,11 +1741,7 @@ class MeridianApp {
       if (input) {
         input.value = '';
         this.updateEditArchiveItemAddTagButtonState(input);
-        // Hide autocomplete using unified system
-        const autocompleteInstance = this.editArchiveItemTagAutocomplete;
-        if (autocompleteInstance) {
-          autocompleteInstance.hide();
-        }
+        this.hideEditArchiveItemTagAutocomplete();
       }
     }
   }
@@ -1772,7 +1761,51 @@ class MeridianApp {
     btn.disabled = !hasValue;
   }
 
+  showEditArchiveItemTagAutocomplete(input) {
+    const value = input.value.trim();
+    const autocompleteDiv = document.getElementById('edit-archive-tag-autocomplete');
 
+    if (value.length === 0) {
+      this.hideEditArchiveItemTagAutocomplete();
+      return;
+    }
+
+    // Get existing tags to exclude from suggestions
+    const excludeTags = this.editArchiveItemTags || [];
+
+    // Get intelligent tag suggestions from archive data
+    const suggestions = this.getIntelligentArchiveTagSuggestions(value, excludeTags, 5);
+
+    if (suggestions.length === 0) {
+      this.hideEditArchiveItemTagAutocomplete();
+      return;
+    }
+
+    // Show autocomplete dropdown
+    autocompleteDiv.innerHTML = suggestions
+      .map((tag, index) => `
+        <div class="autocomplete-item" data-tag="${this.escapeHtml(tag)}" data-index="${index}">
+          <span class="autocomplete-tag-name">${this.escapeHtml(tag)}</span>
+        </div>
+      `).join('');
+
+    // Add click events to autocomplete items
+    autocompleteDiv.querySelectorAll('.autocomplete-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        const tag = e.target.closest('.autocomplete-item').dataset.tag;
+        this.addEditArchiveItemTag(tag);
+      });
+    });
+
+    autocompleteDiv.style.display = 'block';
+  }
+
+  hideEditArchiveItemTagAutocomplete() {
+    const autocompleteDiv = document.getElementById('edit-archive-tag-autocomplete');
+    if (autocompleteDiv) {
+      autocompleteDiv.style.display = 'none';
+    }
+  }
 
   // Tag Management functionality
   setupTagInputEvents() {
@@ -1982,13 +2015,8 @@ class MeridianApp {
         this.updateAddTagButtonState(input);
       }
       
-      // Hide autocomplete using unified system
-      const autocompleteInstance = this.resourceTagAutocompletes?.find(instance => 
-        instance.inputSelector.includes(`data-resource-id="${resourceId}"`)
-      );
-      if (autocompleteInstance) {
-        autocompleteInstance.hide();
-      }
+      // Hide autocomplete
+      this.hideTagAutocomplete(resourceId);
 
       this.showSuccess('Tag added successfully');
     } catch (error) {
@@ -2222,13 +2250,8 @@ class MeridianApp {
         this.updateArchiveAddTagButtonState(input);
       }
       
-      // Hide autocomplete using unified system
-      const autocompleteInstance = this.archiveTagAutocompletes?.find(instance => 
-        instance.inputSelector.includes(`data-file-uuid="${fileUuid}"`)
-      );
-      if (autocompleteInstance) {
-        autocompleteInstance.hide();
-      }
+      // Hide autocomplete
+      this.hideArchiveTagAutocomplete(fileUuid);
 
       this.showSuccess('Tag added successfully');
     } catch (error) {
@@ -3130,42 +3153,76 @@ class MeridianApp {
     // Initialize bulk tags array
     this.bulkTags = [];
 
-    // Initialize unified bulk tag autocompletion
-    this.initializeBulkTagAutocompletion();
-  }
-
-  initializeBulkTagAutocompletion() {
-    // Clean up any existing bulk tag autocomplete instance
-    if (this.bulkTagAutocomplete) {
-      this.bulkTagAutocomplete.cleanup && this.bulkTagAutocomplete.cleanup();
-    }
-
+    // Setup bulk tag input functionality
     const bulkTagInput = document.getElementById('bulk-tag-input');
     const bulkAddTagBtn = document.getElementById('bulk-add-tag-btn');
     
-    if (!bulkTagInput || !bulkAddTagBtn) return;
+    if (bulkTagInput && bulkAddTagBtn) {
+      // Input events
+      bulkTagInput.addEventListener('input', (e) => {
+        this.updateBulkAddTagButtonState(e.target);
+        this.showBulkTagAutocomplete(e.target);
+      });
 
-    this.bulkTagAutocomplete = new TagAutocomplete({
-      inputSelector: '#bulk-tag-input',
-      autocompleteSelector: '#bulk-tag-autocomplete',
-      getSuggestions: (inputValue) => {
-        return this.getIntelligentTagSuggestions(inputValue, this.bulkTags, 8);
-      },
-      onTagSelect: (tagValue) => {
-        this.addBulkTag(tagValue);
-      },
-      onInputChange: (input) => {
-        this.updateBulkAddTagButtonState(input);
-      }
-    });
+      bulkTagInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.addBulkTag(bulkTagInput.value.trim());
+        } else if (e.key === 'Escape') {
+          this.hideBulkTagAutocomplete();
+        }
+      });
 
-    // Button click event
-    bulkAddTagBtn.addEventListener('click', () => {
-      this.addBulkTag(bulkTagInput.value.trim());
-    });
+      bulkTagInput.addEventListener('blur', () => {
+        // Delay hiding to allow for click on autocomplete
+        setTimeout(() => this.hideBulkTagAutocomplete(), 150);
+      });
+
+      // Button click
+      bulkAddTagBtn.addEventListener('click', () => {
+        this.addBulkTag(bulkTagInput.value.trim());
+      });
+    }
   }
 
+  showBulkTagAutocomplete(input) {
+    const value = input.value.trim().toLowerCase();
+    if (value.length < 1) {
+      this.hideBulkTagAutocomplete();
+      return;
+    }
 
+    const existingTags = this.getAllExistingTags();
+    const suggestions = this.getIntelligentTagSuggestions(value, this.bulkTags, 8);
+    
+    if (suggestions.length === 0) {
+      this.hideBulkTagAutocomplete();
+      return;
+    }
+
+    const autocompleteEl = document.getElementById('bulk-tag-autocomplete');
+    autocompleteEl.innerHTML = suggestions.map(tag => `
+      <div class="autocomplete-item" data-tag="${this.escapeHtml(tag)}">
+        ${this.escapeHtml(tag)}
+      </div>
+    `).join('');
+
+    // Add click handlers
+    autocompleteEl.querySelectorAll('.autocomplete-item').forEach(item => {
+      item.addEventListener('click', () => {
+        this.addBulkTag(item.dataset.tag);
+      });
+    });
+
+    autocompleteEl.style.display = 'block';
+  }
+
+  hideBulkTagAutocomplete() {
+    const autocompleteEl = document.getElementById('bulk-tag-autocomplete');
+    if (autocompleteEl) {
+      autocompleteEl.style.display = 'none';
+    }
+  }
 
   updateBulkAddTagButtonState(input) {
     const bulkAddTagBtn = document.getElementById('bulk-add-tag-btn');
@@ -3190,10 +3247,7 @@ class MeridianApp {
       this.updateBulkAddTagButtonState(bulkTagInput);
     }
     
-    // Hide autocomplete using unified system
-    if (this.bulkTagAutocomplete) {
-      this.bulkTagAutocomplete.hide();
-    }
+    this.hideBulkTagAutocomplete();
   }
 
   removeBulkTag(tagValue) {

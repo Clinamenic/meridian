@@ -597,14 +597,20 @@ export class ArweaveManager {
       // Build arkb command arguments array
       const args = ['deploy', filePath, '--wallet', walletPath];
       
-      // Add enhanced tags as separate arguments  
+      // Add enhanced tags using the working --tag-name/--tag-value format
       for (const tag of enhancedTags) {
-        args.push('--tag', tag);
+        const [key, value] = tag.split(':', 2);
+        if (key && value) {
+          args.push('--tag-name', key.trim(), '--tag-value', value.trim());
+        } else {
+          console.warn(`Skipping malformed tag: ${tag}`);
+        }
       }
       
-      // Add final flags
-      args.push('--no-bundle', '--auto-confirm');
+      // Add final flags for direct file upload 
+      args.push('--bundle', '--force', '--auto-confirm');
 
+      console.log('Enhanced tags being processed:', enhancedTags);
       console.log(`Executing arkb command: ${this.arkbPath} ${args.join(' ')}`);
 
       // Execute upload using spawn for better argument handling
@@ -717,7 +723,22 @@ export class ArweaveManager {
 
       // Build file list for arkb
       const fileList = filePaths.map(f => `"${f}"`).join(' ');
-      const tagArgs = tags.length > 0 ? tags.map(tag => `--tag "${tag}"`).join(' ') : '';
+      
+      // Build tag arguments using the working --tag-name/--tag-value format
+      let tagArgs = '';
+      if (tags.length > 0) {
+        const tagPairs: string[] = [];
+        for (const tag of tags) {
+          const [key, value] = tag.split(':', 2);
+          if (key && value) {
+            tagPairs.push(`--tag-name "${key.trim()}" --tag-value "${value.trim()}"`);
+          } else {
+            console.warn(`Skipping malformed tag in bundle: ${tag}`);
+          }
+        }
+        tagArgs = tagPairs.join(' ');
+      }
+      
       const command = `${this.arkbPath} deploy ${fileList} --wallet "${walletPath}" ${tagArgs} --auto-confirm`;
 
       console.log(`Executing arkb bundle command: ${command}`);
@@ -793,62 +814,88 @@ export class ArweaveManager {
    */
   public async checkTransactionStatus(transactionId: string): Promise<UploadStatus> {
     try {
-      // Try arkb status command first
+      // Use GraphQL API for more reliable status checking
+      const query = `
+        query {
+          transactions(ids: ["${transactionId}"]) {
+            edges {
+              node {
+                id
+                block {
+                  height
+                  timestamp
+                }
+              }
+            }
+          }
+        }
+      `;
+
       try {
-        const command = `${this.arkbPath} status ${transactionId} --json`;
-        const { stdout } = await execAsync(command);
-        
-        const result = JSON.parse(stdout);
-        
-        if (result.confirmed) {
+        const response = await fetch('https://arweave.net/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+
+        const data = await response.json();
+        const transaction = data.data?.transactions?.edges?.[0]?.node;
+
+        if (transaction && transaction.block) {
           return 'confirmed';
-        } else if (result.pending) {
+        } else if (transaction) {
           return 'pending';
         } else {
-          return 'failed';
+          // Transaction not found in GraphQL, try HTTP API
+          return await this.checkTransactionStatusHTTP(transactionId);
         }
-      } catch (arkbError) {
-        console.warn('arkb status failed, trying HTTP API:', arkbError);
+      } catch (graphqlError) {
+        console.warn('GraphQL status check failed, trying HTTP API:', graphqlError);
+        return await this.checkTransactionStatusHTTP(transactionId);
       }
-
-      // Fallback: Check via HTTP API
-      const https = require('https');
-      const url = `https://arweave.net/tx/${transactionId}/status`;
-      
-      return new Promise((resolve) => {
-        const req = https.get(url, (res: any) => {
-          let data = '';
-          res.on('data', (chunk: any) => data += chunk);
-          res.on('end', () => {
-            try {
-              if (res.statusCode === 200) {
-                const result = JSON.parse(data);
-                if (result.block_height && result.block_height > 0) {
-                  resolve('confirmed');
-                } else {
-                  resolve('pending');
-                }
-              } else if (res.statusCode === 404) {
-                resolve('failed');
-              } else {
-                resolve('pending');
-              }
-            } catch {
-              resolve('failed');
-            }
-          });
-        });
-        
-        req.on('error', () => resolve('failed'));
-        req.setTimeout(5000, () => {
-          req.destroy();
-          resolve('failed');
-        });
-      });
     } catch (error) {
       console.error('Failed to check transaction status:', error);
       return 'failed';
     }
+  }
+
+  /**
+   * Fallback HTTP status check
+   */
+  private async checkTransactionStatusHTTP(transactionId: string): Promise<UploadStatus> {
+    const https = require('https');
+    const url = `https://arweave.net/tx/${transactionId}/status`;
+    
+    return new Promise((resolve) => {
+      const req = https.get(url, (res: any) => {
+        let data = '';
+        res.on('data', (chunk: any) => data += chunk);
+        res.on('end', () => {
+          try {
+            if (res.statusCode === 200) {
+              const result = JSON.parse(data);
+              if (result.block_height && result.block_height > 0) {
+                resolve('confirmed');
+              } else {
+                resolve('pending');
+              }
+            } else if (res.statusCode === 404) {
+              resolve('failed');
+            } else {
+              resolve('pending');
+            }
+          } catch {
+            resolve('pending'); // Default to pending if we can't parse response
+          }
+        });
+      });
+      
+      req.on('error', () => resolve('pending')); // Default to pending on error
+      req.setTimeout(5000, () => {
+        req.destroy();
+        resolve('pending'); // Default to pending on timeout
+      });
+    });
   }
 
   /**

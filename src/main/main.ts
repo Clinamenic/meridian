@@ -13,6 +13,8 @@ import { TemplateManager } from './template-manager';
 import { StagingManager } from './staging-manager';
 import { MarkdownProcessor } from './markdown-processor';
 import DeployManager from './deploy-manager';
+import ConfigManager from './config-manager';
+import { GitHubManager } from './github-manager';
 
 class MeridianApp {
   private mainWindow: BrowserWindow | null = null;
@@ -28,6 +30,8 @@ class MeridianApp {
   private stagingManager: StagingManager;
   private markdownProcessor: MarkdownProcessor;
   private deployManager: DeployManager;
+  private configManager: ConfigManager;
+  private githubManager: GitHubManager;
 
   constructor() {
     this.credentialManager = CredentialManager.getInstance();
@@ -41,6 +45,8 @@ class MeridianApp {
     this.stagingManager = new StagingManager(this.dataManager, this.socialManager);
     this.markdownProcessor = new MarkdownProcessor();
     this.deployManager = new DeployManager();
+    this.configManager = ConfigManager.getInstance();
+    this.githubManager = new GitHubManager();
 
     // Initialize centralized account state manager
     this.accountStateManager = AccountStateManager.getInstance(
@@ -526,6 +532,15 @@ class MeridianApp {
 
     ipcMain.handle('account-state:handle-switch', async (_, platform, accountId) => {
       return await this.accountStateManager.handleAccountSwitch(platform, accountId);
+    });
+
+    // Configuration management IPC handlers
+    ipcMain.handle('config:load-site-settings', async (_, workspacePath) => {
+      return await this.configManager.loadSiteSettings(workspacePath);
+    });
+
+    ipcMain.handle('config:save-site-settings', async (_, workspacePath, settings) => {
+      return await this.configManager.saveSiteSettings(workspacePath, settings);
     });
 
     // Credential management

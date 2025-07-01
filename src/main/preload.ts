@@ -71,7 +71,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
     validateSystem: () => ipcRenderer.invoke('deploy:validate-system'),
     deployGitHub: (config: any) => ipcRenderer.invoke('deploy:deploy-github', config),
     exportStatic: (config: any) => ipcRenderer.invoke('deploy:export-static', config),
-    checkInitialized: (workspacePath: string) => ipcRenderer.invoke('deploy:check-initialized', workspacePath)
+    checkInitialized: (workspacePath: string) => ipcRenderer.invoke('deploy:check-initialized', workspacePath),
+    
+    // GitHub-specific APIs
+    githubAccounts: () => ipcRenderer.invoke('deploy:github-accounts'),
+    addGitHubAccount: (token: string, nickname?: string, repoName?: string) => ipcRenderer.invoke('deploy:add-github-account', token, nickname, repoName),
+    validateGitHubToken: (token: string) => ipcRenderer.invoke('deploy:validate-github-token', token),
+    getGitHubAccount: (accountId: string) => ipcRenderer.invoke('deploy:get-github-account', accountId),
+    removeGitHubAccount: (accountId: string) => ipcRenderer.invoke('deploy:remove-github-account', accountId),
+    deployToGitHubPages: (config: any) => ipcRenderer.invoke('deploy:deploy-to-github-pages', config),
+    startGitHubAccountAddition: (repoName?: string) => 
+      ipcRenderer.invoke('deploy:start-github-account-addition', repoName),
+    generateGitHubTokenUrl: (repoName?: string) => 
+      ipcRenderer.invoke('deploy:generate-github-token-url', repoName),
+    getGitHubAccounts: () => 
+      ipcRenderer.invoke('deploy:github-accounts'),
   },
 
   // Broadcast APIs
@@ -153,6 +167,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('account-state:handle-switch', platform, accountId),
   },
 
+  // Configuration APIs
+  config: {
+    loadSiteSettings: (workspacePath: string) => 
+      ipcRenderer.invoke('config:load-site-settings', workspacePath),
+    saveSiteSettings: (workspacePath: string, settings: any) => 
+      ipcRenderer.invoke('config:save-site-settings', workspacePath, settings),
+  },
+
   // Credential APIs
   credentials: {
     set: (service: Platform | 'arweave', key: string, value: string) => 
@@ -230,6 +252,18 @@ export interface ElectronAPI {
     validateSystem: () => Promise<any>;
     deployGitHub: (config: any) => Promise<any>;
     exportStatic: (config: any) => Promise<string>;
+    checkInitialized: (workspacePath: string) => Promise<boolean>;
+    
+    // GitHub-specific APIs
+    githubAccounts: () => Promise<any[]>;
+    addGitHubAccount: (token: string, nickname?: string, repoName?: string) => Promise<any>;
+    validateGitHubToken: (token: string) => Promise<any>;
+    getGitHubAccount: (accountId: string) => Promise<any>;
+    removeGitHubAccount: (accountId: string) => Promise<void>;
+    deployToGitHubPages: (config: any) => Promise<any>;
+    startGitHubAccountAddition: (repoName?: string) => Promise<void>;
+    generateGitHubTokenUrl: (repoName?: string) => Promise<string>;
+    getGitHubAccounts: () => Promise<any[]>;
   };
   
   broadcast: {
@@ -280,6 +314,11 @@ export interface ElectronAPI {
     set: (service: Platform | 'arweave', key: string, value: string) => Promise<void>;
     get: (service: Platform | 'arweave', key: string) => Promise<string | null>;
     validatePlatform: (platform: Platform) => Promise<boolean>;
+  };
+
+  config: {
+    loadSiteSettings: (workspacePath: string) => Promise<any>;
+    saveSiteSettings: (workspacePath: string, settings: any) => Promise<void>;
   };
   
   showItemInFolder: (filePath: string) => Promise<void>;

@@ -1748,11 +1748,7 @@ class MeridianApp {
       if (input) {
         input.value = '';
         this.updateEditArchiveItemAddTagButtonState(input);
-        // Hide autocomplete using unified system
-        const autocompleteInstance = this.editArchiveItemTagAutocomplete;
-        if (autocompleteInstance) {
-          autocompleteInstance.hide();
-        }
+        this.hideEditArchiveItemTagAutocomplete();
       }
     }
   }
@@ -1982,13 +1978,8 @@ class MeridianApp {
         this.updateAddTagButtonState(input);
       }
       
-      // Hide autocomplete using unified system
-      const autocompleteInstance = this.resourceTagAutocompletes?.find(instance => 
-        instance.inputSelector.includes(`data-resource-id="${resourceId}"`)
-      );
-      if (autocompleteInstance) {
-        autocompleteInstance.hide();
-      }
+      // Hide autocomplete
+      this.hideTagAutocomplete(resourceId);
 
       this.showSuccess('Tag added successfully');
     } catch (error) {
@@ -2222,13 +2213,8 @@ class MeridianApp {
         this.updateArchiveAddTagButtonState(input);
       }
       
-      // Hide autocomplete using unified system
-      const autocompleteInstance = this.archiveTagAutocompletes?.find(instance => 
-        instance.inputSelector.includes(`data-file-uuid="${fileUuid}"`)
-      );
-      if (autocompleteInstance) {
-        autocompleteInstance.hide();
-      }
+      // Hide autocomplete
+      this.hideArchiveTagAutocomplete(fileUuid);
 
       this.showSuccess('Tag added successfully');
     } catch (error) {
@@ -3130,42 +3116,76 @@ class MeridianApp {
     // Initialize bulk tags array
     this.bulkTags = [];
 
-    // Initialize unified bulk tag autocompletion
-    this.initializeBulkTagAutocompletion();
-  }
-
-  initializeBulkTagAutocompletion() {
-    // Clean up any existing bulk tag autocomplete instance
-    if (this.bulkTagAutocomplete) {
-      this.bulkTagAutocomplete.cleanup && this.bulkTagAutocomplete.cleanup();
-    }
-
+    // Setup bulk tag input functionality
     const bulkTagInput = document.getElementById('bulk-tag-input');
     const bulkAddTagBtn = document.getElementById('bulk-add-tag-btn');
     
-    if (!bulkTagInput || !bulkAddTagBtn) return;
+    if (bulkTagInput && bulkAddTagBtn) {
+      // Input events
+      bulkTagInput.addEventListener('input', (e) => {
+        this.updateBulkAddTagButtonState(e.target);
+        this.showBulkTagAutocomplete(e.target);
+      });
 
-    this.bulkTagAutocomplete = new TagAutocomplete({
-      inputSelector: '#bulk-tag-input',
-      autocompleteSelector: '#bulk-tag-autocomplete',
-      getSuggestions: (inputValue) => {
-        return this.getIntelligentTagSuggestions(inputValue, this.bulkTags, 8);
-      },
-      onTagSelect: (tagValue) => {
-        this.addBulkTag(tagValue);
-      },
-      onInputChange: (input) => {
-        this.updateBulkAddTagButtonState(input);
-      }
-    });
+      bulkTagInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this.addBulkTag(bulkTagInput.value.trim());
+        } else if (e.key === 'Escape') {
+          this.hideBulkTagAutocomplete();
+        }
+      });
 
-    // Button click event
-    bulkAddTagBtn.addEventListener('click', () => {
-      this.addBulkTag(bulkTagInput.value.trim());
-    });
+      bulkTagInput.addEventListener('blur', () => {
+        // Delay hiding to allow for click on autocomplete
+        setTimeout(() => this.hideBulkTagAutocomplete(), 150);
+      });
+
+      // Button click
+      bulkAddTagBtn.addEventListener('click', () => {
+        this.addBulkTag(bulkTagInput.value.trim());
+      });
+    }
   }
 
+  showBulkTagAutocomplete(input) {
+    const value = input.value.trim().toLowerCase();
+    if (value.length < 1) {
+      this.hideBulkTagAutocomplete();
+      return;
+    }
 
+    const existingTags = this.getAllExistingTags();
+    const suggestions = this.getIntelligentTagSuggestions(value, this.bulkTags, 8);
+    
+    if (suggestions.length === 0) {
+      this.hideBulkTagAutocomplete();
+      return;
+    }
+
+    const autocompleteEl = document.getElementById('bulk-tag-autocomplete');
+    autocompleteEl.innerHTML = suggestions.map(tag => `
+      <div class="autocomplete-item" data-tag="${this.escapeHtml(tag)}">
+        ${this.escapeHtml(tag)}
+      </div>
+    `).join('');
+
+    // Add click handlers
+    autocompleteEl.querySelectorAll('.autocomplete-item').forEach(item => {
+      item.addEventListener('click', () => {
+        this.addBulkTag(item.dataset.tag);
+      });
+    });
+
+    autocompleteEl.style.display = 'block';
+  }
+
+  hideBulkTagAutocomplete() {
+    const autocompleteEl = document.getElementById('bulk-tag-autocomplete');
+    if (autocompleteEl) {
+      autocompleteEl.style.display = 'none';
+    }
+  }
 
   updateBulkAddTagButtonState(input) {
     const bulkAddTagBtn = document.getElementById('bulk-add-tag-btn');
@@ -3190,10 +3210,7 @@ class MeridianApp {
       this.updateBulkAddTagButtonState(bulkTagInput);
     }
     
-    // Hide autocomplete using unified system
-    if (this.bulkTagAutocomplete) {
-      this.bulkTagAutocomplete.hide();
-    }
+    this.hideBulkTagAutocomplete();
   }
 
   removeBulkTag(tagValue) {

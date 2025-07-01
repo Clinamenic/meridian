@@ -317,6 +317,8 @@ export class CredentialManager {
         return ['accessToken', 'refreshToken'];
       case 'x':
         return ['apiKey', 'apiSecret', 'accessToken', 'accessTokenSecret'];
+      case 'github':
+        return ['token']; // Minimal requirement
       default:
         return [];
     }
