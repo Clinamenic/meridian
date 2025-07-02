@@ -3850,137 +3850,7 @@ body {
   /* Custom checkbox styling can be added here if needed */
 }
 
-/* Collapse/Expand Global Button States */
-#collapse-all-btn .collapse-down,
-#collapse-all-btn .collapse-up {
-  display: none;
-}
 
-#collapse-all-btn[data-state="expanded"] .collapse-down {
-  display: block;
-}
-
-#collapse-all-btn[data-state="expanded"] .collapse-up {
-  display: none;
-}
-
-#collapse-all-btn[data-state="collapsed"] .collapse-down {
-  display: none;
-}
-
-#collapse-all-btn[data-state="collapsed"] .collapse-up {
-  display: block;
-}
-
-/* Collapsed Resource Item Styles */
-.resource-item.collapsed .resource-description {
-  display: none;
-}
-
-.resource-item.collapsed .resource-tags {
-  display: none;
-}
-
-/* Individual Resource Collapse Button */
-.resource-collapse-btn {
-  padding: var(--spacing-xs);
-  border: none;
-  border-radius: 50%;
-  background-color: transparent;
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-  transition: all 0.2s ease;
-  height: 26px;
-  width: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  margin-right: var(--spacing-xs);
-}
-
-.resource-collapse-btn:hover {
-  background-color: var(--surface-border-subtle);
-  color: var(--text-primary);
-}
-
-.resource-collapse-btn svg {
-  transition: transform 0.2s ease;
-  transform: rotate(180deg);
-}
-
-.resource-item.collapsed .resource-collapse-btn svg {
-  transform: rotate(0deg);
-}
-
-/* Archive Collapse/Expand Global Button States */
-#archive-collapse-all-btn .collapse-down,
-#archive-collapse-all-btn .collapse-up {
-  display: none;
-}
-
-#archive-collapse-all-btn[data-state="expanded"] .collapse-down {
-  display: block;
-}
-
-#archive-collapse-all-btn[data-state="expanded"] .collapse-up {
-  display: none;
-}
-
-#archive-collapse-all-btn[data-state="collapsed"] .collapse-down {
-  display: none;
-}
-
-#archive-collapse-all-btn[data-state="collapsed"] .collapse-up {
-  display: block;
-}
-
-/* Collapsed Archive Item Styles */
-.archive-item.collapsed .archive-metadata {
-  display: none;
-}
-
-.archive-item.collapsed .archive-arweave-hashes {
-  display: none;
-}
-
-.archive-item.collapsed .archive-tags {
-  display: none;
-}
-
-/* Individual Archive Collapse Button */
-.archive-collapse-btn {
-  padding: var(--spacing-xs);
-  border: none;
-  border-radius: 50%;
-  background-color: transparent;
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
-  transition: all 0.2s ease;
-  height: 26px;
-  width: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  margin-right: var(--spacing-xs);
-}
-
-.archive-collapse-btn:hover {
-  background-color: var(--surface-border-subtle);
-  color: var(--text-primary);
-}
-
-.archive-collapse-btn svg {
-  transition: transform 0.2s ease;
-  transform: rotate(180deg);
-}
-
-.archive-item.collapsed .archive-collapse-btn svg {
-  transform: rotate(0deg);
-}
 
 /* ===== DEPLOY TOOL STYLES ===== */
 
@@ -4144,8 +4014,6 @@ body {
   justify-content: space-between;
   display: flex;
   margin-bottom: var(--spacing-lg);
-  padding: var(--spacing-md);
-  border-bottom: 1px solid var(--surface-border);
   overflow-x: auto;
   overflow-y: visible;
 }
@@ -4156,16 +4024,16 @@ body {
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
   border: 1px solid var(--surface-border);
-  border-radius: 50%;
+  border-radius: var(--border-radius-lg);
   background-color: var(--surface-bg-subtle);
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
   font-weight: 500;
   transition: all 0.2s ease;
   flex: 1;
-  max-width: calc(33.333% - var(--spacing-lg));
+  max-width: calc(33.333% - var(--spacing-sm));
   min-width: 0;
   aspect-ratio: 1/1 !important;
   text-align: center;

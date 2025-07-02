@@ -14,6 +14,7 @@ export class TagManager extends ModuleBase {
     this.archiveTagAutocompletes = [];
     this.editArchiveItemTagAutocomplete = null;
     this.bulkTagAutocomplete = null;
+    this.modalTagAutocomplete = null;
     
     // Tag state management
     this.activeTagFilters = new Set();
@@ -26,6 +27,9 @@ export class TagManager extends ModuleBase {
     // Bulk tag state
     this.bulkTags = [];
     this.editArchiveItemTags = [];
+
+    // Modal tag state
+    this.modalTags = [];
   }
 
   async onInit() {
@@ -192,6 +196,88 @@ export class TagManager extends ModuleBase {
       console.error('Failed to add tag:', error);
       this.showError('Failed to add tag');
     }
+  }
+
+  /**
+   * Render tag filters in the collate panel
+   */
+  renderTagFilters() {
+    console.log('[TagManager] renderTagFilters called');
+    
+    const container = document.getElementById('tag-filter-list');
+    if (!this.getData().collate || !this.getData().collate.tags) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const tags = Object.entries(this.getData().collate.tags)
+      .sort(([a], [b]) => a.localeCompare(b)); // Sort alphabetically by tag name
+      
+    console.log('[TagManager] Rendering tags:', tags);
+
+    container.innerHTML = tags.map(([tag, count]) => `
+      <div class="tag-filter-container">
+        <button class="tag-filter" data-tag="${tag}">
+          <span class="tag-filter-label">${this.escapeHtml(tag)}</span>
+          <span class="tag-filter-count">${count}</span>
+        </button>
+        <div class="tag-dropdown-menu" data-tag="${tag}">
+          <button class="tag-dropdown-item edit-tag-option" data-tag="${tag}">Edit</button>
+          <button class="tag-dropdown-item delete-tag-option" data-tag="${tag}">Remove</button>
+        </div>
+      </div>
+    `).join('');
+
+    // Add click and context menu events to tag filters
+    container.querySelectorAll('.tag-filter').forEach(btn => {
+      // Left click to toggle filter
+      btn.addEventListener('click', (e) => {
+        const tag = e.target.dataset.tag;
+        this.toggleTagFilter(tag);
+        e.target.classList.toggle('active');
+      });
+
+      // Right click to show context menu
+      btn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const tag = e.target.dataset.tag;
+        console.log('[TagManager] Right click on tag filter:', tag);
+        this.showTagContextMenu(tag, e.clientX, e.clientY);
+      });
+      
+      // Restore active state if this tag is currently filtered
+      const tag = btn.dataset.tag;
+      if (this.activeTagFilters.has(tag)) {
+        btn.classList.add('active');
+      }
+    });
+
+    // Add click events to dropdown options (these are now shown via context menu)
+    const editOptions = container.querySelectorAll('.edit-tag-option');
+    const deleteOptions = container.querySelectorAll('.delete-tag-option');
+    
+    editOptions.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const tag = e.target.dataset.tag;
+        console.log('[TagManager] Edit option clicked for tag:', tag);
+        this.hideTagContextMenu();
+        this.openEditTagModal(tag);
+      });
+    });
+
+    deleteOptions.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const tag = e.target.dataset.tag;
+        console.log('[TagManager] Delete option clicked for tag:', tag);
+        this.hideTagContextMenu();
+        this.confirmDeleteTag(tag);
+      });
+    });
   }
 
   /**
@@ -620,11 +706,22 @@ export class TagManager extends ModuleBase {
    * Apply all filters
    */
   applyAllFilters() {
+    console.log('[TagManager] applyAllFilters called');
+    console.log('[TagManager] Active tag filters:', Array.from(this.activeTagFilters));
+    console.log('[TagManager] Current search term:', this.currentSearchTerm);
+    console.log('[TagManager] Filter logic:', this.filterLogic);
+    
     const resources = this.getData().collate?.resources || [];
     const resourceItems = document.querySelectorAll('.resource-item');
     
+    console.log('[TagManager] Found resource items:', resourceItems.length);
+    console.log('[TagManager] Available resources:', resources.length);
+    
+    let visibleCount = 0;
+    let hiddenCount = 0;
+    
     resourceItems.forEach(item => {
-      const resourceId = item.dataset.resourceId;
+      const resourceId = item.dataset.id; // Changed from resourceId to id
       const resource = resources.find(r => r.id === resourceId);
       
       if (!resource) {
@@ -661,8 +758,17 @@ export class TagManager extends ModuleBase {
       }
       
       // Show/hide based on filters
-      item.style.display = (matchesSearch && matchesTags) ? 'block' : 'none';
+      const shouldShow = matchesSearch && matchesTags;
+      item.style.display = shouldShow ? 'block' : 'none';
+      
+      if (shouldShow) {
+        visibleCount++;
+      } else {
+        hiddenCount++;
+      }
     });
+    
+    console.log('[TagManager] Filtering complete - Visible:', visibleCount, 'Hidden:', hiddenCount);
     
     this.updateResourceCount();
   }
@@ -845,6 +951,7 @@ export class TagManager extends ModuleBase {
     this.initializeArchiveTagAutocompletion();
     this.initializeBulkTagAutocompletion();
     this.initializeEditArchiveItemTagAutocompletion();
+    this.initializeModalTagAutocomplete();
   }
 
   /**
@@ -1154,6 +1261,65 @@ export class TagManager extends ModuleBase {
   // ===== UTILITY METHODS =====
 
   /**
+   * Show tag context menu at specified coordinates
+   */
+  showTagContextMenu(tag, x, y) {
+    // Hide any existing context menus first
+    this.hideTagContextMenu();
+    
+    const menu = document.querySelector(`.tag-dropdown-menu[data-tag="${tag}"]`);
+    if (!menu) return;
+
+    // Position the menu at cursor position
+    menu.style.position = 'fixed';
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+    menu.style.display = 'block';
+    menu.style.zIndex = '2000';
+
+    // Adjust position if menu would go off screen
+    const rect = menu.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    if (rect.right > viewportWidth) {
+      menu.style.left = `${x - rect.width}px`;
+    }
+    if (rect.bottom > viewportHeight) {
+      menu.style.top = `${y - rect.height}px`;
+    }
+
+    // Add document click listener to close menu
+    setTimeout(() => {
+      document.addEventListener('click', this.handleTagContextMenuClick.bind(this), { once: true });
+    }, 10);
+  }
+
+  /**
+   * Hide all tag context menus
+   */
+  hideTagContextMenu() {
+    const menus = document.querySelectorAll('.tag-dropdown-menu');
+    menus.forEach(menu => {
+      menu.style.display = 'none';
+      menu.style.position = '';
+      menu.style.left = '';
+      menu.style.top = '';
+      menu.style.zIndex = '';
+    });
+  }
+
+  /**
+   * Handle tag context menu click events
+   */
+  handleTagContextMenuClick(e) {
+    // Don't close if clicking on the menu itself
+    if (!e.target.closest('.tag-dropdown-menu')) {
+      this.hideTagContextMenu();
+    }
+  }
+
+  /**
    * Clean up autocomplete instances
    */
   cleanupAutocompleteInstances() {
@@ -1182,6 +1348,12 @@ export class TagManager extends ModuleBase {
     if (this.bulkTagAutocomplete) {
       this.bulkTagAutocomplete.cleanup && this.bulkTagAutocomplete.cleanup();
       this.bulkTagAutocomplete = null;
+    }
+
+    // Clean up modal tag autocomplete
+    if (this.modalTagAutocomplete) {
+      this.modalTagAutocomplete.cleanup && this.modalTagAutocomplete.cleanup();
+      this.modalTagAutocomplete = null;
     }
   }
 
@@ -1215,5 +1387,208 @@ export class TagManager extends ModuleBase {
         archive: Array.from(this.activeArchiveTagFilters)
       }
     };
+  }
+
+  /**
+   * Initialize filter logic controls
+   */
+  initializeFilterLogic() {
+    const filterLogicBtn = document.getElementById('filter-logic-btn');
+    
+    if (!filterLogicBtn) return;
+    
+    // Load saved preference or use default
+    const savedLogic = localStorage.getItem('collate-filter-logic') || 'any';
+    this.filterLogic = savedLogic;
+    
+    // Set initial button state
+    this.updateFilterLogicButton();
+    
+    // Add event listener for button clicks
+    filterLogicBtn.addEventListener('click', () => {
+      // Toggle between 'any' and 'all'
+      this.filterLogic = this.filterLogic === 'any' ? 'all' : 'any';
+      localStorage.setItem('collate-filter-logic', this.filterLogic);
+      
+      // Update button appearance and reapply filters
+      this.updateFilterLogicButton();
+      this.applyAllFilters();
+    });
+  }
+
+  /**
+   * Update filter logic button appearance
+   */
+  updateFilterLogicButton() {
+    const filterLogicBtn = document.getElementById('filter-logic-btn');
+    if (!filterLogicBtn) return;
+    
+    // Set data attribute for CSS styling
+    filterLogicBtn.setAttribute('data-logic', this.filterLogic);
+    
+    // Update tooltip
+    const tooltipText = this.filterLogic === 'any' 
+      ? 'Toggle Filter Logic: ANY of these tags' 
+      : 'Toggle Filter Logic: ALL of these tags';
+    filterLogicBtn.setAttribute('title', tooltipText);
+  }
+
+  // ===== MODAL TAG MANAGEMENT =====
+
+  /**
+   * Initialize modal tag autocomplete
+   */
+  initializeModalTagAutocomplete() {
+    console.log('[TagManager] Initializing modal tag autocomplete...');
+    
+    // Initialize modal tags array if not exists
+    if (!this.modalTags) {
+      this.modalTags = [];
+    }
+    
+    // Set up modal tag input autocomplete
+    const modalTagInput = document.getElementById('modal-tag-input');
+    if (modalTagInput) {
+      // Create autocomplete instance for modal tag input
+      const modalTagAutocomplete = new TagAutocomplete(modalTagInput, {
+        suggestionsCallback: (input) => this.getIntelligentTagSuggestions(input, this.modalTags || []),
+        onSelect: (tag) => this.addModalTag(tag),
+        placeholder: 'Add tags...'
+      });
+      
+      // Store the autocomplete instance
+      this.modalTagAutocomplete = modalTagAutocomplete;
+    }
+  }
+
+  /**
+   * Update modal add tag button state
+   */
+  updateModalAddTagButtonState(input) {
+    const addTagBtn = document.getElementById('modal-add-tag-btn');
+    if (!addTagBtn) return;
+    
+    const tagValue = input.value.trim();
+    const isValid = tagValue.length > 0 && !this.modalTags?.includes(tagValue);
+    
+    addTagBtn.disabled = !isValid;
+    addTagBtn.classList.toggle('disabled', !isValid);
+  }
+
+  /**
+   * Add tag to modal
+   */
+  addModalTag(tagValue) {
+    const trimmedTag = tagValue.trim();
+    if (!trimmedTag) return;
+    
+    // Initialize modal tags array if not exists
+    if (!this.modalTags) {
+      this.modalTags = [];
+    }
+    
+    // Check if tag already exists
+    if (this.modalTags.includes(trimmedTag)) {
+      this.showError('Tag already exists');
+      return;
+    }
+    
+    // Add tag to array
+    this.modalTags.push(trimmedTag);
+    
+    // Clear input
+    const input = document.getElementById('modal-tag-input');
+    if (input) {
+      input.value = '';
+      this.updateModalAddTagButtonState(input);
+    }
+    
+    // Re-render modal tags
+    this.renderModalTags();
+    
+    // Hide autocomplete if exists
+    if (this.modalTagAutocomplete) {
+      this.modalTagAutocomplete.hide();
+    }
+  }
+
+  /**
+   * Remove tag from modal
+   */
+  removeModalTag(tagValue) {
+    if (!this.modalTags) return;
+    
+    const index = this.modalTags.indexOf(tagValue);
+    if (index > -1) {
+      this.modalTags.splice(index, 1);
+      this.renderModalTags();
+    }
+  }
+
+  /**
+   * Render modal tags
+   */
+  renderModalTags() {
+    const container = document.getElementById('modal-tags-container');
+    if (!container) return;
+    
+    if (!this.modalTags || this.modalTags.length === 0) {
+      container.innerHTML = '<div class="no-tags">No tags added</div>';
+      return;
+    }
+    
+    container.innerHTML = this.modalTags.map(tag => `
+      <span class="tag">
+        ${this.escapeHtml(tag)}
+        <button class="tag-remove" onclick="app.getTagManager().removeModalTag('${this.escapeHtml(tag)}')">×</button>
+      </span>
+    `).join('');
+  }
+
+  /**
+   * Get modal tags
+   */
+  getModalTags() {
+    return this.modalTags || [];
+  }
+
+  /**
+   * Clear modal tags
+   */
+  clearModalTags() {
+    this.modalTags = [];
+    this.renderModalTags();
+  }
+
+  /**
+   * Clear bulk tags
+   */
+  clearBulkTags() {
+    this.bulkTags = [];
+    this.renderBulkTags();
+  }
+
+  /**
+   * Get bulk tags
+   */
+  getBulkTags() {
+    return this.bulkTags || [];
+  }
+
+  /**
+   * Set modal tags
+   */
+  setModalTags(tags) {
+    this.modalTags = Array.isArray(tags) ? [...tags] : [];
+    this.renderModalTags();
+  }
+
+  /**
+   * Escape HTML to prevent XSS
+   */
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 } 

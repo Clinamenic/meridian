@@ -91,14 +91,40 @@ export class ModuleLoader {
   async loadAllModules() {
     // Import all modules
     const { TagManager } = await import('./TagManager.js');
+    const { ResourceManager } = await import('./ResourceManager.js');
+    const { ArchiveManager } = await import('./ArchiveManager.js');
+    const { ModalManager } = await import('./ModalManager.js');
+    const { AccountManager } = await import('./AccountManager.js');
+    const { BroadcastManager } = await import('./BroadcastManager.js');
+    const { DeployManager } = await import('./DeployManager.js');
+    const { UploadManager } = await import('./UploadManager.js');
     
     // Register modules in dependency order
     // TagManager has no dependencies, so it can be loaded first
     await this.registerModule('tagManager', TagManager);
     
+    // ResourceManager depends on TagManager for tag operations
+    await this.registerModule('resourceManager', ResourceManager);
+    
+    // ArchiveManager depends on TagManager for tag operations
+    await this.registerModule('archiveManager', ArchiveManager);
+    
+    // ModalManager has no dependencies, can be loaded anytime
+    await this.registerModule('modalManager', ModalManager);
+    
+    // AccountManager has no dependencies, can be loaded anytime
+    await this.registerModule('accountManager', AccountManager);
+    
+    // BroadcastManager depends on ModalManager for modal operations
+    await this.registerModule('broadcastManager', BroadcastManager);
+    
+    // DeployManager depends on AccountManager for deploy operations
+    await this.registerModule('deployManager', DeployManager);
+    
+    // UploadManager has no dependencies, can be loaded anytime
+    await this.registerModule('uploadManager', UploadManager);
+    
     // Future modules will be added here in dependency order
-    // await this.registerModule('resourceManager', ResourceManager);
-    // await this.registerModule('archiveManager', ArchiveManager);
     // etc.
   }
 

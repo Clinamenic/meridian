@@ -939,7 +939,7 @@
           <!-- Tab Content -->
           <div class="modal-tab-content">
             <!-- Single Resource Tab -->
-            <div id="single-tab" class="modal-tab-panel active">
+            <div id="single-tab" class="modal-tab-panel" data-tab="single">
               <form id="add-resource-form">
                 <div class="form-group">
                   <label for="resource-url">URL</label>
@@ -1018,7 +1018,7 @@
             </div>
 
             <!-- Bulk Add Tab -->
-            <div id="bulk-tab" class="modal-tab-panel">
+            <div id="bulk-tab" class="modal-tab-panel" data-tab="bulk">
               <div class="bulk-add-content">
                 <!-- Phase Progress Cards -->
                 <div class="modal-tab-phase-cards" id="bulk-phase-cards">
@@ -2125,8 +2125,136 @@
           <!-- Content will be dynamically populated -->
         </div>
       </div>
+
+      <!-- Add Resources Modal -->
+      <div id="add-resources-modal" class="modal large-modal">
+        <div class="modal-header">
+          <h3>Add Resources</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <!-- Modal Tabs -->
+          <div class="modal-tabs">
+            <button class="modal-tab-btn active" data-tab="single">
+              Single Resource
+            </button>
+            <button class="modal-tab-btn" data-tab="bulk">Bulk Import</button>
+          </div>
+
+          <!-- Single Resource Tab -->
+          <div id="single-tab" class="modal-tab-panel" data-tab="single">
+            <form id="add-resource-form">
+              <div class="form-group">
+                <label for="resource-url">URL</label>
+                <div class="form-group-inline">
+                  <input
+                    type="url"
+                    id="resource-url"
+                    placeholder="Enter URL (e.g., https://example.com)"
+                    required
+                  />
+                  <button
+                    type="button"
+                    id="extract-metadata-btn"
+                    class="panel-header-btn"
+                  >
+                    Extract Metadata
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="resource-title">Title</label>
+                <input
+                  type="text"
+                  id="resource-title"
+                  placeholder="Resource title"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="resource-description">Description</label>
+                <textarea
+                  id="resource-description"
+                  placeholder="Optional description"
+                ></textarea>
+              </div>
+              <div class="form-group">
+                <label>Tags</label>
+                <div class="modal-resource-tags">
+                  <div class="modal-resource-tag-input">
+                    <div class="tag-input-container">
+                      <input
+                        type="text"
+                        id="modal-tag-input"
+                        class="tag-input"
+                        placeholder="add tag..."
+                      />
+                      <button
+                        type="button"
+                        class="add-tag-btn"
+                        id="modal-add-tag-btn"
+                        disabled
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div
+                      class="tag-autocomplete modal-tag-autocomplete"
+                      id="modal-tag-autocomplete"
+                      style="display: none"
+                    ></div>
+                  </div>
+                  <div class="modal-tags-list" id="modal-tags-list">
+                    <!-- Tags rendered here -->
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="secondary-btn modal-cancel">
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  id="extract-metadata-btn"
+                  class="secondary-btn"
+                >
+                  Extract Metadata
+                </button>
+                <button type="submit" class="primary-btn">Add Resource</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Bulk Import Tab -->
+          <div id="bulk-tab" class="modal-tab-panel" data-tab="bulk">
+            <div class="bulk-import-content">
+              <div class="form-group">
+                <label for="bulk-text-input">Paste URLs or Text</label>
+                <textarea
+                  id="bulk-text-input"
+                  placeholder="Paste URLs, text with URLs, or any content you want to process..."
+                  rows="8"
+                ></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="secondary-btn modal-cancel">
+                  Cancel
+                </button>
+                <button type="button" id="extract-urls-btn" class="primary-btn">
+                  Extract URLs
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- Modal Overlay -->
+    <div id="modal-overlay"></div>
+
+    <script type="module" src="app.js"></script>
   </body>
 </html>
