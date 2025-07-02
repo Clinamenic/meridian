@@ -49,18 +49,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Lifecycle Management**: Coordinated init/cleanup across all modules
 - **Error Handling**: Consistent error handling and logging across modules
 
-## [Unreleased]
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
 ### Security
 
 ## [0.2.0] - 2025-06-25
