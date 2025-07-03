@@ -392,4 +392,61 @@ export interface DeployResult {
   repository?: string;
   message?: string;
   error?: string;
+}
+
+// Unified Resource types for Unified tool
+export interface UnifiedResource {
+  id: string;
+  uri: string;
+  contentHash: string;
+  properties: {
+    'dc:title': string;
+    'dc:type': string;
+    'meridian:tags': string[];
+    'meridian:description'?: string;
+    [key: string]: any;
+  };
+  locations: {
+    primary: {
+      type: 'file-path' | 'http-url';
+      value: string;
+      accessible: boolean;
+      lastVerified: string;
+    };
+    alternatives: Array<{
+      type: 'file-path' | 'http-url';
+      value: string;
+      accessible: boolean;
+      lastVerified: string;
+    }>;
+  };
+  provenance: Array<{
+    timestamp: string;
+    action: string;
+    method: string;
+    toLocation: {
+      type: 'file-path' | 'http-url';
+      value: string;
+      accessible: boolean;
+      lastVerified: string;
+    };
+  }>;
+  state: {
+    type: 'internal' | 'external';
+    accessible: boolean;
+    lastVerified: string;
+    verificationStatus: 'verified' | 'unverified' | 'failed';
+  };
+  timestamps: {
+    created: string;
+    modified: string;
+    lastAccessed: string;
+  };
+}
+
+export interface UnifiedData {
+  resources: UnifiedResource[];
+  tags: { [tag: string]: number }; // tag usage count
+  lastModified: string;
+  version: string;
 } 

@@ -17,7 +17,7 @@
       <canvas id="marbling-canvas" class="marbling-background"></canvas>
       <div class="landing-content">
         <h1>Meridian</h1>
-        <p class="version-text" id="version-display">v0.1.0</p>
+        <p class="version-text" id="version-display">v0.4.0</p>
         <p>Please select a workspace directory to begin</p>
         <button id="landing-workspace-btn" class="primary-btn">
           Select Workspace
@@ -63,13 +63,9 @@
       <main class="main-content">
         <!-- Tab Navigation -->
         <nav class="tab-navigation">
-          <button class="tab-btn active" data-tool="collate">
+          <button class="tab-btn active" data-tool="unified">
             <span class="tab-icon"></span>
-            <span class="tab-label">Collate</span>
-          </button>
-          <button class="tab-btn" data-tool="archive">
-            <span class="tab-icon"></span>
-            <span class="tab-label">Archive</span>
+            <span class="tab-label">Unified</span>
           </button>
           <button class="tab-btn" data-tool="deploy">
             <span class="tab-icon"></span>
@@ -83,441 +79,9 @@
 
         <!-- Tool Panels -->
         <div class="tool-panels">
-          <!-- Collate Panel -->
-          <div id="collate-panel" class="tool-panel active">
-            <div class="panel-header">
-              <div class="panel-header-left">
-                <div class="panel-actions">
-                  <button
-                    id="add-resources-btn"
-                    class="panel-header-icon-btn"
-                    title="Add Resources"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-                    </svg>
-                  </button>
-                  <button
-                    id="export-btn"
-                    class="panel-header-icon-btn"
-                    title="Export Resources"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path
-                        d="M23,12L19,8V11H10V13H19V16M1,18V6C1,4.89 1.9,4 3,4H15A2,2 0 0,1 17,6V9H15V6H3V18H15V15H17V18A2,2 0 0,1 15,20H3A2,2 0 0,1 1,18Z"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    id="collapse-all-btn"
-                    class="panel-header-icon-btn"
-                    title="Collapse All Resources"
-                    data-state="expanded"
-                  >
-                    <!-- Collapse All icon (when expanded) - two chevrons pointing toward center -->
-                    <svg
-                      class="collapse-icon collapse-down"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                    >
-                      <path
-                        d="M4 2L8 6L12 2"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M4 14L8 10L12 14"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                    <!-- Expand All icon (when collapsed) - two chevrons pointing away from center -->
-                    <svg
-                      class="collapse-icon collapse-up"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                    >
-                      <path
-                        d="M4 6L8 2L12 6"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M4 10L8 14L12 10"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
-                <div class="panel-search">
-                  <input
-                    type="text"
-                    id="resource-search"
-                    class="search-input"
-                    placeholder="Search resources..."
-                  />
-                  <div class="resource-count">
-                    <span id="resource-count-text">0 Resources Listed</span>
-                  </div>
-                </div>
-              </div>
-              <div class="panel-header-right">
-                <button
-                  id="filter-logic-btn"
-                  class="panel-header-icon-btn"
-                  data-logic="any"
-                  title="Toggle Filter Logic: ANY of these tags"
-                >
-                  <!-- ANY state SVG (all circles filled) -->
-                  <svg
-                    class="filter-logic-icon filter-logic-any"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 21 21"
-                    fill="currentColor"
-                  >
-                    <circle cx="13.5" cy="10.5" r="5" />
-                    <circle cx="7.5" cy="10.5" r="5" />
-                  </svg>
-                  <!-- ALL state SVG (only intersection filled) -->
-                  <svg
-                    class="filter-logic-icon filter-logic-all"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 21 21"
-                  >
-                    <!-- Draw outline circles -->
-                    <circle
-                      cx="13.5"
-                      cy="10.5"
-                      r="5"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                    />
-                    <circle
-                      cx="7.5"
-                      cy="10.5"
-                      r="5"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                    />
-                    <!-- Draw intersection area (lens shape) -->
-                    <path
-                      d="M 10.5 6.464 A 5 5 0 0 1 10.5 14.536 A 5 5 0 0 1 10.5 6.464 Z"
-                      fill="currentColor"
-                      stroke="none"
-                    />
-                  </svg>
-                </button>
-                <button
-                  id="clear-filters-btn"
-                  class="panel-header-icon-btn"
-                  title="Clear All Filters"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 32 32"
-                    fill="currentColor"
-                    stroke="currentColor"
-                    stroke-width="0.5"
-                  >
-                    <polygon
-                      points="30 11.414 28.586 10 24 14.586 19.414 10 18 11.414 22.586 16 18 20.585 19.415 22 24 17.414 28.587 22 30 20.587 25.414 16 30 11.414"
-                      stroke-width="0.8"
-                    />
-                    <path
-                      d="M4,4A2,2,0,0,0,2,6V9.1709a2,2,0,0,0,.5859,1.4145L10,18v8a2,2,0,0,0,2,2h4a2,2,0,0,0,2-2V24H16v2H12V17.1709l-.5859-.5855L4,9.1709V6H24V8h2V6a2,2,0,0,0-2-2Z"
-                      stroke-width="0.8"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="panel-content">
-              <div class="main-content-area">
-                <div class="resource-controls">
-                  <!-- Search controls remain here -->
-                </div>
-
-                <div class="resource-list" id="resource-list">
-                  <div class="loading-state">Loading resources...</div>
-                </div>
-              </div>
-
-              <div class="filters-sidebar">
-                <div class="tag-filter-list" id="tag-filter-list"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Archive Panel -->
-          <div id="archive-panel" class="tool-panel">
-            <div class="panel-header">
-              <div class="panel-header-left">
-                <div class="panel-actions">
-                  <button
-                    id="upload-file-btn"
-                    class="panel-header-icon-btn"
-                    title="Upload File"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <polyline
-                        points="17,8 12,3 7,8"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <line
-                        x1="12"
-                        y1="3"
-                        x2="12"
-                        y2="15"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    id="setup-wallet-btn"
-                    class="panel-header-icon-btn"
-                    title="Setup Wallet"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 134.9 135.4"
-                      fill="currentColor"
-                    >
-                      <path
-                        d="M77.6,91.5c-0.3-0.6-0.6-1.3-0.8-2.1c-0.2-0.8-0.4-1.6-0.5-2.5c-0.7,0.8-1.5,1.5-2.4,2.2
-                        c-0.9,0.7-1.9,1.3-3,1.8c-1.1,0.5-2.3,0.9-3.7,1.2c-1.3,0.3-2.8,0.4-4.4,0.4c-2.5,0-4.9-0.4-7-1.1c-2.1-0.7-3.9-1.8-5.5-3.1
-                        c-1.5-1.3-2.7-2.9-3.6-4.7c-0.9-1.8-1.3-3.8-1.3-5.9c0-5.2,1.9-9.3,5.8-12.1c3.9-2.9,9.7-4.3,17.4-4.3h7.1v-2.9
-                        c0-2.4-0.8-4.3-2.3-5.7c-1.6-1.4-3.8-2.1-6.7-2.1c-2.6,0-4.5,0.6-5.7,1.7c-1.2,1.1-1.8,2.6-1.8,4.5H46.5c0-2.1,0.5-4.1,1.4-6
-                        c0.9-1.9,2.3-3.6,4.1-5c1.8-1.4,4-2.6,6.6-3.4c2.6-0.8,5.5-1.3,8.9-1.3c3,0,5.8,0.4,8.4,1.1c2.6,0.7,4.8,1.8,6.7,3.3
-                        c1.9,1.4,3.4,3.2,4.4,5.4c1.1,2.2,1.6,4.7,1.6,7.6v21.3c0,2.7,0.2,4.9,0.5,6.6c0.3,1.7,0.8,3.2,1.5,4.5v0.8H77.6z M65.5,82.6
-                        c1.3,0,2.5-0.2,3.6-0.5c1.1-0.3,2.1-0.7,3-1.2c0.9-0.5,1.6-1,2.3-1.7c0.6-0.6,1.1-1.3,1.5-1.9v-8.5h-6.5c-2,0-3.7,0.2-5.1,0.6
-                        c-1.4,0.4-2.6,0.9-3.4,1.6c-0.9,0.7-1.5,1.5-2,2.5c-0.4,1-0.6,2-0.6,3.1c0,1.7,0.6,3.1,1.8,4.3C61.2,82,63,82.6,65.5,82.6z"
-                      />
-                      <circle
-                        cx="67.3"
-                        cy="68.1"
-                        r="61.7"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="9.6521"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    id="archive-collapse-all-btn"
-                    class="panel-header-icon-btn"
-                    title="Collapse All Files"
-                    data-state="expanded"
-                  >
-                    <!-- Collapse All icon (when expanded) - two chevrons pointing toward center -->
-                    <svg
-                      class="collapse-icon collapse-down"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                    >
-                      <path
-                        d="M4 2L8 6L12 2"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M4 14L8 10L12 14"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                    <!-- Expand All icon (when collapsed) - two chevrons pointing away from center -->
-                    <svg
-                      class="collapse-icon collapse-up"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                    >
-                      <path
-                        d="M4 6L8 2L12 6"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                      <path
-                        d="M4 10L8 14L12 10"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
-                <div class="panel-search">
-                  <input
-                    type="text"
-                    id="archive-search"
-                    class="search-input"
-                    placeholder="Search archive..."
-                  />
-                  <div class="resource-count">
-                    <span id="archive-count-text">0 Files Listed</span>
-                  </div>
-                </div>
-              </div>
-              <div class="panel-header-right">
-                <button
-                  id="archive-filter-logic-btn"
-                  class="panel-header-icon-btn"
-                  data-logic="any"
-                  title="Toggle Filter Logic: ANY of these tags"
-                >
-                  <!-- ANY state SVG (all circles filled) -->
-                  <svg
-                    class="filter-logic-icon filter-logic-any"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 21 21"
-                    fill="currentColor"
-                  >
-                    <circle cx="13.5" cy="10.5" r="5" />
-                    <circle cx="7.5" cy="10.5" r="5" />
-                  </svg>
-                  <!-- ALL state SVG (only intersection filled) -->
-                  <svg
-                    class="filter-logic-icon filter-logic-all"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 21 21"
-                  >
-                    <!-- Draw outline circles -->
-                    <circle
-                      cx="13.5"
-                      cy="10.5"
-                      r="5"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                    />
-                    <circle
-                      cx="7.5"
-                      cy="10.5"
-                      r="5"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                    />
-                    <!-- Draw intersection area (lens shape) -->
-                    <path
-                      d="M 10.5 6.464 A 5 5 0 0 1 10.5 14.536 A 5 5 0 0 1 10.5 6.464 Z"
-                      fill="currentColor"
-                      stroke="none"
-                    />
-                  </svg>
-                </button>
-                <button
-                  id="archive-clear-filters-btn"
-                  class="panel-header-icon-btn"
-                  title="Clear All Filters"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 32 32"
-                    fill="currentColor"
-                    stroke="currentColor"
-                    stroke-width="0.5"
-                  >
-                    <polygon
-                      points="30 11.414 28.586 10 24 14.586 19.414 10 18 11.414 22.586 16 18 20.585 19.415 22 24 17.414 28.587 22 30 20.587 25.414 16 30 11.414"
-                      stroke-width="0.8"
-                    />
-                    <path
-                      d="M4,4A2,2,0,0,0,2,6V9.1709a2,2,0,0,0,.5859,1.4145L10,18v8a2,2,0,0,0,2,2h4a2,2,0,0,0,2-2V24H16v2H12V17.1709l-.5859-.5855L4,9.1709V6H24V8h2V6a2,2,0,0,0-2-2Z"
-                      stroke-width="0.8"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="panel-content">
-              <div class="main-content-area">
-                <div class="archive-list" id="archive-list">
-                  <div class="wallet-info-section">
-                    <div class="wallet-info-compact">
-                      <div class="wallet-indicator">
-                        <span class="wallet-label">Wallet:</span>
-                        <span class="wallet-value" id="wallet-address"
-                          >Not configured</span
-                        >
-                      </div>
-                      <div class="balance-display">
-                        <span class="balance-label">Balance:</span>
-                        <span class="balance-value">--</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="loading-state">Loading archive...</div>
-                </div>
-              </div>
-
-              <div class="filters-sidebar">
-                <div class="tag-filter-list" id="archive-tag-filter-list"></div>
-              </div>
-            </div>
+          <!-- Unified Panel -->
+          <div id="unified-panel" class="tool-panel active">
+            <!-- Content will be rendered by UnifiedResourceManager -->
           </div>
 
           <!-- Deploy Panel -->
@@ -903,7 +467,7 @@
               </div>
 
               <div class="footer-info">
-                <p><strong>Version:</strong> 0.1.0</p>
+                <p><strong>Version:</strong> 0.4.0</p>
                 <p>
                   <strong>Local-First:</strong> All data is stored locally on
                   your machine
@@ -1725,6 +1289,78 @@
               <button class="export-option-btn" data-format="bookmarks">
                 <div class="export-option-header">
                   <strong>Browser Bookmarks</strong>
+                </div>
+                <div class="export-option-description">
+                  HTML bookmarks file compatible with Chrome, Firefox, Safari,
+                  and Edge. Organized by tags.
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Unified Export Modal -->
+      <div id="unified-export-modal" class="modal">
+        <div class="modal-header">
+          <h3>Export Unified Resources</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="export-info">
+            <p id="unified-export-resource-count">
+              Ready to export unified resources
+            </p>
+            <p
+              id="unified-export-filter-info"
+              class="export-filter-description"
+            ></p>
+          </div>
+
+          <div class="export-options">
+            <h4>Select Export Format:</h4>
+
+            <div class="export-option">
+              <button class="export-option-btn" data-format="db">
+                <div class="export-option-header">
+                  <strong>SQLite Database</strong>
+                </div>
+                <div class="export-option-description">
+                  Complete SQLite database with all resource data, tags, and
+                  metadata. Best for backup or transferring to another
+                  workspace.
+                </div>
+              </button>
+            </div>
+
+            <div class="export-option">
+              <button class="export-option-btn" data-format="json">
+                <div class="export-option-header">
+                  <strong>JSON Export</strong>
+                </div>
+                <div class="export-option-description">
+                  Complete resource data with metadata, tags, and timestamps.
+                  Best for backup or re-importing.
+                </div>
+              </button>
+            </div>
+
+            <div class="export-option">
+              <button class="export-option-btn" data-format="txt">
+                <div class="export-option-header">
+                  <strong>Text URLs</strong>
+                </div>
+                <div class="export-option-description">
+                  Simple text file with one URL per line. Perfect for sharing or
+                  importing into other tools.
+                </div>
+              </button>
+            </div>
+
+            <div class="export-option">
+              <button class="export-option-btn" data-format="html">
+                <div class="export-option-header">
+                  <strong>HTML Bookmarks</strong>
                 </div>
                 <div class="export-option-description">
                   HTML bookmarks file compatible with Chrome, Firefox, Safari,

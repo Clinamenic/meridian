@@ -18,13 +18,19 @@ export class ModuleLoader {
       console.log(`[ModuleLoader] Registering module: ${name}`);
       
       // Create module instance
-      const module = new ModuleClass(this.app);
+      console.log(`[ModuleLoader] Creating instance of ${name}...`);
+      // Pass the modules map so modules can access each other
+      const module = new ModuleClass(this.app, this.modules);
+      console.log(`[ModuleLoader] Instance of ${name} created successfully`);
       
       // Store module reference
       this.modules.set(name, module);
+      console.log(`[ModuleLoader] Module ${name} stored in modules map`);
       
       // Initialize module
+      console.log(`[ModuleLoader] Initializing module ${name}...`);
       await module.init();
+      console.log(`[ModuleLoader] Module ${name} initialization completed`);
       
       console.log(`[ModuleLoader] Module ${name} registered and initialized successfully`);
       return module;
@@ -91,23 +97,26 @@ export class ModuleLoader {
   async loadAllModules() {
     // Import all modules
     const { TagManager } = await import('./TagManager.js');
-    const { ResourceManager } = await import('./ResourceManager.js');
-    const { ArchiveManager } = await import('./ArchiveManager.js');
+          // ResourceManager and ArchiveManager replaced by UnifiedResourceManager
     const { ModalManager } = await import('./ModalManager.js');
     const { AccountManager } = await import('./AccountManager.js');
     const { BroadcastManager } = await import('./BroadcastManager.js');
     const { DeployManager } = await import('./DeployManager.js');
     const { UploadManager } = await import('./UploadManager.js');
+    console.log('[ModuleLoader] Importing UnifiedResourceManager...');
+    const { UnifiedResourceManager } = await import('./UnifiedResourceManager.js');
+    console.log('[ModuleLoader] UnifiedResourceManager imported:', UnifiedResourceManager);
     
     // Register modules in dependency order
     // TagManager has no dependencies, so it can be loaded first
     await this.registerModule('tagManager', TagManager);
     
-    // ResourceManager depends on TagManager for tag operations
-    await this.registerModule('resourceManager', ResourceManager);
+          // ResourceManager and ArchiveManager replaced by UnifiedResourceManager
     
-    // ArchiveManager depends on TagManager for tag operations
-    await this.registerModule('archiveManager', ArchiveManager);
+          // UnifiedResourceManager depends on TagManager
+    console.log('[ModuleLoader] About to register UnifiedResourceManager...');
+    await this.registerModule('unifiedResourceManager', UnifiedResourceManager);
+    console.log('[ModuleLoader] UnifiedResourceManager registered successfully');
     
     // ModalManager has no dependencies, can be loaded anytime
     await this.registerModule('modalManager', ModalManager);

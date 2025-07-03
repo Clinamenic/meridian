@@ -5,7 +5,48 @@ All notable changes to Meridian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-07-01
+## [0.4.0] - 2025-07-03
+
+### Added
+
+- **Unified Resource Management System**: Consolidated resource management interface combining archive and collate functionality
+- **UnifiedResourceManager**: New module providing comprehensive resource management capabilities
+- **Unified Database Manager**: Backend integration for unified resource operations
+- **Streamlined UI**: Single resource panel replacing separate archive and collate panels
+- **Enhanced Resource Operations**: Improved resource handling with unified interface
+
+### Changed
+
+- **BREAKING CHANGE**: Removed legacy Archive and Collate panels from UI
+- **BREAKING CHANGE**: Consolidated all resource management into unified system
+- **Default Panel**: Unified panel now serves as the default active tab
+- **Module Architecture**: Removed ArchiveManager.js and ResourceManager.js modules
+- **Event System**: Updated event handling to use unified resource manager
+- **Export Functionality**: Migrated export operations to unified system
+
+### Removed
+
+- **ArchiveManager.js**: Legacy archive management module
+- **ResourceManager.js**: Legacy resource management module
+- **Archive Panel**: Dedicated archive management interface
+- **Collate Panel**: Dedicated collate management interface
+- **Legacy Export Methods**: Old export functionality in app.js
+
+### Technical Improvements
+
+- **Code Consolidation**: Eliminated duplicate functionality between archive and collate systems
+- **UI Simplification**: Reduced interface complexity with single resource management view
+- **Maintainability**: Streamlined codebase with unified resource handling
+- **Performance**: Reduced module loading and event handling overhead
+
+### Migration Notes
+
+- All existing functionality preserved in unified system
+- Users automatically see unified panel as default
+- No data loss - all resources accessible through new interface
+- Export and management features enhanced in unified system
+
+## [0.3.0] - 2025-07-01
 
 ### Added
 
@@ -48,8 +89,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Event Bus**: Centralized event system for inter-module communication
 - **Lifecycle Management**: Coordinated init/cleanup across all modules
 - **Error Handling**: Consistent error handling and logging across modules
-
-### Security
 
 ## [0.2.0] - 2025-06-25
 

@@ -59,6 +59,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateFileMetadata: (uuid: string, updates: any) => ipcRenderer.invoke('archive:update-file-metadata', uuid, updates),
   },
 
+  // Unified APIs
+  unified: {
+    loadData: () => ipcRenderer.invoke('unified:load-data'),
+    saveData: (data: any) => ipcRenderer.invoke('unified:save-data', data),
+    addResource: (resource: any) => ipcRenderer.invoke('unified:add-resource', resource),
+    updateResource: (id: string, updates: any) => ipcRenderer.invoke('unified:update-resource', id, updates),
+    removeResource: (id: string) => ipcRenderer.invoke('unified:remove-resource', id),
+    addTagToResource: (resourceId: string, tag: string) => ipcRenderer.invoke('unified:add-tag-to-resource', resourceId, tag),
+    removeTagFromResource: (resourceId: string, tag: string) => ipcRenderer.invoke('unified:remove-tag-from-resource', resourceId, tag),
+    // Database-specific APIs
+    exportToJSON: () => ipcRenderer.invoke('unified:export-to-json'),
+    exportToDatabase: (exportData: any) => ipcRenderer.invoke('unified:export-to-database', exportData),
+    getStats: () => ipcRenderer.invoke('unified:get-stats'),
+    searchResources: (criteria: any) => ipcRenderer.invoke('unified:search-resources', criteria),
+  },
+
   // Deploy APIs
   deploy: {
     loadData: () => ipcRenderer.invoke('deploy:load-data'),
@@ -239,6 +255,21 @@ export interface ElectronAPI {
     resolveUUID: (filePath: string) => Promise<any>;
     getFileByUUID: (uuid: string) => Promise<any>;
     updateFileMetadata: (uuid: string, updates: any) => Promise<void>;
+  };
+
+  unified: {
+    loadData: () => Promise<any>;
+    saveData: (data: any) => Promise<void>;
+    addResource: (resource: any) => Promise<any>;
+    updateResource: (id: string, updates: any) => Promise<any>;
+    removeResource: (id: string) => Promise<void>;
+    addTagToResource: (resourceId: string, tag: string) => Promise<any>;
+    removeTagFromResource: (resourceId: string, tag: string) => Promise<any>;
+    // Database-specific APIs
+    exportToJSON: () => Promise<any>;
+    exportToDatabase: (exportData: any) => Promise<{ success: boolean; filePath?: string; error?: string }>;
+    getStats: () => Promise<any>;
+    searchResources: (criteria: any) => Promise<any>;
   };
 
   deploy: {
