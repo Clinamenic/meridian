@@ -3,6 +3,8 @@ import { ModuleLoader } from './modules/ModuleLoader.js';
 import { TagAutocomplete } from './components/TagAutocomplete.js';
 import { UIManager } from './modules/UIManager.js';
 
+console.log('[App] ===== APP.JS LOADED =====');
+
 // Main Application Logic
 class MeridianApp {
   constructor() {
@@ -50,11 +52,20 @@ class MeridianApp {
 
     // Initialize modular system first
     try {
-      console.log('[App] Initializing modular system...');
+      console.log('[App] ===== STARTING MODULAR SYSTEM INITIALIZATION =====');
+      console.log('[App] ModuleLoader instance:', this.moduleLoader);
       await this.moduleLoader.initializeAll();
-      console.log('[App] Modular system initialized successfully');
+      console.log('[App] ===== MODULAR SYSTEM INITIALIZED SUCCESSFULLY =====');
+      
+      // Log all loaded modules
+      const moduleNames = this.moduleLoader.getModuleNames();
+      console.log('[App] Loaded modules:', moduleNames);
+      
+      // Check if UnifiedResourceManager is loaded
+      const unifiedManager = this.moduleLoader.getModule('unifiedResourceManager');
+      console.log('[App] UnifiedResourceManager found:', unifiedManager);
     } catch (error) {
-      console.error('[App] Failed to initialize modular system:', error);
+      console.error('[App] ===== FAILED TO INITIALIZE MODULAR SYSTEM =====', error);
       // Continue with initialization even if modular system fails
     }
 
@@ -83,7 +94,7 @@ class MeridianApp {
 
     // If workspace exists, proceed with normal initialization
     document.getElementById('landing-page').style.display = 'none';
-    await this.loadToolData();
+    await this.loadAllToolData();
 
     // Check if account state is already initialized, if not wait for it
     try {
@@ -144,6 +155,7 @@ class MeridianApp {
     // Tool-specific events
     this.setupCollateEvents();
     this.setupArchiveEvents();
+    // Unified events are handled by UnifiedResourceManager
     this.setupGlobalSearchEvents();
 
     // Account management events are now handled by AccountManager
@@ -156,54 +168,10 @@ class MeridianApp {
   setupCollateEvents() {
     console.log('[App] setupCollateEvents called');
 
-    // Delegate to ResourceManager for resource-related events
-    const resourceManager = this.getResourceManager();
-    if (resourceManager) {
-      // Add resources button (combined modal)
-      const addResourcesBtn = document.getElementById('add-resources-btn');
-      console.log('[App] Add resources button found:', addResourcesBtn);
-      console.log('[App] ResourceManager available:', resourceManager);
+    // Legacy method - collate events now handled by UnifiedResourceManager
+    // All resource-related functionality has been migrated to the unified system
+    console.log('[App] setupCollateEvents called - functionality migrated to UnifiedResourceManager');
 
-      if (addResourcesBtn) {
-        addResourcesBtn.addEventListener('click', () => {
-          console.log('[App] Add resources button clicked!');
-          if (resourceManager) {
-            console.log('[App] Calling resourceManager.openAddResourcesModal()');
-            resourceManager.openAddResourcesModal();
-          } else {
-            console.error('[App] ResourceManager is null!');
-          }
-        });
-        console.log('[App] Event listener attached to add-resources-btn');
-      } else {
-        console.error('[App] Add resources button not found!');
-      }
-
-      // Add resource form
-      const addResourceForm = document.getElementById('add-resource-form');
-      if (addResourceForm) {
-        addResourceForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          await resourceManager.handleAddResource();
-        });
-      }
-
-      // Extract metadata button
-      const extractMetadataBtn = document.getElementById('extract-metadata-btn');
-      if (extractMetadataBtn) {
-        extractMetadataBtn.addEventListener('click', async () => {
-          await resourceManager.extractMetadata();
-        });
-      }
-
-      // Global collapse/expand button
-      const collapseAllBtn = document.getElementById('collapse-all-btn');
-      if (collapseAllBtn) {
-        collapseAllBtn.addEventListener('click', () => {
-          resourceManager.toggleAllResourcesCollapse();
-        });
-      }
-    }
 
     // Delegate to TagManager for tag-related events
     const tagManager = this.getTagManager();
@@ -239,33 +207,12 @@ class MeridianApp {
   }
 
   setupArchiveEvents() {
-    // Upload file button - delegate to UploadManager
-    const uploadFileBtn = document.getElementById('upload-file-btn');
-    if (uploadFileBtn) {
-      uploadFileBtn.addEventListener('click', async () => {
-        const uploadManager = this.getUploadManager();
-        if (uploadManager) {
-          await uploadManager.uploadFile();
-        } else {
-          console.error('[App] UploadManager not available');
-        }
-      });
-    }
-
-    // Setup wallet button - now opens account management modal
-    const setupWalletBtn = document.getElementById('setup-wallet-btn');
-    if (setupWalletBtn) {
-      setupWalletBtn.addEventListener('click', () => {
-        const accountManager = this.getModule('accountManager');
-        if (accountManager) {
-          accountManager.openArweaveAccountsModal();
-        }
-      });
-    }
-
-    // Archive functionality is now handled by ArchiveManager
-    // The ArchiveManager handles all archive-related events in its setupArchiveEventListeners() method
+    // Legacy method - archive events have been removed
+    // Archive functionality has been merged into UnifiedResourceManager
+    console.log('[App] setupArchiveEvents called - archive functionality migrated to UnifiedResourceManager');
   }
+
+
 
   // Workspace Management
   setupWorkspaceDropdown() {
@@ -387,6 +334,11 @@ class MeridianApp {
         console.log('[DEBUG] Active tab before tool activation:', activeTab);
         console.log('[DEBUG] Active panel before tool activation:', activePanel);
 
+        // Load all tool data when workspace is selected
+        console.log('[DEBUG] Loading all tool data for new workspace...');
+        await this.loadAllToolData();
+
+        // Ensure a tool is active
         if (!activeTab) {
           console.log('[DEBUG] No active tool, activating Collate tool');
           await this.switchTool('collate');
@@ -396,10 +348,9 @@ class MeridianApp {
           const newActivePanel = document.querySelector('.tool-panel.active');
           console.log('[DEBUG] Active tab after switchTool:', newActiveTab);
           console.log('[DEBUG] Active panel after switchTool:', newActivePanel);
-        } else {
-          console.log('[DEBUG] Active tool found:', activeTab.dataset.tool);
-          await this.loadToolData();
         }
+
+
 
         // Check final state
         const finalActiveTab = document.querySelector('.tab-btn.active');
@@ -612,6 +563,16 @@ class MeridianApp {
           await this.loadArchiveData();
           console.log(`[DEBUG switchTool] Archive data loaded successfully`);
           break;
+        case 'unified':
+          console.log(`[DEBUG switchTool] Loading unified data...`);
+          const unifiedResourceManager = this.getModule('unifiedResourceManager');
+          if (unifiedResourceManager) {
+            unifiedResourceManager.renderUnifiedPanel();
+          } else {
+            console.error('[App] UnifiedResourceManager not available');
+          }
+          console.log(`[DEBUG switchTool] Unified data loaded successfully`);
+          break;
         case 'deploy':
           console.log(`[DEBUG switchTool] Loading deploy data...`);
           const deployManager = this.getDeployManager();
@@ -640,6 +601,32 @@ class MeridianApp {
     }
   }
 
+  async loadAllToolData() {
+    console.log('[App] Loading all tool data...');
+    
+    try {
+      // Load all tool data regardless of which tab is active
+      await this.loadCollateData();
+      await this.loadArchiveData();
+      await this.loadUnifiedData();
+      
+      // Load deploy and broadcast data if managers are available
+      const deployManager = this.getDeployManager();
+      if (deployManager) {
+        await deployManager.loadDeployData();
+      }
+      
+      const broadcastManager = this.getBroadcastManager();
+      if (broadcastManager) {
+        await broadcastManager.loadBroadcastData();
+      }
+      
+      console.log('[App] All tool data loaded successfully');
+    } catch (error) {
+      console.error('[App] Error loading all tool data:', error);
+    }
+  }
+
   async loadToolData() {
     // Check current active tool and load its data
     const activeTab = document.querySelector('.tab-btn.active');
@@ -651,6 +638,9 @@ class MeridianApp {
         break;
       case 'archive':
         await this.loadArchiveData();
+        break;
+      case 'unified':
+        await this.loadUnifiedData();
         break;
       case 'deploy':
         const deployManager = this.getDeployManager();
@@ -680,36 +670,9 @@ class MeridianApp {
     }
   }
 
-  // Collate Tool
+  // Legacy method - collate data loading handled by UnifiedResourceManager
   async loadCollateData() {
-    try {
-      console.log('[App] Loading collate data...');
-      this.data.collate = await window.electronAPI.collate.loadData();
-      console.log('[App] Collate data loaded:', this.data.collate);
-
-      // Use ResourceManager for rendering resources
-      const resourceManager = this.getResourceManager();
-      console.log('[App] ResourceManager:', resourceManager);
-      if (resourceManager) {
-        console.log('[App] Calling ResourceManager.renderResources()');
-        resourceManager.renderResources();
-      } else {
-        console.error('[App] ResourceManager not found!');
-      }
-
-      // Use TagManager for rendering tag filters
-      const tagManager = this.getTagManager();
-      console.log('[App] TagManager:', tagManager);
-      if (tagManager) {
-        console.log('[App] Calling TagManager.renderTagFilters()');
-        tagManager.renderTagFilters();
-      } else {
-        console.error('[App] TagManager not found!');
-      }
-    } catch (error) {
-      console.error('Failed to load collate data:', error);
-      this.showError('Failed to load resources');
-    }
+    console.log('[App] loadCollateData called - functionality migrated to UnifiedResourceManager');
   }
 
   // ===== UNIFIED TAG AUTOCOMPLETE SETUP =====
@@ -721,14 +684,8 @@ class MeridianApp {
     return this.moduleLoader.getModule('tagManager');
   }
 
-  getResourceManager() {
-    const manager = this.moduleLoader.getModule('resourceManager');
-    console.log('[App] getResourceManager called, result:', manager);
-    return manager;
-  }
-
-  getArchiveManager() {
-    return this.moduleLoader.getModule('archiveManager');
+  getUnifiedResourceManager() {
+    return this.moduleLoader.getModule('unifiedResourceManager');
   }
 
   getModalManager() {
@@ -1124,234 +1081,69 @@ class MeridianApp {
 
   // Export functionality
   setupExportEvents() {
-    const exportBtn = document.getElementById('export-btn');
-    const exportOptions = document.querySelectorAll('.export-option-btn');
-
-    // Show export modal
-    exportBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.openExportModal();
-    });
-
-    // Handle export format selection
-    exportOptions.forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const format = e.currentTarget.dataset.format;
-        await this.handleExport(format);
-        this.closeModal();
-      });
-    });
+    // Legacy method - export functionality now handled by UnifiedResourceManager
+    // All export-related functionality has been migrated to the unified system
+    console.log('[App] setupExportEvents called - functionality migrated to UnifiedResourceManager');
   }
 
+  // Legacy method - export functionality now handled by UnifiedResourceManager
   openExportModal() {
-    const filteredResources = this.getFilteredResources();
-    const hasResources = filteredResources.length > 0;
-
-    if (!hasResources) {
-      this.showError('No resources to export with current filters');
-      return;
-    }
-
-    // Update modal content
-    this.updateExportModalContent(filteredResources);
-
-    // Show modal
-    this.openModal('export-modal');
+    console.log('[App] openExportModal called - functionality migrated to UnifiedResourceManager');
   }
 
+  // Legacy method - export functionality now handled by UnifiedResourceManager
   updateExportModalContent(filteredResources) {
-    const resourceCountEl = document.getElementById('export-resource-count');
-    const filterInfoEl = document.getElementById('export-filter-info');
-    const exportOptions = document.querySelectorAll('.export-option-btn');
-
-    // Update resource count
-    const count = filteredResources.length;
-    resourceCountEl.textContent = `Ready to export ${count} resource${count !== 1 ? 's' : ''}`;
-
-    // Update filter information
-    const filterParts = [];
-    if (this.currentSearchTerm.trim()) {
-      filterParts.push(`Search: "${this.currentSearchTerm.trim()}"`);
-    }
-    if (this.activeTagFilters.size > 0) {
-      const tags = Array.from(this.activeTagFilters).join(', ');
-      filterParts.push(`Tags: ${tags}`);
-    }
-
-    if (filterParts.length > 0) {
-      filterInfoEl.textContent = `Applied filters: ${filterParts.join(' | ')}`;
-      filterInfoEl.style.display = 'block';
-    } else {
-      filterInfoEl.textContent = 'All resources (no filters applied)';
-      filterInfoEl.style.display = 'block';
-    }
-
-    // Enable all export options
-    exportOptions.forEach(btn => {
-      btn.disabled = false;
-    });
+    console.log('[App] updateExportModalContent called - functionality migrated to UnifiedResourceManager');
   }
 
+  // Legacy method - export functionality now handled by UnifiedResourceManager
   getFilteredResources() {
-    if (!this.data.collate) return [];
-
-    return this.data.collate.resources.filter(resource => {
-      // Apply same filtering logic as applyAllFilters()
-      let matchesSearch = true;
-      if (this.currentSearchTerm.trim()) {
-        const term = this.currentSearchTerm.toLowerCase();
-        const title = resource.title.toLowerCase();
-        const description = (resource.description || '').toLowerCase();
-        const url = resource.url.toLowerCase();
-
-        matchesSearch = title.includes(term) || description.includes(term) || url.includes(term);
-      }
-
-      let matchesTags = true;
-      if (this.activeTagFilters.size > 0) {
-        if (this.filterLogic === 'all') {
-          // ALL logic: Resource must have ALL of the selected tags
-          matchesTags = Array.from(this.activeTagFilters).every(tag =>
-            resource.tags.includes(tag)
-          );
-        } else {
-          // ANY logic (default): Resource must have at least one of the selected tags
-          matchesTags = Array.from(this.activeTagFilters).some(tag =>
-            resource.tags.includes(tag)
-          );
-        }
-      }
-
-      return matchesSearch && matchesTags;
-    });
+    console.log('[App] getFilteredResources called - functionality migrated to UnifiedResourceManager');
+    return [];
   }
 
+  // Legacy method - export functionality now handled by UnifiedResourceManager
   async handleExport(format) {
-    try {
-      const filteredResources = this.getFilteredResources();
-
-      if (filteredResources.length === 0) {
-        this.showError('No resources to export with current filters');
-        return;
-      }
-
-      // Generate export data
-      const exportData = this.generateExportData(filteredResources, format);
-
-      // Generate suggested filename
-      const filename = this.generateExportFilename(format);
-
-      // Show progress
-      this.updateFooterStatus('Exporting...', false);
-
-      // Call backend export
-      const result = await window.electronAPI.collate.exportResources(format, exportData, filename);
-
-      if (result.success) {
-        const formatNames = {
-          json: 'JSON',
-          text: 'text file',
-          bookmarks: 'bookmarks file'
-        };
-        const formatName = formatNames[format] || format;
-        UIManager.showSuccess(`Successfully exported ${filteredResources.length} resources as ${formatName}`);
-        this.updateFooterStatus('Export completed', false);
-      } else {
-        if (result.error === 'Export cancelled by user') {
-          this.updateFooterStatus('Export cancelled', false);
-        } else {
-          this.showError(`Export failed: ${result.error || 'Unknown error'}`);
-          this.updateFooterStatus('Export failed', true);
-        }
-      }
-
-    } catch (error) {
-      console.error('Export error:', error);
-      this.showError('Failed to export resources');
-      this.updateFooterStatus('Export failed', true);
-    }
+    console.log('[App] handleExport called - functionality migrated to UnifiedResourceManager');
   }
 
+  // Legacy method - export functionality now handled by UnifiedResourceManager
   generateExportData(resources, format) {
-    const baseData = {
-      resources: resources,
-      exportedAt: new Date().toISOString(),
-      filters: {
-        searchTerm: this.currentSearchTerm,
-        activeTags: Array.from(this.activeTagFilters)
-      },
-      count: resources.length,
-      exportFormat: format
-    };
-
-    switch (format) {
-      case 'json':
-        return baseData;
-      case 'text':
-        return {
-          ...baseData,
-          urls: resources.map(r => r.url)
-        };
-      case 'bookmarks':
-        return baseData;
-      default:
-        return baseData;
-    }
+    console.log('[App] generateExportData called - functionality migrated to UnifiedResourceManager');
+    return {};
   }
 
+  // Legacy method - export functionality now handled by UnifiedResourceManager
   generateExportFilename(format) {
-    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    let baseFilename = `meridian-resources-${timestamp}`;
-
-    // Add filter information to filename
-    const filterParts = [];
-
-    if (this.currentSearchTerm.trim()) {
-      const searchSlug = this.currentSearchTerm.trim().replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-      filterParts.push(`search-${searchSlug}`);
-    }
-
-    if (this.activeTagFilters.size > 0) {
-      const tagSlug = Array.from(this.activeTagFilters).join('-').replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
-      filterParts.push(`tags-${tagSlug}`);
-    }
-
-    if (filterParts.length > 0) {
-      baseFilename += `-${filterParts.join('-')}`;
-    }
-
-    // Add appropriate extension
-    switch (format) {
-      case 'json':
-        return `${baseFilename}.json`;
-      case 'text':
-        return `${baseFilename}.txt`;
-      case 'bookmarks':
-        return `${baseFilename}.html`;
-      default:
-        return `${baseFilename}.txt`;
-    }
+    console.log('[App] generateExportFilename called - functionality migrated to UnifiedResourceManager');
+    return 'export.json';
   }
 
   // Archive Tool
+  // Legacy method - archive data loading handled by UnifiedResourceManager
   async loadArchiveData() {
-    console.log('[App] Loading archive data...');
+    console.log('[App] loadArchiveData called - functionality migrated to UnifiedResourceManager');
+  }
+
+  // Unified Tool
+  async loadUnifiedData() {
+    console.log('[App] Loading unified data...');
 
     try {
-      // Use ArchiveManager for loading archive data
-      const archiveManager = this.getArchiveManager();
-      if (archiveManager) {
-        await archiveManager.loadArchiveData();
+      // Use UnifiedResourceManager for loading unified data
+      const unifiedResourceManager = this.getModule('unifiedResourceManager');
+      if (unifiedResourceManager) {
+        await unifiedResourceManager.loadUnifiedResources();
+        unifiedResourceManager.renderUnifiedPanel();
       } else {
-        console.error('[App] ArchiveManager not available');
-        this.showError('Archive functionality not available');
+        console.error('[App] UnifiedResourceManager not available');
+        this.showError('Unified functionality not available');
       }
 
-      console.log('[App] Archive data loading complete');
+      console.log('[App] Unified data loading complete');
     } catch (error) {
-      console.error('[App] Failed to load archive data:', error);
-      this.showError('Failed to load archive data');
+      console.error('[App] Failed to load unified data:', error);
+      this.showError('Failed to load unified data');
     }
   }
 

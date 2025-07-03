@@ -27,6 +27,7 @@
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.10.0",
+    "@types/sqlite3": "^3.1.11",
     "@types/three": "^0.177.0",
     "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
@@ -47,6 +48,7 @@
     "js-yaml": "^4.1.0",
     "minimatch": "^10.0.3",
     "node-fetch": "^3.3.2",
+    "sqlite3": "^5.1.7",
     "three": "^0.177.0",
     "twitter-api-v2": "^1.23.2",
     "uuid": "^9.0.1"

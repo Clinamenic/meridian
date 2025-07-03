@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { CollateData, ArchiveData, BroadcastData, Resource, ArweaveUpload, SocialPost, FileRegistryEntry, ArweaveUploadRecord } from '../types';
+import { CollateData, ArchiveData, BroadcastData, UnifiedData, Resource, UnifiedResource, ArweaveUpload, SocialPost, FileRegistryEntry, ArweaveUploadRecord } from '../types';
 
 export interface MeridianWorkspaceStructure {
   meridianPath: string;       // .meridian/
@@ -813,6 +813,192 @@ export class DataManager {
     }
 
     await this.saveBroadcastData(data);
+  }
+
+  // UNIFIED DATA MANAGEMENT
+  /**
+   * Load unified data from workspace (legacy JSON fallback)
+   */
+  public async loadUnifiedData(): Promise<UnifiedData> {
+    const filePath = this.getDataFilePath('resources.json');
+    try {
+      const fileContent = await fs.readFile(filePath, 'utf-8');
+      return JSON.parse(fileContent) as UnifiedData;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        // File doesn't exist, return empty data without creating file
+        return {
+          resources: [],
+          tags: {},
+          lastModified: new Date().toISOString(),
+          version: '1.0'
+        };
+      }
+      console.error(`Failed to load unified data file ${filePath}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Save unified data to workspace
+   */
+  public async saveUnifiedData(data: UnifiedData): Promise<void> {
+    const filePath = this.getDataFilePath('resources.json');
+    data.lastModified = new Date().toISOString();
+    data.version = data.version || '1.0';
+    await this.saveDataFile(filePath, data);
+  }
+
+  /**
+   * Add a unified resource
+   */
+  public async addUnifiedResource(resource: Omit<UnifiedResource, 'id'>): Promise<UnifiedResource> {
+    const data = await this.loadUnifiedData();
+    
+    const newResource: UnifiedResource = {
+      ...resource,
+      id: this.generateId()
+    };
+
+    data.resources.push(newResource);
+    
+    // Update tag counts
+    const tags = resource.properties['meridian:tags'] || [];
+    for (const tag of tags) {
+      data.tags[tag] = (data.tags[tag] || 0) + 1;
+    }
+
+    await this.saveUnifiedData(data);
+    return newResource;
+  }
+
+  /**
+   * Update a unified resource
+   */
+  public async updateUnifiedResource(id: string, updates: Partial<UnifiedResource>): Promise<UnifiedResource> {
+    const data = await this.loadUnifiedData();
+    
+    const resourceIndex = data.resources.findIndex(r => r.id === id);
+    if (resourceIndex === -1) {
+      throw new Error(`Unified resource with ID ${id} not found`);
+    }
+
+    const oldResource = data.resources[resourceIndex]!;
+    const updatedResource: UnifiedResource = {
+      ...oldResource,
+      ...updates,
+      id: oldResource.id, // Ensure id is preserved
+      timestamps: {
+        ...oldResource.timestamps,
+        modified: new Date().toISOString()
+      }
+    };
+
+    data.resources[resourceIndex] = updatedResource;
+
+    // Update tag counts if tags changed
+    const oldTags = new Set(oldResource.properties['meridian:tags'] || []);
+    const newTags = new Set(updatedResource.properties['meridian:tags'] || []);
+    
+    // Remove old tags
+    for (const tag of oldTags) {
+      if (!newTags.has(tag)) {
+        data.tags[tag] = Math.max(0, (data.tags[tag] || 0) - 1);
+        if (data.tags[tag] === 0) {
+          delete data.tags[tag];
+        }
+      }
+    }
+    
+    // Add new tags
+    for (const tag of newTags) {
+      if (!oldTags.has(tag)) {
+        data.tags[tag] = (data.tags[tag] || 0) + 1;
+      }
+    }
+
+    await this.saveUnifiedData(data);
+    return updatedResource;
+  }
+
+  /**
+   * Remove a unified resource
+   */
+  public async removeUnifiedResource(id: string): Promise<void> {
+    const data = await this.loadUnifiedData();
+    
+    const resourceIndex = data.resources.findIndex(r => r.id === id);
+    if (resourceIndex === -1) {
+      throw new Error(`Unified resource with ID ${id} not found`);
+    }
+
+    const resource = data.resources[resourceIndex]!;
+    
+    // Update tag counts
+    const tags = resource.properties['meridian:tags'] || [];
+    for (const tag of tags) {
+      data.tags[tag] = Math.max(0, (data.tags[tag] || 0) - 1);
+      if (data.tags[tag] === 0) {
+        delete data.tags[tag];
+      }
+    }
+
+    data.resources.splice(resourceIndex, 1);
+    await this.saveUnifiedData(data);
+  }
+
+  /**
+   * Add a tag to a unified resource
+   */
+  public async addTagToUnifiedResource(resourceId: string, tag: string): Promise<UnifiedResource> {
+    const data = await this.loadUnifiedData();
+    
+    const resource = data.resources.find(r => r.id === resourceId);
+    if (!resource) {
+      throw new Error(`Unified resource with ID ${resourceId} not found`);
+    }
+
+    const currentTags = resource.properties['meridian:tags'] || [];
+    if (currentTags.includes(tag)) {
+      return resource; // Tag already exists
+    }
+
+    const updatedTags = [...currentTags, tag];
+    const updatedResource = await this.updateUnifiedResource(resourceId, {
+      properties: {
+        ...resource.properties,
+        'meridian:tags': updatedTags
+      }
+    });
+
+    return updatedResource;
+  }
+
+  /**
+   * Remove a tag from a unified resource
+   */
+  public async removeTagFromUnifiedResource(resourceId: string, tag: string): Promise<UnifiedResource> {
+    const data = await this.loadUnifiedData();
+    
+    const resource = data.resources.find(r => r.id === resourceId);
+    if (!resource) {
+      throw new Error(`Unified resource with ID ${resourceId} not found`);
+    }
+
+    const currentTags = resource.properties['meridian:tags'] || [];
+    if (!currentTags.includes(tag)) {
+      return resource; // Tag doesn't exist
+    }
+
+    const updatedTags = currentTags.filter(t => t !== tag);
+    const updatedResource = await this.updateUnifiedResource(resourceId, {
+      properties: {
+        ...resource.properties,
+        'meridian:tags': updatedTags
+      }
+    });
+
+    return updatedResource;
   }
 
   // UTILITY METHODS

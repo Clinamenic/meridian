@@ -3,10 +3,10 @@
  * Follows the same pattern as the TypeScript backend managers
  */
 export class ModuleBase {
-  constructor(app) {
+  constructor(app, modules = null) {
     this.app = app;
     this.eventBus = app.eventBus || new EventTarget();
-    this.modules = app.modules || new Map();
+    this.modules = modules || app.modules || new Map();
     this.initialized = false;
   }
 
