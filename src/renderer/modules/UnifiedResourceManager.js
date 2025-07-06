@@ -1,45 +1,155 @@
 import { ModuleBase } from './ModuleBase.js';
+import { TagAutocomplete } from '../components/TagAutocomplete.js';
 
 /**
  * UnifiedResourceManager - manages both internal (local) and external (web) resources
  * Foundation for unified resource management in Meridian
+ * Follows Meridian modular architecture pattern with ModuleBase inheritance
  */
 export class UnifiedResourceManager extends ModuleBase {
   constructor(app) {
     super(app);
-    // In-memory resource list
-    this.unifiedResources = [];
+    
+    // Meridian-compliant unified state management
+    this.state = {
+      resources: [],
+      filters: {
+        searchTerm: '',
+        activeTags: new Set(),
+        filterLogic: 'any' // 'any' or 'all'
+      },
+      collapse: {
+        globalState: 'expanded',
+        collapsedItems: new Set()
+      },
+      ui: {
+        loading: false,
+        error: null
+      }
+    };
     
     // Modal state
     this.editingResourceId = null;
     this.modalTags = [];
     
-    // Filter and search state
-    this.activeTagFilters = new Set();
-    this.currentSearchTerm = '';
-    this.filterLogic = 'any'; // 'any' or 'all'
+    // Tag autocomplete instances for cleanup
+    this.tagAutocompletes = [];
     
-    // Collapse state management
-    this.unifiedCollapseState = {
-      globalState: 'expanded',
-      collapsedItems: new Set()
-    };
+    // Legacy state properties (to be removed after migration)
+    this.unifiedResources = this.state.resources; // Alias for backward compatibility
+    this.activeTagFilters = this.state.filters.activeTags; // Alias for backward compatibility
+    this.currentSearchTerm = this.state.filters.searchTerm; // Alias for backward compatibility
+    this.filterLogic = this.state.filters.filterLogic; // Alias for backward compatibility
+    this.unifiedCollapseState = this.state.collapse; // Alias for backward compatibility
   }
 
   async onInit() {
     console.log('[UnifiedResourceManager] ===== INITIALIZING UNIFIED RESOURCE MANAGER =====');
+    
+    // Emit initialization event for module coordination
+    this.emit('unifiedResourceManagerInitializing');
+    
     // Don't load resources yet - wait for workspace to be selected
     console.log('[UnifiedResourceManager] Setting up panel and event listeners...');
     this.renderUnifiedPanel();
     console.log('[UnifiedResourceManager] Panel rendered and event listeners set up, initializing collapse state...');
     this.initializeCollapseState();
+    
+    // Emit initialization complete event
+    this.emit('unifiedResourceManagerInitialized', { 
+      moduleName: 'UnifiedResourceManager',
+      state: this.state 
+    });
+    
     console.log('[UnifiedResourceManager] ===== UNIFIED RESOURCE MANAGER INITIALIZED SUCCESSFULLY =====');
   }
 
   async onCleanup() {
     console.log('[UnifiedResourceManager] Cleaning up...');
+    
+    // Clean up tag autocomplete instances
+    this.cleanupTagAutocompletes();
+    
+    // Save collapse state
     this.saveCollapseState();
+    
+    // Emit cleanup event
+    this.emit('unifiedResourceManagerCleanedUp');
+    
     console.log('[UnifiedResourceManager] Cleaned up successfully');
+  }
+
+  /**
+   * Clean up tag autocomplete instances
+   */
+  cleanupTagAutocompletes() {
+    if (this.tagAutocompletes) {
+      this.tagAutocompletes.forEach(instance => {
+        if (instance && typeof instance.cleanup === 'function') {
+          instance.cleanup();
+        }
+      });
+      this.tagAutocompletes = [];
+    }
+  }
+
+  /**
+   * Get unified state (for external access)
+   */
+  getState() {
+    return this.state;
+  }
+
+  /**
+   * Update state and emit change events
+   */
+  updateState(updates, emitEvent = true) {
+    const oldState = JSON.parse(JSON.stringify(this.state));
+    
+    // Deep merge updates into state
+    this.mergeState(this.state, updates);
+    
+    // Update legacy aliases for backward compatibility
+    this.updateLegacyAliases();
+    
+    // Emit state change event if requested
+    if (emitEvent) {
+      this.emit('unifiedResourceStateChanged', {
+        oldState,
+        newState: this.state,
+        updates
+      });
+    }
+  }
+
+  /**
+   * Deep merge state updates
+   */
+  mergeState(target, source) {
+    for (const key in source) {
+      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        // Handle Set objects specially
+        if (source[key] instanceof Set) {
+          target[key] = new Set(source[key]);
+        } else {
+          if (!target[key]) target[key] = {};
+          this.mergeState(target[key], source[key]);
+        }
+      } else {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  /**
+   * Update legacy aliases for backward compatibility
+   */
+  updateLegacyAliases() {
+    this.unifiedResources = this.state.resources;
+    this.activeTagFilters = this.state.filters.activeTags;
+    this.currentSearchTerm = this.state.filters.searchTerm;
+    this.filterLogic = this.state.filters.filterLogic;
+    this.unifiedCollapseState = this.state.collapse;
   }
 
   /**
@@ -149,107 +259,111 @@ export class UnifiedResourceManager extends ModuleBase {
     
     // Always set up event listeners after rendering
     this.setupUnifiedEventListeners();
+    this.setupResourceEventListeners();
   }
 
   /**
    * Render the unified resource list
    */
   renderUnifiedResourceList() {
+    // Get filtered resources based on current search and tag filters
     const filteredResources = this.getFilteredResources();
     
     if (filteredResources.length === 0) {
-      if (this.unifiedResources.length === 0) {
+      if (this.state.resources.length === 0) {
         return '<div class="loading-state">No resources yet. Click "Add Resource" to get started!</div>';
       } else {
-        return '<div class="loading-state">No resources match your current filters.</div>';
+        const filterInfo = this.getFilterInfo();
+        return `<div class="loading-state">No resources match your current filters.${filterInfo ? ` (${filterInfo})` : ''}</div>`;
       }
     }
 
     return filteredResources.map(resource => {
-      const isCollapsed = this.unifiedCollapseState.collapsedItems.has(resource.id);
+      const isCollapsed = this.state.collapse.collapsedItems.has(resource.id);
       const arweaveHashes = resource.properties["meridian:arweave_hashes"] || [];
       
       return `
-        <div class="archive-item ${isCollapsed ? 'collapsed' : ''}" data-id="${resource.id}">
-          <div class="archive-header">
-            <div class="archive-info">
-              <h4 class="archive-title">${this.escapeHtml(resource.properties["dc:title"] || "Untitled")}</h4>
-              <div class="archive-path">
+        <div class="resource-item ${isCollapsed ? 'collapsed' : ''}" data-id="${resource.id}">
+          <div class="resource-header">
+            <div class="resource-info">
+              <h4 class="resource-title">${this.escapeHtml(resource.properties["dc:title"] || "Untitled")}</h4>
+              <div class="resource-path">
                 <span class="file-status-indicator ${this.getResourceStatusIndicator(resource)}"></span>
                 ${this.escapeHtml(resource.locations.primary.value)}
               </div>
               ${!isCollapsed && resource.properties["meridian:description"] ? `
-                <p class="archive-description">${this.escapeHtml(resource.properties["meridian:description"])}</p>
+                <p class="resource-description">${this.escapeHtml(resource.properties["meridian:description"])}</p>
               ` : ''}
+              
               ${!isCollapsed ? `
-                <div class="archive-metadata">
-                  <span class="archive-metadata-item">
-                    <span class="archive-metadata-label">Type:</span>
-                    <span class="archive-metadata-value">${this.escapeHtml(resource.state.type)}</span>
+                <div class="resource-metadata">
+                  <span class="resource-metadata-item">
+                    <span class="resource-metadata-label">Type:</span>
+                    <span class="resource-metadata-value">${this.escapeHtml(resource.state.type)}</span>
                   </span>
-                  <span class="archive-metadata-item">
-                    <span class="archive-metadata-label">Created:</span>
-                    <span class="archive-metadata-value">${this.formatDate(resource.timestamps.created)}</span>
+                  <span class="resource-metadata-item">
+                    <span class="resource-metadata-label">Created:</span>
+                    <span class="resource-metadata-value">${this.formatDate(resource.timestamps.created)}</span>
                   </span>
                   ${arweaveHashes.length > 0 ? `
-                    <span class="archive-metadata-item">
-                      <span class="archive-metadata-label">Arweave Uploads:</span>
-                      <span class="archive-metadata-value">${arweaveHashes.length}</span>
+                    <span class="resource-metadata-item">
+                      <span class="resource-metadata-label">Arweave Uploads:</span>
+                      <span class="resource-metadata-value">${arweaveHashes.length}</span>
                     </span>
                   ` : ''}
                 </div>
               ` : ''}
             </div>
-            <div class="archive-actions">
-              <button class="archive-collapse-btn" data-resource-id="${resource.id}" title="Toggle details">
+            <div class="resource-actions">
+              <button class="resource-collapse-btn" data-resource-id="${resource.id}" title="Toggle details">
                 <svg width="12" height="12" viewBox="0 0 12 12">
                   <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
-              <div class="archive-actions-dropdown">
-                <button class="archive-actions-btn" data-resource-id="${resource.id}" title="Resource options">⋮</button>
-                <div class="archive-actions-menu" data-resource-id="${resource.id}">
-                  <button class="archive-actions-item edit-option" data-resource-id="${resource.id}">Edit</button>
-                  <button class="archive-actions-item remove-option" data-resource-id="${resource.id}">Remove</button>
+              <div class="resource-actions-dropdown">
+                <button class="resource-actions-btn" data-resource-id="${resource.id}" title="Resource options">⋮</button>
+                <div class="resource-actions-menu" data-resource-id="${resource.id}">
+                  <button class="resource-actions-item edit-option" data-resource-id="${resource.id}">Edit</button>
+                  <button class="resource-actions-item remove-option" data-resource-id="${resource.id}">Remove</button>
                 </div>
               </div>
             </div>
           </div>
           
           ${!isCollapsed && arweaveHashes.length > 0 ? `
-            <div class="archive-arweave-hashes">
-              <div class="archive-hash-header" data-resource-id="${resource.id}">
-                <span class="archive-hash-count">${arweaveHashes.length} Arweave Upload${arweaveHashes.length > 1 ? 's' : ''}</span>
-                <button class="archive-hash-toggle" data-resource-id="${resource.id}" title="Toggle upload history">
-                  <svg class="archive-hash-toggle-icon" width="12" height="12" viewBox="0 0 12 12">
+            <div class="resource-arweave-hashes">
+              <div class="resource-hash-header" data-resource-id="${resource.id}">
+                <span class="resource-hash-count">${arweaveHashes.length} Arweave Upload${arweaveHashes.length > 1 ? 's' : ''}</span>
+                <button class="resource-hash-toggle" data-resource-id="${resource.id}" title="Toggle upload history">
+                  <svg class="resource-hash-toggle-icon" width="12" height="12" viewBox="0 0 12 12">
                     <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </button>
               </div>
-              <div class="archive-hash-list collapsed" data-resource-id="${resource.id}">
+              <div class="resource-hash-list collapsed" data-resource-id="${resource.id}">
                 ${arweaveHashes.map(hash => `
-                  <div class="archive-hash-item">
-                    <div class="archive-hash-content">
-                      <a href="${hash.link}" class="archive-hash-link" target="_blank" title="${hash.hash}">
+                  <div class="resource-hash-item">
+                    <div class="resource-hash-content">
+                      <a href="${hash.link}" class="resource-hash-link" target="_blank" title="${hash.hash}">
                         ${this.truncateHash(hash.hash)}
                       </a>
-                      <span class="archive-hash-timestamp">${this.formatDate(hash.timestamp)}</span>
+                      <span class="resource-hash-timestamp">${this.formatDate(hash.timestamp)}</span>
                       ${hash.tags && hash.tags.length > 0 ? `
-                        <div class="archive-hash-tags">
+                        <div class="resource-hash-tags">
                           ${hash.tags.map(tag => `
-                            <span class="archive-hash-tag" title="${this.escapeHtml(tag)}">${this.escapeHtml(tag)}</span>
+                            <span class="resource-hash-tag" title="${this.escapeHtml(tag)}">${this.escapeHtml(tag)}</span>
                           `).join('')}
                         </div>
                       ` : ''}
                     </div>
-                    <div class="archive-hash-actions">
-                      <button class="archive-hash-action-btn copy-hash-btn" data-hash="${hash.hash}" title="Copy Hash">
+                    <div class="resource-hash-actions">
+                      <button class="resource-hash-action-btn copy-hash-btn" data-hash="${hash.hash}" title="Copy Hash">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
                       </button>
-                      <button class="archive-hash-action-btn copy-url-btn" data-url="${hash.link}" title="Copy URL">
+                      <button class="resource-hash-action-btn copy-url-btn" data-url="${hash.link}" title="Copy URL">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
@@ -263,25 +377,23 @@ export class UnifiedResourceManager extends ModuleBase {
           ` : ''}
           
           ${!isCollapsed ? `
-            <div class="archive-tags">
-              <div class="archive-tag-input">
+            <div class="resource-tags">
+              <div class="resource-tag-input">
                 <div class="tag-input-container">
-                  <input 
-                    type="text" 
-                    class="tag-input" 
-                    placeholder="add tag..." 
-                    data-resource-id="${resource.id}"
-                  />
-                  <button class="add-tag-btn" data-resource-id="${resource.id}" disabled>+</button>
+                  <input type="text" class="tag-input" placeholder="add tag..." data-resource-id="${resource.id}">
+                  <button class="add-tag-btn" data-resource-id="${resource.id}" disabled="">+</button>
                 </div>
                 <div class="tag-autocomplete" id="autocomplete-${resource.id}" style="display: none;"></div>
               </div>
-              ${(resource.properties["meridian:tags"] || []).map(tag => `
-                <span class="archive-tag">
-                  ${this.escapeHtml(tag)}
-                  <button class="remove-tag-btn" data-resource-id="${resource.id}" data-tag="${this.escapeHtml(tag)}" title="Remove tag">×</button>
-                </span>
-              `).join('')}
+              
+              ${resource.properties["meridian:tags"] && resource.properties["meridian:tags"].length > 0 ? 
+                resource.properties["meridian:tags"].map(tag => `
+                  <span class="resource-tag">
+                    ${this.escapeHtml(tag)}
+                    <button class="remove-tag-btn" data-resource-id="${resource.id}" data-tag="${this.escapeHtml(tag)}" title="Remove tag">×</button>
+                  </span>
+                `).join('') : ''
+              }
             </div>
           ` : ''}
         </div>
@@ -290,14 +402,17 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Get filtered resources based on search and tag filters
+   * Get filtered resources based on search and tag filters (Meridian-compliant)
    */
   getFilteredResources() {
-    let filtered = this.unifiedResources;
+    let filtered = this.state.resources;
+    console.log('[UnifiedResourceManager] getFilteredResources called - starting with', filtered.length, 'resources');
+    console.log('[UnifiedResourceManager] Active tags in getFilteredResources:', Array.from(this.state.filters.activeTags));
 
     // Apply search filter
-    if (this.currentSearchTerm) {
-      const searchTerm = this.currentSearchTerm.toLowerCase();
+    if (this.state.filters.searchTerm) {
+      const searchTerm = this.state.filters.searchTerm.toLowerCase();
+      const beforeSearch = filtered.length;
       filtered = filtered.filter(resource => {
         const title = (resource.properties["dc:title"] || "").toLowerCase();
         const description = (resource.properties["meridian:description"] || "").toLowerCase();
@@ -309,48 +424,61 @@ export class UnifiedResourceManager extends ModuleBase {
                url.includes(searchTerm) || 
                tags.includes(searchTerm);
       });
+      console.log('[UnifiedResourceManager] After search filter:', beforeSearch, '->', filtered.length);
     }
 
     // Apply tag filters
-    if (this.activeTagFilters.size > 0) {
+    if (this.state.filters.activeTags.size > 0) {
+      const beforeTags = filtered.length;
+      const activeTagsArray = Array.from(this.state.filters.activeTags);
+      console.log('[UnifiedResourceManager] Applying tag filters with active tags:', activeTagsArray);
+      
       filtered = filtered.filter(resource => {
         const resourceTags = new Set(resource.properties["meridian:tags"] || []);
         
-        if (this.filterLogic === 'any') {
+        if (this.state.filters.filterLogic === 'any') {
           // Show if ANY of the active filters match
-          return Array.from(this.activeTagFilters).some(tag => resourceTags.has(tag));
+          return activeTagsArray.some(tag => resourceTags.has(tag));
         } else {
           // Show if ALL of the active filters match
-          return Array.from(this.activeTagFilters).every(tag => resourceTags.has(tag));
+          return activeTagsArray.every(tag => resourceTags.has(tag));
         }
       });
+      console.log('[UnifiedResourceManager] After tag filter:', beforeTags, '->', filtered.length, 'Active tags:', activeTagsArray);
+    } else {
+      console.log('[UnifiedResourceManager] No active tag filters to apply');
     }
 
+    console.log('[UnifiedResourceManager] Final filtered count:', filtered.length);
     return filtered;
   }
 
   /**
-   * Render tag filters
+   * Render tag filters (Meridian-compliant)
    */
   renderTagFilters() {
     const allTags = this.getAllTags();
+    console.log('[UnifiedResourceManager] renderTagFilters - active tags:', Array.from(this.state.filters.activeTags));
     
     if (allTags.length === 0) {
       return '<div class="no-tags">No tags yet</div>';
     }
 
-    return allTags.map(tag => `
-      <div class="tag-filter-container">
-        <button 
-          class="tag-filter ${this.activeTagFilters.has(tag) ? 'active' : ''}" 
-          data-tag="${this.escapeHtml(tag)}"
-          title="${this.getTagCount(tag)} resources"
-        >
-          <span class="tag-filter-label">${this.escapeHtml(tag)}</span>
-          <span class="tag-filter-count">${this.getTagCount(tag)}</span>
-        </button>
-      </div>
-    `).join('');
+    return allTags.map(tag => {
+      const isActive = this.state.filters.activeTags.has(tag);
+      return `
+        <div class="tag-filter-container">
+          <button 
+            class="tag-filter ${isActive ? 'active' : ''}" 
+            data-tag="${this.escapeHtml(tag)}"
+            title="${this.getTagCount(tag)} resources"
+          >
+            <span class="tag-filter-label">${this.escapeHtml(tag)}</span>
+            <span class="tag-filter-count">${this.getTagCount(tag)}</span>
+          </button>
+        </div>
+      `;
+    }).join('');
   }
 
   /**
@@ -358,17 +486,17 @@ export class UnifiedResourceManager extends ModuleBase {
    */
   getAllTags() {
     const tagSet = new Set();
-    this.unifiedResources.forEach(resource => {
+    this.state.resources.forEach(resource => {
       (resource.properties["meridian:tags"] || []).forEach(tag => tagSet.add(tag));
     });
     return Array.from(tagSet).sort();
   }
 
   /**
-   * Get count of resources with a specific tag
+   * Get count of resources with a specific tag (Meridian-compliant)
    */
   getTagCount(tag) {
-    return this.unifiedResources.filter(resource => 
+    return this.state.resources.filter(resource => 
       (resource.properties["meridian:tags"] || []).includes(tag)
     ).length;
   }
@@ -390,6 +518,71 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
+   * Setup event listeners for resource items (collapsed from setupUnifiedEventListeners)
+   */
+  setupResourceEventListeners() {
+    // Resource collapse buttons
+    document.querySelectorAll('.resource-collapse-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const resourceId = btn.dataset.resourceId;
+        this.toggleResourceCollapse(resourceId);
+      });
+    });
+
+    // Resource actions dropdown
+    document.querySelectorAll('.resource-actions-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const resourceId = btn.dataset.resourceId;
+        const menu = document.querySelector(`.resource-actions-menu[data-resource-id="${resourceId}"]`);
+        if (menu) {
+          menu.classList.toggle('show');
+        }
+      });
+    });
+
+    // Resource action items
+    document.querySelectorAll('.resource-actions-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const resourceId = item.dataset.resourceId;
+        
+        if (item.classList.contains('edit-option')) {
+          this.editUnifiedResource(resourceId);
+        } else if (item.classList.contains('remove-option')) {
+          this.removeUnifiedResource(resourceId);
+        }
+      });
+    });
+
+    // Arweave hash toggle buttons
+    document.querySelectorAll('.resource-hash-toggle').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const resourceId = btn.dataset.resourceId;
+        this.toggleArweaveHashList(resourceId);
+      });
+    });
+
+    // Arweave hash links
+    document.querySelectorAll('.resource-hash-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    });
+
+    // Copy hash buttons
+    document.querySelectorAll('.copy-hash-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const hash = btn.dataset.hash;
+        await this.copyToClipboard(hash);
+      });
+    });
+  }
+
+  /**
    * Setup event listeners for unified panel
    */
   setupUnifiedEventListeners() {
@@ -407,23 +600,53 @@ export class UnifiedResourceManager extends ModuleBase {
       });
     }
 
-    // Search functionality
+    // Search functionality (Meridian-compliant)
     const searchInput = unifiedPanel.querySelector('#unified-search');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
-        this.currentSearchTerm = e.target.value;
-        this.applyUnifiedFilters();
+        // Update state
+        this.updateState({
+          filters: {
+            searchTerm: e.target.value
+          }
+        });
+        
+        // Apply filters
+        this.applyFilters();
+        
+        // Emit search change event
+        this.emit('searchChanged', {
+          searchTerm: this.state.filters.searchTerm,
+          filteredCount: this.getFilteredResources().length
+        });
       });
     }
 
-    // Filter logic toggle
+    // Filter logic toggle (Meridian-compliant)
     const filterLogicBtn = unifiedPanel.querySelector('#unified-filter-logic-btn');
     if (filterLogicBtn) {
       filterLogicBtn.addEventListener('click', () => {
-        this.filterLogic = this.filterLogic === 'any' ? 'all' : 'any';
-        filterLogicBtn.setAttribute('data-logic', this.filterLogic);
-        filterLogicBtn.setAttribute('title', `Toggle Filter Logic: ${this.filterLogic === 'any' ? 'ANY' : 'ALL'} of these tags`);
-        this.applyUnifiedFilters();
+        const newLogic = this.state.filters.filterLogic === 'any' ? 'all' : 'any';
+        
+        // Update state
+        this.updateState({
+          filters: {
+            filterLogic: newLogic
+          }
+        });
+        
+        // Update button appearance
+        filterLogicBtn.setAttribute('data-logic', newLogic);
+        filterLogicBtn.setAttribute('title', `Toggle Filter Logic: ${newLogic === 'any' ? 'ANY' : 'ALL'} of these tags`);
+        
+        // Apply filters
+        this.applyFilters();
+        
+        // Emit filter logic change event
+        this.emit('filterLogicChanged', {
+          filterLogic: newLogic,
+          filteredCount: this.getFilteredResources().length
+        });
       });
     }
 
@@ -468,8 +691,8 @@ export class UnifiedResourceManager extends ModuleBase {
       } else if (e.target.classList.contains('remove-option')) {
         const resourceId = e.target.dataset.resourceId;
         this.removeUnifiedResource(resourceId);
-      } else if (e.target.closest('.archive-collapse-btn')) {
-        const resourceId = e.target.closest('.archive-collapse-btn').dataset.resourceId;
+      } else if (e.target.closest('.resource-collapse-btn')) {
+        const resourceId = e.target.closest('.resource-collapse-btn').dataset.resourceId;
         this.toggleResourceCollapse(resourceId);
       }
     });
@@ -477,8 +700,8 @@ export class UnifiedResourceManager extends ModuleBase {
     // Arweave hash interactions (event delegation)
     unifiedPanel.addEventListener('click', (e) => {
       // Arweave hash toggle
-      if (e.target.closest('.archive-hash-toggle')) {
-        const resourceId = e.target.closest('.archive-hash-toggle').dataset.resourceId;
+      if (e.target.closest('.resource-hash-toggle')) {
+        const resourceId = e.target.closest('.resource-hash-toggle').dataset.resourceId;
         this.toggleArweaveHashList(resourceId);
       }
       
@@ -534,7 +757,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Toggle Arweave hash list visibility
    */
   toggleArweaveHashList(resourceId) {
-    const hashList = document.querySelector(`.archive-hash-list[data-resource-id="${resourceId}"]`);
+    const hashList = document.querySelector(`.resource-hash-list[data-resource-id="${resourceId}"]`);
     if (hashList) {
       hashList.classList.toggle('collapsed');
     }
@@ -567,38 +790,76 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Toggle collapse all functionality
+   * Toggle collapse all functionality (Meridian-compliant)
    */
   toggleCollapseAll() {
-    const collapseBtn = document.getElementById('unified-collapse-all-btn');
-    if (!collapseBtn) return;
-
-    if (this.unifiedCollapseState.globalState === 'expanded') {
-      this.unifiedCollapseState.globalState = 'collapsed';
-      this.unifiedCollapseState.collapsedItems = new Set(this.unifiedResources.map(r => r.id));
-      collapseBtn.setAttribute('data-state', 'collapsed');
-    } else {
-      this.unifiedCollapseState.globalState = 'expanded';
-      this.unifiedCollapseState.collapsedItems.clear();
-      collapseBtn.setAttribute('data-state', 'expanded');
-    }
-
-    this.updateResourceListOnly();
+    const newState = this.state.collapse.globalState === 'expanded' ? 'collapsed' : 'expanded';
+    
+    // Update state
+    this.updateState({
+      collapse: {
+        globalState: newState,
+        collapsedItems: newState === 'collapsed' 
+          ? new Set(this.state.resources.map(r => r.id))
+          : new Set()
+      }
+    });
+    
+    // Update UI
+    this.updateUI();
+    
+    // Save collapse state
     this.saveCollapseState();
+    
+    // Emit event for other modules
+    this.emit('collapseStateChanged', { 
+      globalState: newState, 
+      collapsedItems: Array.from(this.state.collapse.collapsedItems) 
+    });
   }
 
   /**
-   * Toggle individual resource collapse
+   * Toggle individual resource collapse (Meridian-compliant)
    */
   toggleResourceCollapse(resourceId) {
-    if (this.unifiedCollapseState.collapsedItems.has(resourceId)) {
-      this.unifiedCollapseState.collapsedItems.delete(resourceId);
+    const newCollapsedItems = new Set(this.state.collapse.collapsedItems);
+    
+    if (newCollapsedItems.has(resourceId)) {
+      newCollapsedItems.delete(resourceId);
     } else {
-      this.unifiedCollapseState.collapsedItems.add(resourceId);
+      newCollapsedItems.add(resourceId);
     }
-
-    this.updateResourceListOnly();
+    
+    // Update state
+    this.updateState({
+      collapse: {
+        collapsedItems: newCollapsedItems
+      }
+    });
+    
+    // Update UI
+    this.updateUI();
+    
+    // Save collapse state
     this.saveCollapseState();
+    
+    // Emit event for UI updates
+    this.emit('resourceCollapseChanged', { 
+      resourceId, 
+      isCollapsed: this.state.collapse.collapsedItems.has(resourceId) 
+    });
+  }
+
+  /**
+   * Unified UI update method (Meridian-compliant)
+   */
+  updateUI() {
+    console.log('[UnifiedResourceManager] updateUI called - active tags:', Array.from(this.state.filters.activeTags));
+    this.updateTagFilters(); // Update tag filters first
+    this.updateResourceList(); // Then update resource list
+    this.updateButtonStates(); // Then update other button states
+    this.updateCounts(); // Finally update counts
+    console.log('[UnifiedResourceManager] updateUI completed');
   }
 
   /**
@@ -612,82 +873,152 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Toggle tag filter
+   * Update button states (Meridian-compliant)
+   */
+  updateButtonStates() {
+    // Update collapse all button
+    const collapseAllBtn = document.getElementById('unified-collapse-all-btn');
+    if (collapseAllBtn) {
+      collapseAllBtn.setAttribute('data-state', this.state.collapse.globalState);
+      collapseAllBtn.setAttribute('title', 
+        this.state.collapse.globalState === 'expanded' ? 'Collapse All Resources' : 'Expand All Resources'
+      );
+    }
+    
+    // Update individual collapse buttons
+    document.querySelectorAll('.resource-collapse-btn').forEach(btn => {
+      const resourceId = btn.dataset.resourceId;
+      const isCollapsed = this.state.collapse.collapsedItems.has(resourceId);
+      btn.closest('.resource-item').classList.toggle('collapsed', isCollapsed);
+    });
+    
+    // Note: Tag filter buttons are now handled by updateTagFilters() to avoid conflicts
+  }
+
+  /**
+   * Update resource list
+   */
+  updateResourceList() {
+    const resourceList = document.getElementById('unified-resource-list');
+    if (resourceList) {
+      resourceList.innerHTML = this.renderUnifiedResourceList();
+      
+      // Re-setup event listeners for the updated DOM
+      this.setupResourceEventListeners();
+    }
+  }
+
+  /**
+   * Update tag filters
+   */
+  updateTagFilters() {
+    console.log('[UnifiedResourceManager] updateTagFilters called - active tags:', Array.from(this.state.filters.activeTags));
+    const container = document.getElementById('unified-tag-filter-list');
+    if (container) {
+      const newHtml = this.renderTagFilters();
+      console.log('[UnifiedResourceManager] Re-rendering tag filters with HTML:', newHtml.substring(0, 200) + '...');
+      container.innerHTML = newHtml;
+    }
+  }
+
+  /**
+   * Update counts (Meridian-compliant)
+   */
+  updateCounts() {
+    const filteredResources = this.getFilteredResources();
+    const visibleCount = filteredResources.length;
+    const totalCount = this.state.resources.length;
+    
+    const countElement = document.getElementById('unified-count-text');
+    if (countElement) {
+      const resourceText = visibleCount === 1 ? 'Resource' : 'Resources';
+      countElement.textContent = `${visibleCount} of ${totalCount} ${resourceText}`;
+    }
+  }
+
+  /**
+   * Get filter information for display
+   */
+  getFilterInfo() {
+    const parts = [];
+    
+    if (this.state.filters.searchTerm.trim()) {
+      parts.push(`Search: "${this.state.filters.searchTerm}"`);
+    }
+    
+    if (this.state.filters.activeTags.size > 0) {
+      const tags = Array.from(this.state.filters.activeTags).join(', ');
+      parts.push(`Tags: ${tags} (${this.state.filters.filterLogic.toUpperCase()})`);
+    }
+    
+    return parts.length > 0 ? parts.join(' | ') : '';
+  }
+
+  /**
+   * Toggle tag filter (Meridian-compliant)
    */
   toggleTagFilter(tag) {
-    if (this.activeTagFilters.has(tag)) {
-      this.activeTagFilters.delete(tag);
+    console.log('[UnifiedResourceManager] Toggling tag filter:', tag);
+    console.log('[UnifiedResourceManager] Current active tags before toggle:', Array.from(this.state.filters.activeTags));
+    
+    const newActiveTags = new Set(this.state.filters.activeTags);
+    
+    if (newActiveTags.has(tag)) {
+      newActiveTags.delete(tag);
+      console.log('[UnifiedResourceManager] Removed tag filter:', tag);
     } else {
-      this.activeTagFilters.add(tag);
+      newActiveTags.add(tag);
+      console.log('[UnifiedResourceManager] Added tag filter:', tag);
     }
-    this.applyUnifiedFilters();
-    this.updateUnifiedTagFilterButtons();
+    
+    console.log('[UnifiedResourceManager] New active tags before state update:', Array.from(newActiveTags));
+    
+    // Update state
+    this.updateState({
+      filters: {
+        activeTags: newActiveTags
+      }
+    });
+    
+    console.log('[UnifiedResourceManager] Active tags after state update:', Array.from(this.state.filters.activeTags));
+    console.log('[UnifiedResourceManager] State filters object after update:', this.state.filters);
+    
+    // Update UI to reflect the new filter state
+    this.updateUI();
+    
+    // Emit filter change event
+    this.emit('filtersApplied', {
+      searchTerm: this.state.filters.searchTerm,
+      activeTags: Array.from(this.state.filters.activeTags),
+      filterLogic: this.state.filters.filterLogic,
+      filteredCount: this.getFilteredResources().length
+    });
   }
 
   /**
-   * Apply unified filters
+   * Apply unified filters (Meridian-compliant)
+   * This method now only triggers UI updates - filtering is done in renderUnifiedResourceList
+   */
+  applyFilters() {
+    // Update the resource list to reflect current filters
+    this.updateResourceList();
+    
+    // Update counts
+    this.updateCounts();
+  }
+
+  /**
+   * Apply unified filters (legacy method for backward compatibility)
    */
   applyUnifiedFilters() {
-    const resourceItems = document.querySelectorAll('.archive-item');
-    
-    resourceItems.forEach(item => {
-      const resourceId = item.dataset.id;
-      const resource = this.unifiedResources.find(r => r.id === resourceId);
-      
-      if (!resource) {
-        item.style.display = 'none';
-        return;
-      }
-      
-      let matchesSearch = true;
-      let matchesTags = true;
-      
-      // Apply search filter
-      if (this.currentSearchTerm.trim()) {
-        const term = this.currentSearchTerm.toLowerCase();
-        const title = (resource.properties["dc:title"] || "").toLowerCase();
-        const description = (resource.properties["meridian:description"] || "").toLowerCase();
-        const url = resource.locations.primary.value.toLowerCase();
-        const tags = (resource.properties["meridian:tags"] || []).join(" ").toLowerCase();
-        
-        matchesSearch = title.includes(term) || 
-                       description.includes(term) || 
-                       url.includes(term) || 
-                       tags.includes(term);
-      }
-      
-      // Apply tag filters
-      if (this.activeTagFilters.size > 0) {
-        const resourceTags = new Set(resource.properties["meridian:tags"] || []);
-        
-        if (this.filterLogic === 'all') {
-          // ALL logic: Resource must have ALL of the selected tags
-          matchesTags = Array.from(this.activeTagFilters).every(tag => resourceTags.has(tag));
-        } else {
-          // ANY logic (default): Resource must have at least one of the selected tags
-          matchesTags = Array.from(this.activeTagFilters).some(tag => resourceTags.has(tag));
-        }
-      }
-      
-      // Show/hide based on filters
-      item.style.display = (matchesSearch && matchesTags) ? 'block' : 'none';
-    });
-    
-    this.updateUnifiedCount();
+    this.applyFilters();
   }
 
   /**
-   * Update unified tag filter buttons
+   * Update unified tag filter buttons (legacy method - now handled by updateButtonStates)
    */
   updateUnifiedTagFilterButtons() {
-    document.querySelectorAll('.tag-filter').forEach(btn => {
-      const tag = btn.dataset.tag;
-      if (this.activeTagFilters.has(tag)) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
+    this.updateButtonStates();
   }
 
   /**
@@ -701,26 +1032,24 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Update unified count
+   * Update unified count (legacy method for backward compatibility)
    */
   updateUnifiedCount() {
-    const visibleCount = document.querySelectorAll('.archive-item[style*="block"], .archive-item:not([style*="none"])').length;
-    const totalCount = this.unifiedResources.length;
-    
-    const countElement = document.getElementById('unified-count-text');
-    if (countElement) {
-      const resourceText = visibleCount === 1 ? 'Resource' : 'Resources';
-      countElement.textContent = `${visibleCount} of ${totalCount} ${resourceText}`;
-    }
+    this.updateCounts();
   }
 
   /**
-   * Clear all filters
+   * Clear all filters (Meridian-compliant)
    */
   clearAllFilters() {
-    this.activeTagFilters.clear();
-    this.currentSearchTerm = '';
-    this.filterLogic = 'any';
+    // Update state
+    this.updateState({
+      filters: {
+        searchTerm: '',
+        activeTags: new Set(),
+        filterLogic: 'any'
+      }
+    });
     
     // Clear search input
     const searchInput = document.getElementById('unified-search');
@@ -728,99 +1057,118 @@ export class UnifiedResourceManager extends ModuleBase {
       searchInput.value = '';
     }
     
-    // Update filter buttons
-    document.querySelectorAll('.tag-filter').forEach(btn => {
-      btn.classList.remove('active');
-    });
+    // Update filter logic button
+    const filterLogicBtn = document.getElementById('unified-filter-logic-btn');
+    if (filterLogicBtn) {
+      filterLogicBtn.setAttribute('data-logic', 'any');
+      filterLogicBtn.setAttribute('title', 'Toggle Filter Logic: ANY of these tags');
+    }
     
-    // Show all resources
-    document.querySelectorAll('.archive-item').forEach(item => {
-      item.style.display = 'block';
-    });
+    // Update UI to reflect cleared filters
+    this.updateUI();
     
-    this.updateUnifiedCount();
+    // Emit clear filters event
+    this.emit('filtersCleared', {
+      filteredCount: this.state.resources.length
+    });
   }
 
   /**
-   * Add tag to resource
+   * Add tag to resource (Meridian-compliant)
    */
   async addTagToResource(resourceId, tagValue) {
     try {
+      // Get ModalManager for user feedback
+      const modalManager = this.getApp().getModule('ModalManager');
+      
       // Add tag via backend API
       const updatedResource = await window.electronAPI.unified.addTagToResource(resourceId, tagValue);
       
-      // Update local resource
-      const resourceIndex = this.unifiedResources.findIndex(r => r.id === resourceId);
+      // Update local state
+      const resourceIndex = this.state.resources.findIndex(r => r.id === resourceId);
       if (resourceIndex !== -1) {
-        this.unifiedResources[resourceIndex] = updatedResource;
+        this.updateState({
+          resources: this.state.resources.map((r, i) => 
+            i === resourceIndex ? updatedResource : r
+          )
+        });
       }
       
-      // Update the specific resource item in the DOM
-      const resourceItem = document.querySelector(`[data-id="${resourceId}"]`);
-      if (resourceItem) {
-        const tagsContainer = resourceItem.querySelector('.archive-tags');
-        if (tagsContainer) {
-          // Add the new tag to the display
-          const tagSpan = document.createElement('span');
-          tagSpan.className = 'archive-tag';
-          tagSpan.innerHTML = `
-            ${this.escapeHtml(tagValue)}
-            <button class="remove-tag-btn" data-resource-id="${resourceId}" data-tag="${this.escapeHtml(tagValue)}" title="Remove tag">×</button>
-          `;
-          tagsContainer.appendChild(tagSpan);
-        }
+      // Update UI
+      this.updateUI();
+      
+      // Show success message
+      if (modalManager && typeof modalManager.showSuccess === 'function') {
+        modalManager.showSuccess('Tag added successfully');
+      } else {
+        this.showSuccess('Tag added successfully');
       }
       
-      // Update tag filter list and re-apply filters
-      this.updateTagFilterList();
-      this.applyUnifiedFilters();
-      this.showSuccess('Tag added successfully');
+      // Emit event
+      this.emit('tagAdded', { resourceId, tagValue });
+      
     } catch (error) {
       console.error('[UnifiedResourceManager] Error adding tag:', error);
+      this.emit('error', { operation: 'addTag', error: error.message });
       this.showError('Failed to add tag');
     }
   }
 
   /**
-   * Remove tag from resource
+   * Remove tag from resource (Meridian-compliant)
    */
   async removeTagFromResource(resourceId, tag) {
     try {
+      // Get ModalManager for user feedback
+      const modalManager = this.getApp().getModule('ModalManager');
+      
       // Remove tag via backend API
       const updatedResource = await window.electronAPI.unified.removeTagFromResource(resourceId, tag);
       
-      // Update local resource
-      const resourceIndex = this.unifiedResources.findIndex(r => r.id === resourceId);
+      // Update local state
+      const resourceIndex = this.state.resources.findIndex(r => r.id === resourceId);
       if (resourceIndex !== -1) {
-        this.unifiedResources[resourceIndex] = updatedResource;
+        this.updateState({
+          resources: this.state.resources.map((r, i) => 
+            i === resourceIndex ? updatedResource : r
+          )
+        });
       }
       
-      // Remove the tag from the DOM
-      const tagElement = document.querySelector(`[data-resource-id="${resourceId}"][data-tag="${this.escapeHtml(tag)}"]`);
-      if (tagElement) {
-        tagElement.closest('.archive-tag').remove();
+      // Update UI
+      this.updateUI();
+      
+      // Show success message
+      if (modalManager && typeof modalManager.showSuccess === 'function') {
+        modalManager.showSuccess('Tag removed successfully');
+      } else {
+        this.showSuccess('Tag removed successfully');
       }
       
-      // Update tag filter list and re-apply filters
-      this.updateTagFilterList();
-      this.applyUnifiedFilters();
-      this.showSuccess('Tag removed successfully');
+      // Emit event
+      this.emit('tagRemoved', { resourceId, tag });
+      
     } catch (error) {
       console.error('[UnifiedResourceManager] Error removing tag:', error);
+      this.emit('error', { operation: 'removeTag', error: error.message });
       this.showError('Failed to remove tag');
     }
   }
 
   /**
-   * Initialize collapse state
+   * Initialize collapse state (Meridian-compliant)
    */
   initializeCollapseState() {
     try {
       const saved = localStorage.getItem('unifiedCollapseState');
       if (saved) {
         const parsed = JSON.parse(saved);
-        this.unifiedCollapseState.globalState = parsed.globalState || 'expanded';
-        this.unifiedCollapseState.collapsedItems = new Set(parsed.collapsedItems || []);
+        this.updateState({
+          collapse: {
+            globalState: parsed.globalState || 'expanded',
+            collapsedItems: new Set(parsed.collapsedItems || [])
+          }
+        }, false); // Don't emit event during initialization
       }
     } catch (error) {
       console.warn('[UnifiedResourceManager] Failed to load collapse state:', error);
@@ -828,13 +1176,13 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Save collapse state
+   * Save collapse state (Meridian-compliant)
    */
   saveCollapseState() {
     try {
       const state = {
-        globalState: this.unifiedCollapseState.globalState,
-        collapsedItems: Array.from(this.unifiedCollapseState.collapsedItems)
+        globalState: this.state.collapse.globalState,
+        collapsedItems: Array.from(this.state.collapse.collapsedItems)
       };
       localStorage.setItem('unifiedCollapseState', JSON.stringify(state));
     } catch (error) {
@@ -2079,7 +2427,7 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Load unified resources from backend
+   * Load unified resources from backend (Meridian-compliant)
    */
   async loadUnifiedResources() {
     try {
@@ -2094,12 +2442,28 @@ export class UnifiedResourceManager extends ModuleBase {
 
       // Load unified data from backend - this will create resources.json if it doesn't exist
       const unifiedData = await window.electronAPI.unified.loadData();
-      this.unifiedResources = unifiedData.resources || [];
       
-      console.log(`[UnifiedResourceManager] Loaded ${this.unifiedResources.length} resources from backend`);
+      // Update state
+      this.updateState({
+        resources: unifiedData.resources || []
+      });
+      
+      // Update UI
+      this.updateUI();
+      
+      console.log(`[UnifiedResourceManager] Loaded ${this.state.resources.length} resources from backend`);
+      
+      // Emit resources loaded event
+      this.emit('resourcesLoaded', {
+        count: this.state.resources.length
+      });
+      
     } catch (error) {
       console.error('[UnifiedResourceManager] Error loading resources:', error);
-      this.unifiedResources = [];
+      this.updateState({
+        resources: []
+      });
+      this.emit('error', { operation: 'loadResources', error: error.message });
       this.showError('Failed to load unified resources');
     }
   }
@@ -2160,11 +2524,11 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Calculate tag counts from current resources
+   * Calculate tag counts from current resources (Meridian-compliant)
    */
   calculateTagCounts() {
     const tagCounts = {};
-    this.unifiedResources.forEach(resource => {
+    this.state.resources.forEach(resource => {
       const tags = resource.properties["meridian:tags"] || [];
       tags.forEach(tag => {
         tagCounts[tag] = (tagCounts[tag] || 0) + 1;
@@ -2174,7 +2538,7 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Add resource to unified list and save
+   * Add resource to unified list and save (Meridian-compliant)
    */
   async addUnifiedResource(resource) {
     try {
@@ -2183,21 +2547,28 @@ export class UnifiedResourceManager extends ModuleBase {
       // Add resource via backend API
       const addedResource = await window.electronAPI.unified.addResource(resource);
       
-      // Add to local list
-      this.unifiedResources.push(addedResource);
+      // Update state
+      this.updateState({
+        resources: [...this.state.resources, addedResource]
+      });
       
-      // Re-render panel
-      this.renderUnifiedPanel();
+      // Update UI
+      this.updateUI();
       
       console.log('[UnifiedResourceManager] Resource added successfully');
+      
+      // Emit resource added event
+      this.emit('resourceAdded', { resource: addedResource });
+      
     } catch (error) {
       console.error('[UnifiedResourceManager] Error adding resource:', error);
+      this.emit('error', { operation: 'addResource', error: error.message });
       this.showError('Failed to add resource');
     }
   }
 
   /**
-   * Remove resource from unified list and save
+   * Remove resource from unified list and save (Meridian-compliant)
    */
   async removeUnifiedResourceById(resourceId) {
     try {
@@ -2206,15 +2577,22 @@ export class UnifiedResourceManager extends ModuleBase {
       // Remove resource via backend API
       await window.electronAPI.unified.removeResource(resourceId);
       
-      // Remove from local list
-      this.unifiedResources = this.unifiedResources.filter(r => r.id !== resourceId);
+      // Update state
+      this.updateState({
+        resources: this.state.resources.filter(r => r.id !== resourceId)
+      });
       
-      // Re-render panel
-      this.renderUnifiedPanel();
+      // Update UI
+      this.updateUI();
       
       console.log('[UnifiedResourceManager] Resource removed successfully');
+      
+      // Emit resource removed event
+      this.emit('resourceRemoved', { resourceId });
+      
     } catch (error) {
       console.error('[UnifiedResourceManager] Error removing resource:', error);
+      this.emit('error', { operation: 'removeResource', error: error.message });
       this.showError('Failed to remove resource');
     }
   }
@@ -2270,18 +2648,18 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Get export filter information
+   * Get export filter information (Meridian-compliant)
    */
   getExportFilterInfo() {
     const parts = [];
     
-    if (this.currentSearchTerm) {
-      parts.push(`Search: "${this.currentSearchTerm}"`);
+    if (this.state.filters.searchTerm) {
+      parts.push(`Search: "${this.state.filters.searchTerm}"`);
     }
     
-    if (this.activeTagFilters.size > 0) {
-      const tags = Array.from(this.activeTagFilters).join(', ');
-      parts.push(`Tags: ${tags} (${this.filterLogic.toUpperCase()})`);
+    if (this.state.filters.activeTags.size > 0) {
+      const tags = Array.from(this.state.filters.activeTags).join(', ');
+      parts.push(`Tags: ${tags} (${this.state.filters.filterLogic.toUpperCase()})`);
     }
     
     return parts.length > 0 ? parts.join(' | ') : '';

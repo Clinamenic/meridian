@@ -1574,54 +1574,33 @@
         </div>
       </div>
 
-      <!-- Edit Archive Item Modal -->
-      <div id="edit-archive-item-modal" class="modal large-modal">
+      <!-- Edit Resource Item Modal -->
+      <div id="edit-resource-item-modal" class="modal large-modal">
         <div class="modal-header">
-          <h3>Archive Item Details</h3>
+          <h3>Resource Item Details</h3>
           <button class="modal-close">&times;</button>
         </div>
         <div class="modal-content">
-          <form id="edit-archive-item-form">
+          <form id="edit-resource-item-form">
             <!-- File Information Section -->
             <div class="form-section">
               <h4>File Information</h4>
 
               <div class="form-row">
                 <div class="form-group">
-                  <label for="edit-archive-uuid">UUID</label>
+                  <label for="edit-resource-uuid">UUID</label>
                   <input
                     type="text"
-                    id="edit-archive-uuid"
+                    id="edit-resource-uuid"
                     readonly
                     class="readonly-field"
                   />
                 </div>
                 <div class="form-group">
-                  <label for="edit-archive-filepath">File Path</label>
+                  <label for="edit-resource-filepath">File Path</label>
                   <input
                     type="text"
-                    id="edit-archive-filepath"
-                    readonly
-                    class="readonly-field"
-                  />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="edit-archive-filesize">File Size</label>
-                  <input
-                    type="text"
-                    id="edit-archive-filesize"
-                    readonly
-                    class="readonly-field"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="edit-archive-mimetype-display">MIME Type</label>
-                  <input
-                    type="text"
-                    id="edit-archive-mimetype-display"
+                    id="edit-resource-filepath"
                     readonly
                     class="readonly-field"
                   />
@@ -1630,19 +1609,40 @@
 
               <div class="form-row">
                 <div class="form-group">
-                  <label for="edit-archive-created">Created</label>
+                  <label for="edit-resource-filesize">File Size</label>
                   <input
                     type="text"
-                    id="edit-archive-created"
+                    id="edit-resource-filesize"
                     readonly
                     class="readonly-field"
                   />
                 </div>
                 <div class="form-group">
-                  <label for="edit-archive-modified">Modified</label>
+                  <label for="edit-resource-mimetype-display">MIME Type</label>
                   <input
                     type="text"
-                    id="edit-archive-modified"
+                    id="edit-resource-mimetype-display"
+                    readonly
+                    class="readonly-field"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="edit-resource-created">Created</label>
+                  <input
+                    type="text"
+                    id="edit-resource-created"
+                    readonly
+                    class="readonly-field"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="edit-resource-modified">Modified</label>
+                  <input
+                    type="text"
+                    id="edit-resource-modified"
                     readonly
                     class="readonly-field"
                   />
@@ -1655,29 +1655,29 @@
               <h4>Editable Metadata</h4>
 
               <div class="form-group">
-                <label for="edit-archive-title">Title</label>
+                <label for="edit-resource-title">Title</label>
                 <input
                   type="text"
-                  id="edit-archive-title"
+                  id="edit-resource-title"
                   placeholder="Title"
                   required
                 />
               </div>
 
               <div class="form-group">
-                <label for="edit-archive-author">Author</label>
+                <label for="edit-resource-author">Author</label>
                 <input
                   type="text"
-                  id="edit-archive-author"
+                  id="edit-resource-author"
                   placeholder="Author (optional)"
                 />
               </div>
 
               <div class="form-group virtual-only" style="display: none">
-                <label for="edit-archive-mimetype">MIME Type</label>
+                <label for="edit-resource-mimetype">MIME Type</label>
                 <input
                   type="text"
-                  id="edit-archive-mimetype"
+                  id="edit-resource-mimetype"
                   placeholder="e.g., text/markdown, image/png"
                 />
                 <div class="field-help">
@@ -1692,14 +1692,14 @@
                     <div class="tag-input-container">
                       <input
                         type="text"
-                        id="edit-archive-tag-input"
+                        id="edit-resource-tag-input"
                         class="tag-input"
                         placeholder="add tag..."
                       />
                       <button
                         type="button"
                         class="add-tag-btn"
-                        id="edit-archive-add-tag-btn"
+                        id="edit-resource-add-tag-btn"
                         disabled
                       >
                         +
@@ -1707,11 +1707,11 @@
                     </div>
                     <div
                       class="tag-autocomplete modal-tag-autocomplete"
-                      id="edit-archive-tag-autocomplete"
+                      id="edit-resource-tag-autocomplete"
                       style="display: none"
                     ></div>
                   </div>
-                  <div class="modal-tags-list" id="edit-archive-tags-list">
+                  <div class="modal-tags-list" id="edit-resource-tags-list">
                     <!-- Tags rendered here -->
                   </div>
                 </div>
@@ -1721,11 +1721,11 @@
             <!-- Arweave Uploads Section -->
             <div
               class="form-section"
-              id="edit-archive-arweave-section"
+              id="edit-resource-arweave-section"
               style="display: none"
             >
               <h4>Arweave Uploads</h4>
-              <div id="edit-archive-arweave-list">
+              <div id="edit-resource-arweave-list">
                 <!-- Arweave uploads will be rendered here -->
               </div>
             </div>

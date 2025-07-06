@@ -97,7 +97,6 @@ export class ModuleLoader {
   async loadAllModules() {
     // Import all modules
     const { TagManager } = await import('./TagManager.js');
-          // ResourceManager and ArchiveManager replaced by UnifiedResourceManager
     const { ModalManager } = await import('./ModalManager.js');
     const { AccountManager } = await import('./AccountManager.js');
     const { BroadcastManager } = await import('./BroadcastManager.js');

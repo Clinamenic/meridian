@@ -3,7 +3,7 @@ import { TagAutocomplete } from '../components/TagAutocomplete.js';
 
 /**
  * TagManager module - handles all tag-related operations across Meridian
- * Manages: Resource tags, Archive tags, Bulk tags, Tag filtering, Tag autocomplete
+ * Manages: Resource tags, Resource tags, Bulk tags, Tag filtering, Tag autocomplete
  */
 export class TagManager extends ModuleBase {
   constructor(app) {
@@ -11,25 +11,18 @@ export class TagManager extends ModuleBase {
     
     // Tag autocomplete instances
     this.resourceTagAutocompletes = [];
-    this.archiveTagAutocompletes = [];
-    this.editArchiveItemTagAutocomplete = null;
-    this.bulkTagAutocomplete = null;
-    this.modalTagAutocomplete = null;
+    this.editResourceItemTagAutocomplete = null;
     
-    // Tag state management
-    this.activeTagFilters = new Set();
-    this.activeArchiveTagFilters = new Set();
-    this.currentSearchTerm = '';
-    this.currentArchiveSearchTerm = '';
-    this.filterLogic = 'any'; // Default to 'any' (OR logic)
-    this.archiveFilterLogic = 'any';
+    // Tag filtering state
+    this.activeResourceTagFilters = new Set();
+    this.currentResourceSearchTerm = '';
+    this.resourceFilterLogic = 'any';
     
-    // Bulk tag state
-    this.bulkTags = [];
-    this.editArchiveItemTags = [];
-
-    // Modal tag state
-    this.modalTags = [];
+    // Edit modal state
+    this.editResourceItemTags = [];
+    
+    // Event listeners
+    this.boundEventListeners = new Map();
   }
 
   async onInit() {
@@ -56,889 +49,355 @@ export class TagManager extends ModuleBase {
   // ===== RESOURCE TAG MANAGEMENT =====
 
   /**
-   * Get all existing tags from collate resources
+   * Get all existing tags from resource files
    */
-  getAllExistingTags() {
-    if (!this.getData().collate || !this.getData().collate.resources) {
-      return [];
-    }
-
-    const allTags = new Set();
-    this.getData().collate.resources.forEach(resource => {
-      resource.tags.forEach(tag => allTags.add(tag));
-    });
-
-    return Array.from(allTags).sort();
-  }
-
-  /**
-   * Get intelligently ranked tag suggestions for resources
-   */
-  getIntelligentTagSuggestions(input, excludeTags = [], limit = 5) {
-    if (!this.getData().collate || !this.getData().collate.resources) {
-      return [];
-    }
-
-    const inputLower = input.trim().toLowerCase();
-    if (inputLower.length === 0) {
-      return [];
-    }
-
-    // Calculate tag frequency and usage stats
-    const tagStats = new Map();
-    this.getData().collate.resources.forEach(resource => {
-      resource.tags.forEach(tag => {
-        if (!tagStats.has(tag)) {
-          tagStats.set(tag, {
-            name: tag,
-            frequency: 0,
-            resourceCount: 0,
-            lastUsed: new Date(0)
-          });
-        }
-        const stats = tagStats.get(tag);
-        stats.frequency++;
-        stats.resourceCount++;
-        // Use resource creation date as proxy for tag usage
-        if (resource.created) {
-          const resourceDate = new Date(resource.created);
-          if (resourceDate > stats.lastUsed) {
-            stats.lastUsed = resourceDate;
-          }
-        }
-      });
-    });
-
-    // Separate prefix matches from contains matches
-    const prefixMatches = [];
-    const containsMatches = [];
-
-    Array.from(tagStats.values()).forEach(tagInfo => {
-      // Exclude already applied tags
-      if (excludeTags.includes(tagInfo.name)) {
-        return;
-      }
-      
-      const tagLower = tagInfo.name.toLowerCase();
-      
-      // Must match input and not be identical
-      if (tagLower === inputLower) {
-        return;
-      }
-      
-      if (tagLower.startsWith(inputLower)) {
-        prefixMatches.push(tagInfo);
-      } else if (tagLower.includes(inputLower)) {
-        containsMatches.push(tagInfo);
-      }
-    });
-
-    // Sort each group by frequency (descending), then alphabetically
-    const sortByFrequency = (a, b) => {
-      if (a.frequency !== b.frequency) {
-        return b.frequency - a.frequency; // Higher frequency first
-      }
-      return a.name.localeCompare(b.name); // Alphabetical for ties
-    };
-
-    prefixMatches.sort(sortByFrequency);
-    containsMatches.sort(sortByFrequency);
-
-    // Combine: prefix matches first, then contains matches
-    const allSuggestions = [...prefixMatches, ...containsMatches].slice(0, limit);
-
-    // Debug logging in development
-    if (allSuggestions.length > 0) {
-      console.log(`[TagSuggestion] Top ${allSuggestions.length} suggestions for "${input}":`, 
-        allSuggestions.map((s, index) => ({
-          rank: index + 1,
-          tag: s.name,
-          freq: s.frequency,
-          type: s.name.toLowerCase().startsWith(inputLower) ? 'prefix' : 'contains'
-        }))
-      );
-    }
-
-    return allSuggestions.map(s => s.name);
-  }
-
-  /**
-   * Add tag to a resource
-   */
-  async addTagToResource(resourceId, tagValue) {
-    try {
-      // Add tag via IPC
-      await window.electronAPI.collate.addTagToResource(resourceId, tagValue);
-      
-      // Reload data to reflect changes
-      await this.getApp().loadCollateData();
-      
-      // Clear input and update button state
-      const input = document.querySelector(`input[data-resource-id="${resourceId}"]`);
-      if (input) {
-        input.value = '';
-        this.updateAddTagButtonState(input);
-      }
-      
-      // Hide autocomplete using unified system
-      const autocompleteInstance = this.resourceTagAutocompletes?.find(instance => 
-        instance.inputSelector.includes(`data-resource-id="${resourceId}"`)
-      );
-      if (autocompleteInstance) {
-        autocompleteInstance.hide();
-      }
-
-      this.showSuccess('Tag added successfully');
-      
-      // Emit event for other modules
-      this.emit('tagAdded', { resourceId, tagValue, type: 'resource' });
-    } catch (error) {
-      console.error('Failed to add tag:', error);
-      this.showError('Failed to add tag');
-    }
-  }
-
-  /**
-   * Render tag filters in the collate panel
-   */
-  renderTagFilters() {
-    console.log('[TagManager] renderTagFilters called');
-    
-    const container = document.getElementById('tag-filter-list');
-    if (!this.getData().collate || !this.getData().collate.tags) {
-      container.innerHTML = '';
-      return;
-    }
-
-    const tags = Object.entries(this.getData().collate.tags)
-      .sort(([a], [b]) => a.localeCompare(b)); // Sort alphabetically by tag name
-      
-    console.log('[TagManager] Rendering tags:', tags);
-
-    container.innerHTML = tags.map(([tag, count]) => `
-      <div class="tag-filter-container">
-        <button class="tag-filter" data-tag="${tag}">
-          <span class="tag-filter-label">${this.escapeHtml(tag)}</span>
-          <span class="tag-filter-count">${count}</span>
-        </button>
-        <div class="tag-dropdown-menu" data-tag="${tag}">
-          <button class="tag-dropdown-item edit-tag-option" data-tag="${tag}">Edit</button>
-          <button class="tag-dropdown-item delete-tag-option" data-tag="${tag}">Remove</button>
-        </div>
-      </div>
-    `).join('');
-
-    // Add click and context menu events to tag filters
-    container.querySelectorAll('.tag-filter').forEach(btn => {
-      // Left click to toggle filter
-      btn.addEventListener('click', (e) => {
-        const tag = e.target.dataset.tag;
-        this.toggleTagFilter(tag);
-        e.target.classList.toggle('active');
-      });
-
-      // Right click to show context menu
-      btn.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const tag = e.target.dataset.tag;
-        console.log('[TagManager] Right click on tag filter:', tag);
-        this.showTagContextMenu(tag, e.clientX, e.clientY);
-      });
-      
-      // Restore active state if this tag is currently filtered
-      const tag = btn.dataset.tag;
-      if (this.activeTagFilters.has(tag)) {
-        btn.classList.add('active');
-      }
-    });
-
-    // Add click events to dropdown options (these are now shown via context menu)
-    const editOptions = container.querySelectorAll('.edit-tag-option');
-    const deleteOptions = container.querySelectorAll('.delete-tag-option');
-    
-    editOptions.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        const tag = e.target.dataset.tag;
-        console.log('[TagManager] Edit option clicked for tag:', tag);
-        this.hideTagContextMenu();
-        this.openEditTagModal(tag);
-      });
-    });
-
-    deleteOptions.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        const tag = e.target.dataset.tag;
-        console.log('[TagManager] Delete option clicked for tag:', tag);
-        this.hideTagContextMenu();
-        this.confirmDeleteTag(tag);
-      });
-    });
-  }
-
-  /**
-   * Remove tag from a resource
-   */
-  async removeTagFromResource(resourceId, tag) {
-    try {
-      // Find the resource
-      const resource = this.getData().collate.resources.find(r => r.id === resourceId);
-      if (!resource) {
-        this.showError('Resource not found');
-        return;
-      }
-
-      // Check if tag exists on this resource
-      if (!resource.tags.includes(tag)) {
-        this.showError('Tag does not exist on this resource');
-        return;
-      }
-
-      // Remove tag via IPC
-      await window.electronAPI.collate.removeTagFromResource(resourceId, tag);
-      
-      // Reload data to reflect changes
-      await this.getApp().loadCollateData();
-
-      this.showSuccess('Tag removed successfully');
-      
-      // Emit event for other modules
-      this.emit('tagRemoved', { resourceId, tag, type: 'resource' });
-    } catch (error) {
-      console.error('Failed to remove tag:', error);
-      this.showError('Failed to remove tag');
-    }
-  }
-
-  /**
-   * Update add tag button state
-   */
-  updateAddTagButtonState(input) {
-    const resourceId = input.dataset.resourceId;
-    const button = document.querySelector(`button[data-resource-id="${resourceId}"].add-tag-btn`);
-    const hasText = input.value.trim().length > 0;
-    
-    if (button) {
-      button.disabled = !hasText;
-    }
-  }
-
-  // ===== ARCHIVE TAG MANAGEMENT =====
-
-  /**
-   * Get all existing tags from archive files
-   */
-  getAllExistingArchiveTags() {
+  getAllExistingResourceTags() {
     if (!this.getData().archive || !this.getData().archive.files) {
       return [];
     }
 
-    const allTags = new Set();
+    const tagSet = new Set();
     this.getData().archive.files.forEach(file => {
       if (file.tags) {
-        file.tags.forEach(tag => allTags.add(tag));
+        file.tags.forEach(tag => tagSet.add(tag));
       }
     });
 
-    return Array.from(allTags).sort();
+    return Array.from(tagSet).sort();
   }
 
   /**
-   * Get intelligently ranked archive tag suggestions
+   * Get intelligently ranked resource tag suggestions
    */
-  getIntelligentArchiveTagSuggestions(input, excludeTags = [], limit = 5) {
+  getIntelligentResourceTagSuggestions(input, excludeTags = [], limit = 5) {
     if (!this.getData().archive || !this.getData().archive.files) {
       return [];
     }
 
-    const inputLower = input.trim().toLowerCase();
-    if (inputLower.length === 0) {
-      return [];
-    }
+    const inputLower = input.toLowerCase();
+    const suggestions = new Map(); // tag -> score
 
-    // Calculate tag frequency and usage stats for archive files
-    const tagStats = new Map();
+    // Calculate tag frequency and usage stats for resource files
+    const tagStats = {};
     this.getData().archive.files.forEach(file => {
       if (file.tags) {
         file.tags.forEach(tag => {
-          if (!tagStats.has(tag)) {
-            tagStats.set(tag, {
-              name: tag,
-              frequency: 0,
-              fileCount: 0,
-              lastUsed: new Date(0)
-            });
+          if (!tagStats[tag]) {
+            tagStats[tag] = { count: 0, files: new Set() };
           }
-          const stats = tagStats.get(tag);
-          stats.frequency++;
-          stats.fileCount++;
-          // Use file modification date as proxy for tag usage
-          if (file.modified) {
-            const fileDate = new Date(file.modified);
-            if (fileDate > stats.lastUsed) {
-              stats.lastUsed = fileDate;
-            }
-          }
+          tagStats[tag].count++;
+          tagStats[tag].files.add(file.uuid);
         });
       }
     });
 
-    // Separate prefix matches from contains matches
-    const prefixMatches = [];
-    const containsMatches = [];
+    // Score each tag based on multiple factors
+    Object.entries(tagStats).forEach(([tag, stats]) => {
+      if (excludeTags.includes(tag)) return;
 
-    Array.from(tagStats.values()).forEach(tagInfo => {
-      // Exclude already applied tags
-      if (excludeTags.includes(tagInfo.name)) {
-        return;
+      let score = 0;
+
+      // 1. Exact prefix match (highest priority)
+      if (tag.toLowerCase().startsWith(inputLower)) {
+        score += 1000;
+        // Bonus for exact case match
+        if (tag.startsWith(input)) {
+          score += 500;
+        }
       }
-      
-      const tagLower = tagInfo.name.toLowerCase();
-      
-      // Must match input and not be identical
-      if (tagLower === inputLower) {
-        return;
+      // 2. Contains input anywhere
+      else if (tag.toLowerCase().includes(inputLower)) {
+        score += 100;
       }
+      // 3. Fuzzy match (words starting with input)
+      else {
+        const words = tag.toLowerCase().split(/[-_\s]+/);
+        const hasMatchingWord = words.some(word => word.startsWith(inputLower));
+        if (hasMatchingWord) {
+          score += 50;
+        }
+      }
+
+      // 4. Frequency bonus (more used tags get higher scores)
+      score += Math.min(stats.count * 10, 100);
+
+      // 5. Recency bonus (tags from recently modified files)
+      const recentFiles = this.getData().archive.files
+        .filter(f => f.modified && new Date(f.modified) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+        .map(f => f.uuid);
       
-      if (tagLower.startsWith(inputLower)) {
-        prefixMatches.push(tagInfo);
-      } else if (tagLower.includes(inputLower)) {
-        containsMatches.push(tagInfo);
+      const recentUsage = Array.from(stats.files).filter(uuid => recentFiles.includes(uuid)).length;
+      score += recentUsage * 5;
+
+      if (score > 0) {
+        suggestions.set(tag, score);
       }
     });
 
-    // Sort each group by frequency (descending), then alphabetically
-    const sortByFrequency = (a, b) => {
-      if (a.frequency !== b.frequency) {
-        return b.frequency - a.frequency; // Higher frequency first
-      }
-      return a.name.localeCompare(b.name); // Alphabetical for ties
-    };
+    // Sort by score and return top results
+    const sortedSuggestions = Array.from(suggestions.entries())
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, limit)
+      .map(([tag]) => tag);
 
-    prefixMatches.sort(sortByFrequency);
-    containsMatches.sort(sortByFrequency);
+    console.log(`[ResourceTagSuggestion] Top ${sortedSuggestions.length} suggestions for "${input}":`,
+      sortedSuggestions.map(tag => `${tag} (${suggestions.get(tag)})`));
 
-    // Combine: prefix matches first, then contains matches
-    const allSuggestions = [...prefixMatches, ...containsMatches].slice(0, limit);
-
-    // Debug logging in development
-    if (allSuggestions.length > 0) {
-      console.log(`[ArchiveTagSuggestion] Top ${allSuggestions.length} suggestions for "${input}":`, 
-        allSuggestions.map((s, index) => ({
-          rank: index + 1,
-          tag: s.name,
-          freq: s.frequency,
-          type: s.name.toLowerCase().startsWith(inputLower) ? 'prefix' : 'contains'
-        }))
-      );
-    }
-
-    return allSuggestions.map(s => s.name);
+    return sortedSuggestions;
   }
 
   /**
-   * Add tag to an archive file
+   * Add tag to a resource file
    */
-  async addTagToArchiveFile(fileUuid, tagValue) {
+  async addTagToResourceFile(fileUuid, tagValue) {
     try {
       // Find the file
       const file = this.getData().archive.files.find(f => f.uuid === fileUuid);
       if (!file) {
-        this.showError('File not found');
-        return;
+        throw new Error('File not found');
       }
 
-      // Check if tag already exists on this file
-      if (file.tags && file.tags.includes(tagValue)) {
-        this.showError('Tag already exists on this file');
-        return;
+      // Normalize tag value
+      tagValue = tagValue.trim().toLowerCase();
+      if (!tagValue) {
+        throw new Error('Tag cannot be empty');
       }
 
-      // Add tag to the file
+      // Initialize tags array if it doesn't exist
       if (!file.tags) {
         file.tags = [];
       }
-      file.tags.push(tagValue);
 
-      // Save the updated archive data
+      // Check if tag already exists
+      if (file.tags.includes(tagValue)) {
+        throw new Error('Tag already exists');
+      }
+
+      // Add the tag
+      file.tags.push(tagValue);
+      file.tags.sort(); // Keep tags sorted
+
+      // Save the updated resource data
       await window.electronAPI.archive.saveData(this.getData().archive);
       
-      // Reload archive data to reflect changes
+      // Reload resource data to reflect changes
       await this.getApp().loadArchiveData();
-      
-      // Clear the input and reset button state
-      const input = document.querySelector(`input[data-file-uuid="${fileUuid}"].archive-tag-input`);
-      if (input) {
-        input.value = '';
-        this.updateArchiveAddTagButtonState(input);
-      }
-      
-      // Hide autocomplete using unified system
-      const autocompleteInstance = this.archiveTagAutocompletes?.find(instance => 
-        instance.inputSelector.includes(`data-file-uuid="${fileUuid}"`)
-      );
-      if (autocompleteInstance) {
-        autocompleteInstance.hide();
-      }
 
-      this.showSuccess('Tag added successfully');
-      
-      // Emit event for other modules
-      this.emit('tagAdded', { fileUuid, tagValue, type: 'archive' });
+      // Update the UI
+      this.updateResourceTagDisplay(fileUuid);
+      this.updateResourceTagFilterList();
+
+      // Emit event
+      this.emit('tagAdded', { fileUuid, tagValue, type: 'resource' });
+
+      console.log(`[TagManager] Added tag "${tagValue}" to resource file ${fileUuid}`);
     } catch (error) {
-      console.error('Failed to add tag to archive file:', error);
-      this.showError('Failed to add tag');
+      console.error('Failed to add tag to resource file:', error);
+      throw error;
     }
   }
 
   /**
-   * Remove tag from an archive file
+   * Remove tag from a resource file
    */
-  async removeTagFromArchiveFile(fileUuid, tag) {
+  async removeTagFromResourceFile(fileUuid, tag) {
     try {
       // Find the file
       const file = this.getData().archive.files.find(f => f.uuid === fileUuid);
       if (!file) {
-        this.showError('File not found');
-        return;
+        throw new Error('File not found');
       }
 
-      // Check if tag exists on this file
-      if (!file.tags || !file.tags.includes(tag)) {
-        this.showError('Tag does not exist on this file');
-        return;
+      // Remove the tag
+      if (file.tags) {
+        file.tags = file.tags.filter(t => t !== tag);
       }
 
-      // Remove tag from the file
-      file.tags = file.tags.filter(t => t !== tag);
-
-      // Save the updated archive data
+      // Save the updated resource data
       await window.electronAPI.archive.saveData(this.getData().archive);
       
-      // Reload archive data to reflect changes
+      // Reload resource data to reflect changes
       await this.getApp().loadArchiveData();
 
-      this.showSuccess('Tag removed successfully');
-      
-      // Emit event for other modules
-      this.emit('tagRemoved', { fileUuid, tag, type: 'archive' });
+      // Update the UI
+      this.updateResourceTagDisplay(fileUuid);
+      this.updateResourceTagFilterList();
+
+      // Emit event
+      this.emit('tagRemoved', { fileUuid, tag, type: 'resource' });
+
+      console.log(`[TagManager] Removed tag "${tag}" from resource file ${fileUuid}`);
     } catch (error) {
-      console.error('Failed to remove tag from archive file:', error);
-      this.showError('Failed to remove tag');
+      console.error('Failed to remove tag from resource file:', error);
+      throw error;
     }
   }
 
-  /**
-   * Update archive add tag button state
-   */
-  updateArchiveAddTagButtonState(input) {
-    const fileUuid = input.dataset.fileUuid;
-    const button = document.querySelector(`button[data-file-uuid="${fileUuid}"].archive-add-tag-btn`);
-    const hasText = input.value.trim().length > 0;
-    
-    if (button) {
-      button.disabled = !hasText;
-    }
-  }
-
-  // ===== BULK TAG MANAGEMENT =====
+  // ===== EDIT RESOURCE ITEM TAG MANAGEMENT =====
 
   /**
-   * Add bulk tag
+   * Add tag to edit resource item
    */
-  addBulkTag(tagValue) {
-    if (!tagValue || this.bulkTags.includes(tagValue)) {
+  addEditResourceItemTag(tagValue) {
+    if (!tagValue || this.editResourceItemTags.includes(tagValue)) {
       return;
     }
 
-    this.bulkTags.push(tagValue);
-    this.renderBulkTags();
-    
-    // Clear input
-    const bulkTagInput = document.getElementById('bulk-tag-input');
-    if (bulkTagInput) {
-      bulkTagInput.value = '';
-      this.updateBulkAddTagButtonState(bulkTagInput);
-    }
-    
-    // Hide autocomplete using unified system
-    if (this.bulkTagAutocomplete) {
-      this.bulkTagAutocomplete.hide();
-    }
-    
-    // Emit event for other modules
-    this.emit('bulkTagAdded', { tagValue });
-  }
+    this.editResourceItemTags.push(tagValue);
+    this.renderEditResourceItemTags();
 
-  /**
-   * Remove bulk tag
-   */
-  removeBulkTag(tagValue) {
-    this.bulkTags = this.bulkTags.filter(tag => tag !== tagValue);
-    this.renderBulkTags();
-    
-    // Emit event for other modules
-    this.emit('bulkTagRemoved', { tagValue });
-  }
-
-  /**
-   * Render bulk tags
-   */
-  renderBulkTags() {
-    const container = document.getElementById('bulk-tags-list');
-    if (!container) return;
-
-    if (this.bulkTags.length === 0) {
-      container.innerHTML = '<div class="no-tags">No tags added yet</div>';
-      return;
-    }
-
-    container.innerHTML = this.bulkTags.map(tag => `
-      <span class="resource-tag">
-        ${this.escapeHtml(tag)}
-        <button class="remove-tag-btn" onclick="app.tagManager.removeBulkTag('${this.escapeHtml(tag)}')" title="Remove tag">
-          ×
-        </button>
-      </span>
-    `).join('');
-  }
-
-  /**
-   * Update bulk add tag button state
-   */
-  updateBulkAddTagButtonState(input) {
-    const btn = document.getElementById('bulk-add-tag-btn');
-    if (!btn) return;
-    
-    const hasValue = input.value.trim().length > 0;
-    btn.disabled = !hasValue;
-  }
-
-  // ===== EDIT ARCHIVE ITEM TAG MANAGEMENT =====
-
-  /**
-   * Add tag to edit archive item
-   */
-  addEditArchiveItemTag(tagValue) {
-    if (!tagValue || this.editArchiveItemTags.includes(tagValue)) {
-      return;
-    }
-
-    this.editArchiveItemTags.push(tagValue);
-    this.renderEditArchiveItemTags();
-    
     // Clear input and update button state
-    const input = document.getElementById('edit-archive-tag-input');
+    const input = document.getElementById('edit-resource-tag-input');
     if (input) {
       input.value = '';
-      this.updateEditArchiveItemAddTagButtonState(input);
-      // Hide autocomplete using unified system
-      if (this.editArchiveItemTagAutocomplete) {
-        this.editArchiveItemTagAutocomplete.hide();
-      }
+      this.updateEditResourceItemAddTagButtonState(input);
+    }
+
+    if (this.editResourceItemTagAutocomplete) {
+      this.editResourceItemTagAutocomplete.hide();
     }
   }
 
   /**
-   * Remove tag from edit archive item
+   * Remove tag from edit resource item
    */
-  removeEditArchiveItemTag(tagValue) {
-    if (!this.editArchiveItemTags) return;
-    
-    this.editArchiveItemTags = this.editArchiveItemTags.filter(tag => tag !== tagValue);
-    this.renderEditArchiveItemTags();
+  removeEditResourceItemTag(tagValue) {
+    if (!this.editResourceItemTags) return;
+
+    this.editResourceItemTags = this.editResourceItemTags.filter(tag => tag !== tagValue);
+    this.renderEditResourceItemTags();
   }
 
   /**
-   * Update edit archive item add tag button state
+   * Update edit resource item add tag button state
    */
-  updateEditArchiveItemAddTagButtonState(input) {
-    const btn = document.getElementById('edit-archive-add-tag-btn');
-    if (!btn) return;
-    
-    const hasValue = input.value.trim().length > 0;
-    btn.disabled = !hasValue;
+  updateEditResourceItemAddTagButtonState(input) {
+    const btn = document.getElementById('edit-resource-add-tag-btn');
+    if (!btn || !input) return;
+
+    const value = input.value.trim();
+    btn.disabled = !value || this.editResourceItemTags.includes(value);
   }
 
   /**
-   * Render edit archive item tags
+   * Render edit resource item tags
    */
-  renderEditArchiveItemTags() {
-    const container = document.getElementById('edit-archive-tags-list');
+  renderEditResourceItemTags() {
+    const container = document.getElementById('edit-resource-tags-list');
     if (!container) return;
 
-    if (!this.editArchiveItemTags || this.editArchiveItemTags.length === 0) {
-      container.innerHTML = '<div class="no-tags">No tags added yet</div>';
+    if (!this.editResourceItemTags || this.editResourceItemTags.length === 0) {
+      container.innerHTML = '<div class="no-tags">No tags added</div>';
       return;
     }
 
-    container.innerHTML = this.editArchiveItemTags.map(tag => `
-      <span class="resource-tag">
+    container.innerHTML = this.editResourceItemTags.map(tag => `
+      <span class="modal-tag">
         ${this.escapeHtml(tag)}
-        <button class="remove-tag-btn" onclick="app.tagManager.removeEditArchiveItemTag('${this.escapeHtml(tag)}')" title="Remove tag">
+        <button class="remove-tag-btn" onclick="app.tagManager.removeEditResourceItemTag('${this.escapeHtml(tag)}')" title="Remove tag">
           ×
         </button>
       </span>
     `).join('');
   }
 
-  // ===== TAG FILTERING =====
+  // ===== RESOURCE TAG FILTERING =====
 
   /**
-   * Toggle tag filter
+   * Toggle resource tag filter
    */
-  toggleTagFilter(tag) {
-    if (this.activeTagFilters.has(tag)) {
-      this.activeTagFilters.delete(tag);
+  toggleResourceTagFilter(tag) {
+    if (this.activeResourceTagFilters.has(tag)) {
+      this.activeResourceTagFilters.delete(tag);
     } else {
-      this.activeTagFilters.add(tag);
+      this.activeResourceTagFilters.add(tag);
     }
-    
-    this.applyAllFilters();
-    this.updateClearFiltersButton();
+
+    this.updateResourceTagFilterButtons();
+    this.applyResourceFilters();
   }
 
   /**
-   * Apply all filters
+   * Apply resource filters
    */
-  applyAllFilters() {
-    console.log('[TagManager] applyAllFilters called');
-    console.log('[TagManager] Active tag filters:', Array.from(this.activeTagFilters));
-    console.log('[TagManager] Current search term:', this.currentSearchTerm);
-    console.log('[TagManager] Filter logic:', this.filterLogic);
+  applyResourceFilters() {
+    const files = this.getData().archive?.files || [];
     
-    const resources = this.getData().collate?.resources || [];
-    const resourceItems = document.querySelectorAll('.resource-item');
-    
-    console.log('[TagManager] Found resource items:', resourceItems.length);
-    console.log('[TagManager] Available resources:', resources.length);
-    
-    let visibleCount = 0;
-    let hiddenCount = 0;
-    
-    resourceItems.forEach(item => {
-      const resourceId = item.dataset.id; // Changed from resourceId to id
-      const resource = resources.find(r => r.id === resourceId);
-      
-      if (!resource) {
-        item.style.display = 'none';
-        return;
-      }
-      
-      let matchesSearch = true;
-      let matchesTags = true;
-      
+    files.forEach(file => {
+      const item = document.querySelector(`.resource-item[data-uuid="${file.uuid}"]`);
+      if (!item) return;
+
+      let shouldShow = true;
+
       // Apply search filter
-      if (this.currentSearchTerm.trim()) {
-        const term = this.currentSearchTerm.toLowerCase();
-        const title = resource.title.toLowerCase();
-        const description = (resource.description || '').toLowerCase();
-        const url = resource.url.toLowerCase();
+      if (this.currentResourceSearchTerm) {
+        const searchTerm = this.currentResourceSearchTerm.toLowerCase();
+        const title = (file.title || '').toLowerCase();
+        const filePath = (file.filePath || '').toLowerCase();
+        const author = (file.metadata?.author || '').toLowerCase();
         
-        matchesSearch = title.includes(term) || description.includes(term) || url.includes(term);
+        shouldShow = title.includes(searchTerm) || 
+                    filePath.includes(searchTerm) || 
+                    author.includes(searchTerm);
       }
-      
+
       // Apply tag filters
-      if (this.activeTagFilters.size > 0) {
-        if (this.filterLogic === 'all') {
-          // ALL logic: Resource must have ALL of the selected tags
-          matchesTags = Array.from(this.activeTagFilters).every(tag => 
-            resource.tags.includes(tag)
-          );
+      if (shouldShow && this.activeResourceTagFilters.size > 0) {
+        const fileTags = new Set(file.tags || []);
+        
+        if (this.resourceFilterLogic === 'all') {
+          // Show if ALL of the active filters match
+          shouldShow = Array.from(this.activeResourceTagFilters).every(tag => fileTags.has(tag));
         } else {
-          // ANY logic (default): Resource must have at least one of the selected tags
-          matchesTags = Array.from(this.activeTagFilters).some(tag => 
-            resource.tags.includes(tag)
-          );
+          // Show if ANY of the active filters match
+          shouldShow = Array.from(this.activeResourceTagFilters).some(tag => fileTags.has(tag));
         }
       }
-      
-      // Show/hide based on filters
-      const shouldShow = matchesSearch && matchesTags;
+
       item.style.display = shouldShow ? 'block' : 'none';
-      
-      if (shouldShow) {
-        visibleCount++;
-      } else {
-        hiddenCount++;
-      }
     });
-    
-    console.log('[TagManager] Filtering complete - Visible:', visibleCount, 'Hidden:', hiddenCount);
-    
+
     this.updateResourceCount();
   }
 
   /**
-   * Clear all filters
-   */
-  clearAllFilters() {
-    this.activeTagFilters.clear();
-    this.currentSearchTerm = '';
-    
-    // Clear search input
-    const searchInput = document.getElementById('resource-search');
-    if (searchInput) {
-      searchInput.value = '';
-    }
-    
-    // Update filter buttons
-    document.querySelectorAll('.tag-filter-btn').forEach(btn => {
-      btn.classList.remove('active');
-    });
-    
-    // Show all resources
-    document.querySelectorAll('.resource-item').forEach(item => {
-      item.style.display = 'block';
-    });
-    
-    this.updateResourceCount();
-    this.updateClearFiltersButton();
-  }
-
-  /**
-   * Update clear filters button
-   */
-  updateClearFiltersButton() {
-    const clearBtn = document.getElementById('clear-filters-btn');
-    if (!clearBtn) return;
-    
-    const hasActiveFilters = this.activeTagFilters.size > 0 || this.currentSearchTerm.trim().length > 0;
-    clearBtn.disabled = !hasActiveFilters;
-  }
-
-  /**
-   * Update resource count
+   * Update resource count display
    */
   updateResourceCount() {
-    const visibleCount = document.querySelectorAll('.resource-item[style*="block"], .resource-item:not([style*="none"])').length;
-    const totalCount = this.getData().collate?.resources?.length || 0;
-    
-    const countElement = document.getElementById('resource-count');
-    if (countElement) {
-      countElement.textContent = `${visibleCount} of ${totalCount} resources`;
-    }
-  }
-
-  // ===== ARCHIVE TAG FILTERING =====
-
-  /**
-   * Toggle archive tag filter
-   */
-  toggleArchiveTagFilter(tag) {
-    if (this.activeArchiveTagFilters.has(tag)) {
-      this.activeArchiveTagFilters.delete(tag);
-    } else {
-      this.activeArchiveTagFilters.add(tag);
-    }
-    
-    this.applyArchiveFilters();
-    this.updateArchiveClearFiltersButton();
-  }
-
-  /**
-   * Apply archive filters
-   */
-  applyArchiveFilters() {
-    const files = this.getData().archive?.files || [];
-    const fileItems = document.querySelectorAll('.archive-file-item');
-    
-    fileItems.forEach(item => {
-      const fileUuid = item.dataset.fileUuid;
-      const file = files.find(f => f.uuid === fileUuid);
-      
-      if (!file) {
-        item.style.display = 'none';
-        return;
-      }
-      
-      let matchesSearch = true;
-      let matchesTags = true;
-      
-      // Apply search filter
-      if (this.currentArchiveSearchTerm.trim()) {
-        const term = this.currentArchiveSearchTerm.toLowerCase();
-        const name = file.name.toLowerCase();
-        const path = file.path.toLowerCase();
-        
-        matchesSearch = name.includes(term) || path.includes(term);
-      }
-      
-      // Apply tag filters
-      if (this.activeArchiveTagFilters.size > 0) {
-        if (this.archiveFilterLogic === 'all') {
-          // ALL logic: File must have ALL of the selected tags
-          matchesTags = Array.from(this.activeArchiveTagFilters).every(tag => 
-            file.tags && file.tags.includes(tag)
-          );
-        } else {
-          // ANY logic (default): File must have at least one of the selected tags
-          matchesTags = Array.from(this.activeArchiveTagFilters).some(tag => 
-            file.tags && file.tags.includes(tag)
-          );
-        }
-      }
-      
-      // Show/hide based on filters
-      item.style.display = (matchesSearch && matchesTags) ? 'block' : 'none';
-    });
-    
-    this.updateArchiveCount();
-  }
-
-  /**
-   * Clear all archive filters
-   */
-  clearAllArchiveFilters() {
-    this.activeArchiveTagFilters.clear();
-    this.currentArchiveSearchTerm = '';
-    
-    // Clear search input
-    const searchInput = document.getElementById('archive-search');
-    if (searchInput) {
-      searchInput.value = '';
-    }
-    
-    // Update filter buttons
-    document.querySelectorAll('.archive-tag-filter-btn').forEach(btn => {
-      btn.classList.remove('active');
-    });
-    
-    // Show all files
-    document.querySelectorAll('.archive-file-item').forEach(item => {
-      item.style.display = 'block';
-    });
-    
-    this.updateArchiveCount();
-    this.updateArchiveClearFiltersButton();
-  }
-
-  /**
-   * Update archive clear filters button
-   */
-  updateArchiveClearFiltersButton() {
-    const clearBtn = document.getElementById('archive-clear-filters-btn');
-    if (!clearBtn) return;
-    
-    const hasActiveFilters = this.activeArchiveTagFilters.size > 0 || this.currentArchiveSearchTerm.trim().length > 0;
-    clearBtn.disabled = !hasActiveFilters;
-  }
-
-  /**
-   * Update archive count
-   */
-  updateArchiveCount() {
-    const visibleCount = document.querySelectorAll('.archive-file-item[style*="block"], .archive-file-item:not([style*="none"])').length;
     const totalCount = this.getData().archive?.files?.length || 0;
+    const visibleCount = document.querySelectorAll('.resource-item[style*="display: block"], .resource-item:not([style*="display: none"])').length;
     
-    const countElement = document.getElementById('archive-count');
+    const countElement = document.getElementById('resource-count-text');
     if (countElement) {
-      countElement.textContent = `${visibleCount} of ${totalCount} files`;
+      countElement.textContent = `${visibleCount} of ${totalCount} Resources Listed`;
     }
+  }
+
+  /**
+   * Initialize edit resource item tag autocompletion
+   */
+  initializeEditResourceItemTagAutocompletion() {
+    // Clean up existing edit resource item tag autocomplete
+    if (this.editResourceItemTagAutocomplete) {
+      this.editResourceItemTagAutocomplete.cleanup && this.editResourceItemTagAutocomplete.cleanup();
+    }
+
+    const editResourceTagInput = document.getElementById('edit-resource-tag-input');
+    if (!editResourceTagInput) return;
+
+    this.editResourceItemTagAutocomplete = new TagAutocomplete({
+      inputSelector: '#edit-resource-tag-input',
+      autocompleteSelector: '#edit-resource-tag-autocomplete',
+      getSuggestions: (inputValue) => {
+        return this.getIntelligentResourceTagSuggestions(inputValue, this.editResourceItemTags, 5);
+      },
+      onSelect: (tagValue) => {
+        this.addEditResourceItemTag(tagValue);
+      },
+      onInputChange: (input) => {
+        this.updateEditResourceItemAddTagButtonState(input);
+      }
+    });
   }
 
   // ===== TAG AUTОCOMPLETE INITIALIZATION =====
@@ -948,10 +407,7 @@ export class TagManager extends ModuleBase {
    */
   initializeTagAutocompleteSystems() {
     this.initializeResourceTagAutocompletion();
-    this.initializeArchiveTagAutocompletion();
-    this.initializeBulkTagAutocompletion();
-    this.initializeEditArchiveItemTagAutocompletion();
-    this.initializeModalTagAutocomplete();
+    this.initializeEditResourceItemTagAutocompletion();
   }
 
   /**
@@ -991,335 +447,6 @@ export class TagManager extends ModuleBase {
   }
 
   /**
-   * Initialize archive tag autocompletion
-   */
-  initializeArchiveTagAutocompletion() {
-    // Clean up any existing archive tag autocomplete instances
-    if (this.archiveTagAutocompletes) {
-      this.archiveTagAutocompletes.forEach(instance => instance.cleanup && instance.cleanup());
-    }
-    this.archiveTagAutocompletes = [];
-
-    // Set up autocomplete for each archive tag input
-    const archiveTagInputs = document.querySelectorAll('.archive-tag-input');
-    archiveTagInputs.forEach(input => {
-      const fileUuid = input.dataset.fileUuid;
-      
-      const autocomplete = new TagAutocomplete({
-        inputSelector: `input[data-file-uuid="${fileUuid}"].archive-tag-input`,
-        autocompleteSelector: `#archive-autocomplete-${fileUuid}`,
-        getSuggestions: (inputValue) => {
-          // Get current file's existing tags to exclude from suggestions
-          const file = this.getData().archive?.files?.find(f => f.uuid === fileUuid);
-          const excludeTags = file?.tags || [];
-          return this.getIntelligentArchiveTagSuggestions(inputValue, excludeTags, 5);
-        },
-        onTagSelect: (tagValue) => {
-          this.addTagToArchiveFile(fileUuid, tagValue);
-        },
-        onInputChange: (input) => {
-          this.updateArchiveAddTagButtonState(input);
-        }
-      });
-
-      this.archiveTagAutocompletes.push(autocomplete);
-    });
-  }
-
-  /**
-   * Initialize bulk tag autocompletion
-   */
-  initializeBulkTagAutocompletion() {
-    // Clean up existing bulk tag autocomplete
-    if (this.bulkTagAutocomplete) {
-      this.bulkTagAutocomplete.cleanup && this.bulkTagAutocomplete.cleanup();
-    }
-
-    const bulkTagInput = document.getElementById('bulk-tag-input');
-    if (!bulkTagInput) return;
-
-    this.bulkTagAutocomplete = new TagAutocomplete({
-      inputSelector: '#bulk-tag-input',
-      autocompleteSelector: '#bulk-tag-autocomplete',
-      getSuggestions: (inputValue) => {
-        return this.getIntelligentTagSuggestions(inputValue, this.bulkTags, 8);
-      },
-      onTagSelect: (tagValue) => {
-        this.addBulkTag(tagValue);
-      },
-      onInputChange: (input) => {
-        this.updateBulkAddTagButtonState(input);
-      }
-    });
-  }
-
-  /**
-   * Initialize edit archive item tag autocompletion
-   */
-  initializeEditArchiveItemTagAutocompletion() {
-    // Clean up existing edit archive item tag autocomplete
-    if (this.editArchiveItemTagAutocomplete) {
-      this.editArchiveItemTagAutocomplete.cleanup && this.editArchiveItemTagAutocomplete.cleanup();
-    }
-
-    const editArchiveTagInput = document.getElementById('edit-archive-tag-input');
-    if (!editArchiveTagInput) return;
-
-    this.editArchiveItemTagAutocomplete = new TagAutocomplete({
-      inputSelector: '#edit-archive-tag-input',
-      autocompleteSelector: '#edit-archive-tag-autocomplete',
-      getSuggestions: (inputValue) => {
-        return this.getIntelligentArchiveTagSuggestions(inputValue, this.editArchiveItemTags, 5);
-      },
-      onTagSelect: (tagValue) => {
-        this.addEditArchiveItemTag(tagValue);
-      },
-      onInputChange: (input) => {
-        this.updateEditArchiveItemAddTagButtonState(input);
-      }
-    });
-  }
-
-  // ===== TAG MANAGEMENT MODALS =====
-
-  /**
-   * Open edit tag modal
-   */
-  openEditTagModal(tag) {
-    console.log('Opening edit modal for tag:', tag);
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal">
-        <div class="modal-header">
-          <h3>Edit Tag</h3>
-          <button class="modal-close">×</button>
-        </div>
-        <div class="modal-content">
-          <p>Rename the tag "<strong>${this.escapeHtml(tag)}</strong>" across all resources:</p>
-          <div class="form-group">
-            <label for="edit-tag-input">New tag name:</label>
-            <input type="text" id="edit-tag-input" value="${tag}" placeholder="Enter new tag name">
-          </div>
-          <div class="form-actions">
-            <button class="secondary-btn cancel-btn">Cancel</button>
-            <button class="primary-btn rename-btn">Rename Tag</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-    
-    // Add the active class to make it visible
-    setTimeout(() => {
-      modal.classList.add('active');
-    }, 10);
-    
-    // Set up event listeners
-    const closeBtn = modal.querySelector('.modal-close');
-    const cancelBtn = modal.querySelector('.cancel-btn');
-    const renameBtn = modal.querySelector('.rename-btn');
-    const input = modal.querySelector('#edit-tag-input');
-
-    // Close handlers
-    const closeModal = () => {
-      modal.classList.remove('active');
-      setTimeout(() => modal.remove(), 200); // Wait for transition
-    };
-    closeBtn.addEventListener('click', closeModal);
-    cancelBtn.addEventListener('click', closeModal);
-    
-    // Rename handler
-    renameBtn.addEventListener('click', () => {
-      this.handleRenameTag(tag, input.value);
-    });
-
-    // Focus and select the input
-    input.focus();
-    input.select();
-
-    // Handle Enter key
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        this.handleRenameTag(tag, input.value);
-      } else if (e.key === 'Escape') {
-        closeModal();
-      }
-    });
-
-    // Close modal when clicking outside
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        closeModal();
-      }
-    });
-  }
-
-  /**
-   * Handle tag rename
-   */
-  async handleRenameTag(oldTag, newTag) {
-    try {
-      // Validate new tag name
-      if (!newTag.trim()) {
-        this.showError('Tag name cannot be empty');
-        return;
-      }
-
-      if (newTag.trim() === oldTag) {
-        this.showError('New tag name must be different');
-        return;
-      }
-
-      // Rename tag via IPC
-      await window.electronAPI.collate.renameTag(oldTag, newTag);
-      
-      // Reload data to reflect changes
-      await this.getApp().loadCollateData();
-
-      this.showSuccess(`Tag "${oldTag}" renamed to "${newTag}"`);
-      
-      // Emit event for other modules
-      this.emit('tagRenamed', { oldTag, newTag });
-    } catch (error) {
-      console.error('Failed to rename tag:', error);
-      this.showError('Failed to rename tag');
-    }
-  }
-
-  /**
-   * Confirm delete tag
-   */
-  confirmDeleteTag(tag) {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-      <div class="modal">
-        <div class="modal-header">
-          <h3>Delete Tag</h3>
-          <button class="modal-close">×</button>
-        </div>
-        <div class="modal-content">
-          <p>Are you sure you want to delete the tag "<strong>${this.escapeHtml(tag)}</strong>"?</p>
-          <p class="warning">This will remove the tag from all resources that use it.</p>
-          <div class="form-actions">
-            <button class="secondary-btn cancel-btn">Cancel</button>
-            <button class="danger-btn delete-btn">Delete Tag</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(modal);
-    
-    setTimeout(() => {
-      modal.classList.add('active');
-    }, 10);
-    
-    const closeModal = () => {
-      modal.classList.remove('active');
-      setTimeout(() => modal.remove(), 200);
-    };
-    
-    modal.querySelector('.modal-close').addEventListener('click', closeModal);
-    modal.querySelector('.cancel-btn').addEventListener('click', closeModal);
-    modal.querySelector('.delete-btn').addEventListener('click', () => {
-      this.handleDeleteTag(tag);
-      closeModal();
-    });
-    
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        closeModal();
-      }
-    });
-  }
-
-  /**
-   * Handle tag deletion
-   */
-  async handleDeleteTag(tag) {
-    try {
-      // Delete tag via IPC
-      await window.electronAPI.collate.deleteTag(tag);
-      
-      // Reload data to reflect changes
-      await this.getApp().loadCollateData();
-
-      this.showSuccess(`Tag "${tag}" deleted successfully`);
-      
-      // Emit event for other modules
-      this.emit('tagDeleted', { tag });
-    } catch (error) {
-      console.error('Failed to delete tag:', error);
-      this.showError('Failed to delete tag');
-    }
-  }
-
-  // ===== UTILITY METHODS =====
-
-  /**
-   * Show tag context menu at specified coordinates
-   */
-  showTagContextMenu(tag, x, y) {
-    // Hide any existing context menus first
-    this.hideTagContextMenu();
-    
-    const menu = document.querySelector(`.tag-dropdown-menu[data-tag="${tag}"]`);
-    if (!menu) return;
-
-    // Position the menu at cursor position
-    menu.style.position = 'fixed';
-    menu.style.left = `${x}px`;
-    menu.style.top = `${y}px`;
-    menu.style.display = 'block';
-    menu.style.zIndex = '2000';
-
-    // Adjust position if menu would go off screen
-    const rect = menu.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    if (rect.right > viewportWidth) {
-      menu.style.left = `${x - rect.width}px`;
-    }
-    if (rect.bottom > viewportHeight) {
-      menu.style.top = `${y - rect.height}px`;
-    }
-
-    // Add document click listener to close menu
-    setTimeout(() => {
-      document.addEventListener('click', this.handleTagContextMenuClick.bind(this), { once: true });
-    }, 10);
-  }
-
-  /**
-   * Hide all tag context menus
-   */
-  hideTagContextMenu() {
-    const menus = document.querySelectorAll('.tag-dropdown-menu');
-    menus.forEach(menu => {
-      menu.style.display = 'none';
-      menu.style.position = '';
-      menu.style.left = '';
-      menu.style.top = '';
-      menu.style.zIndex = '';
-    });
-  }
-
-  /**
-   * Handle tag context menu click events
-   */
-  handleTagContextMenuClick(e) {
-    // Don't close if clicking on the menu itself
-    if (!e.target.closest('.tag-dropdown-menu')) {
-      this.hideTagContextMenu();
-    }
-  }
-
-  /**
    * Clean up autocomplete instances
    */
   cleanupAutocompleteInstances() {
@@ -1331,29 +458,10 @@ export class TagManager extends ModuleBase {
       this.resourceTagAutocompletes = [];
     }
 
-    // Clean up archive tag autocompletes
-    if (this.archiveTagAutocompletes) {
-      this.archiveTagAutocompletes.forEach(instance => {
-        if (instance.cleanup) instance.cleanup();
-      });
-      this.archiveTagAutocompletes = [];
-    }
-
     // Clean up other autocomplete instances
-    if (this.editArchiveItemTagAutocomplete) {
-      this.editArchiveItemTagAutocomplete.cleanup && this.editArchiveItemTagAutocomplete.cleanup();
-      this.editArchiveItemTagAutocomplete = null;
-    }
-
-    if (this.bulkTagAutocomplete) {
-      this.bulkTagAutocomplete.cleanup && this.bulkTagAutocomplete.cleanup();
-      this.bulkTagAutocomplete = null;
-    }
-
-    // Clean up modal tag autocomplete
-    if (this.modalTagAutocomplete) {
-      this.modalTagAutocomplete.cleanup && this.modalTagAutocomplete.cleanup();
-      this.modalTagAutocomplete = null;
+    if (this.editResourceItemTagAutocomplete) {
+      this.editResourceItemTagAutocomplete.cleanup && this.editResourceItemTagAutocomplete.cleanup();
+      this.editResourceItemTagAutocomplete = null;
     }
   }
 
@@ -1367,29 +475,6 @@ export class TagManager extends ModuleBase {
   }
 
   /**
-   * Get tag statistics
-   */
-  getTagStatistics() {
-    const resourceTags = this.getAllExistingTags();
-    const archiveTags = this.getAllExistingArchiveTags();
-    
-    return {
-      resourceTags: {
-        total: resourceTags.length,
-        tags: resourceTags
-      },
-      archiveTags: {
-        total: archiveTags.length,
-        tags: archiveTags
-      },
-      activeFilters: {
-        resource: Array.from(this.activeTagFilters),
-        archive: Array.from(this.activeArchiveTagFilters)
-      }
-    };
-  }
-
-  /**
    * Initialize filter logic controls
    */
   initializeFilterLogic() {
@@ -1398,8 +483,8 @@ export class TagManager extends ModuleBase {
     if (!filterLogicBtn) return;
     
     // Load saved preference or use default
-    const savedLogic = localStorage.getItem('collate-filter-logic') || 'any';
-    this.filterLogic = savedLogic;
+    const savedLogic = localStorage.getItem('resource-filter-logic') || 'any';
+    this.resourceFilterLogic = savedLogic;
     
     // Set initial button state
     this.updateFilterLogicButton();
@@ -1407,12 +492,12 @@ export class TagManager extends ModuleBase {
     // Add event listener for button clicks
     filterLogicBtn.addEventListener('click', () => {
       // Toggle between 'any' and 'all'
-      this.filterLogic = this.filterLogic === 'any' ? 'all' : 'any';
-      localStorage.setItem('collate-filter-logic', this.filterLogic);
+      this.resourceFilterLogic = this.resourceFilterLogic === 'any' ? 'all' : 'any';
+      localStorage.setItem('resource-filter-logic', this.resourceFilterLogic);
       
       // Update button appearance and reapply filters
       this.updateFilterLogicButton();
-      this.applyAllFilters();
+      this.applyResourceFilters();
     });
   }
 
@@ -1424,163 +509,108 @@ export class TagManager extends ModuleBase {
     if (!filterLogicBtn) return;
     
     // Set data attribute for CSS styling
-    filterLogicBtn.setAttribute('data-logic', this.filterLogic);
+    filterLogicBtn.setAttribute('data-logic', this.resourceFilterLogic);
     
     // Update tooltip
-    const tooltipText = this.filterLogic === 'any' 
+    const tooltipText = this.resourceFilterLogic === 'any' 
       ? 'Toggle Filter Logic: ANY of these tags' 
       : 'Toggle Filter Logic: ALL of these tags';
     filterLogicBtn.setAttribute('title', tooltipText);
   }
 
-  // ===== MODAL TAG MANAGEMENT =====
-
   /**
-   * Initialize modal tag autocomplete
+   * Update resource tag filter buttons
    */
-  initializeModalTagAutocomplete() {
-    console.log('[TagManager] Initializing modal tag autocomplete...');
-    
-    // Initialize modal tags array if not exists
-    if (!this.modalTags) {
-      this.modalTags = [];
-    }
-    
-    // Set up modal tag input autocomplete
-    const modalTagInput = document.getElementById('modal-tag-input');
-    if (modalTagInput) {
-      // Create autocomplete instance for modal tag input
-      const modalTagAutocomplete = new TagAutocomplete(modalTagInput, {
-        suggestionsCallback: (input) => this.getIntelligentTagSuggestions(input, this.modalTags || []),
-        onSelect: (tag) => this.addModalTag(tag),
-        placeholder: 'Add tags...'
-      });
-      
-      // Store the autocomplete instance
-      this.modalTagAutocomplete = modalTagAutocomplete;
-    }
+  updateResourceTagFilterButtons() {
+    document.querySelectorAll('.tag-filter').forEach(btn => {
+      const tag = btn.dataset.tag;
+      if (this.activeResourceTagFilters.has(tag)) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
   }
 
   /**
-   * Update modal add tag button state
+   * Update resource tag filter list
    */
-  updateModalAddTagButtonState(input) {
-    const addTagBtn = document.getElementById('modal-add-tag-btn');
-    if (!addTagBtn) return;
-    
-    const tagValue = input.value.trim();
-    const isValid = tagValue.length > 0 && !this.modalTags?.includes(tagValue);
-    
-    addTagBtn.disabled = !isValid;
-    addTagBtn.classList.toggle('disabled', !isValid);
+  updateResourceTagFilterList() {
+    // This method would update the tag filter list display
+    // Implementation depends on how the filter list is rendered
+    console.log('[TagManager] updateResourceTagFilterList called');
   }
 
   /**
-   * Add tag to modal
+   * Apply all filters (legacy method for backward compatibility)
    */
-  addModalTag(tagValue) {
-    const trimmedTag = tagValue.trim();
-    if (!trimmedTag) return;
-    
-    // Initialize modal tags array if not exists
-    if (!this.modalTags) {
-      this.modalTags = [];
-    }
-    
-    // Check if tag already exists
-    if (this.modalTags.includes(trimmedTag)) {
-      this.showError('Tag already exists');
-      return;
-    }
-    
-    // Add tag to array
-    this.modalTags.push(trimmedTag);
-    
-    // Clear input
-    const input = document.getElementById('modal-tag-input');
-    if (input) {
-      input.value = '';
-      this.updateModalAddTagButtonState(input);
-    }
-    
-    // Re-render modal tags
-    this.renderModalTags();
-    
-    // Hide autocomplete if exists
-    if (this.modalTagAutocomplete) {
-      this.modalTagAutocomplete.hide();
-    }
+  applyAllFilters() {
+    console.log('[TagManager] applyAllFilters called - delegating to applyResourceFilters');
+    this.applyResourceFilters();
   }
 
   /**
-   * Remove tag from modal
+   * Clear all filters (legacy method for backward compatibility)
    */
-  removeModalTag(tagValue) {
-    if (!this.modalTags) return;
+  clearAllFilters() {
+    console.log('[TagManager] clearAllFilters called');
     
-    const index = this.modalTags.indexOf(tagValue);
-    if (index > -1) {
-      this.modalTags.splice(index, 1);
-      this.renderModalTags();
+    // Clear resource tag filters
+    this.activeResourceTagFilters.clear();
+    this.currentResourceSearchTerm = '';
+    
+    // Clear search input
+    const searchInput = document.getElementById('resource-search');
+    if (searchInput) {
+      searchInput.value = '';
+    }
+    
+    // Update filter buttons
+    document.querySelectorAll('.tag-filter').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    
+    // Show all resources
+    document.querySelectorAll('.resource-item').forEach(item => {
+      item.style.display = 'block';
+    });
+    
+    this.updateResourceCount();
+    this.updateResourceTagFilterButtons();
+  }
+
+  /**
+   * Update resource count display
+   */
+  updateResourceCount() {
+    const visibleResources = document.querySelectorAll('.resource-item[style*="display: block"], .resource-item:not([style*="display: none"])').length;
+    const totalResources = document.querySelectorAll('.resource-item').length;
+    
+    const countElement = document.getElementById('resource-count');
+    if (countElement) {
+      if (visibleResources === totalResources) {
+        countElement.textContent = `${totalResources} resource${totalResources !== 1 ? 's' : ''}`;
+      } else {
+        countElement.textContent = `${visibleResources} of ${totalResources} resource${totalResources !== 1 ? 's' : ''}`;
+      }
     }
   }
 
   /**
-   * Render modal tags
+   * Get tag statistics
    */
-  renderModalTags() {
-    const container = document.getElementById('modal-tags-container');
-    if (!container) return;
+  getTagStats() {
+    const resourceTags = this.getAllExistingResourceTags();
     
-    if (!this.modalTags || this.modalTags.length === 0) {
-      container.innerHTML = '<div class="no-tags">No tags added</div>';
-      return;
-    }
-    
-    container.innerHTML = this.modalTags.map(tag => `
-      <span class="tag">
-        ${this.escapeHtml(tag)}
-        <button class="tag-remove" onclick="app.getTagManager().removeModalTag('${this.escapeHtml(tag)}')">×</button>
-      </span>
-    `).join('');
-  }
-
-  /**
-   * Get modal tags
-   */
-  getModalTags() {
-    return this.modalTags || [];
-  }
-
-  /**
-   * Clear modal tags
-   */
-  clearModalTags() {
-    this.modalTags = [];
-    this.renderModalTags();
-  }
-
-  /**
-   * Clear bulk tags
-   */
-  clearBulkTags() {
-    this.bulkTags = [];
-    this.renderBulkTags();
-  }
-
-  /**
-   * Get bulk tags
-   */
-  getBulkTags() {
-    return this.bulkTags || [];
-  }
-
-  /**
-   * Set modal tags
-   */
-  setModalTags(tags) {
-    this.modalTags = Array.isArray(tags) ? [...tags] : [];
-    this.renderModalTags();
+    return {
+      resourceTags: {
+        total: resourceTags.length,
+        tags: resourceTags
+      },
+      activeFilters: {
+        resource: Array.from(this.activeResourceTagFilters)
+      }
+    };
   }
 
   /**
