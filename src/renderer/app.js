@@ -567,7 +567,7 @@ class MeridianApp {
           console.log(`[DEBUG switchTool] Loading unified data...`);
           const unifiedResourceManager = this.getModule('unifiedResourceManager');
           if (unifiedResourceManager) {
-            unifiedResourceManager.renderUnifiedPanel();
+            await unifiedResourceManager.loadUnifiedResources();
           } else {
             console.error('[App] UnifiedResourceManager not available');
           }
@@ -1134,7 +1134,6 @@ class MeridianApp {
       const unifiedResourceManager = this.getModule('unifiedResourceManager');
       if (unifiedResourceManager) {
         await unifiedResourceManager.loadUnifiedResources();
-        unifiedResourceManager.renderUnifiedPanel();
       } else {
         console.error('[App] UnifiedResourceManager not available');
         this.showError('Unified functionality not available');
@@ -1931,6 +1930,10 @@ class MeridianApp {
     UIManager.showError(message);
   }
 
+  showSuccess(message) {
+    UIManager.showSuccess(message);
+  }
+
 
   // Marbling Background Management
   initializeMarblingBackground() {
@@ -2138,26 +2141,32 @@ class MeridianApp {
       `;
 
       console.log('[DEBUG] Modal HTML created, length:', modalHtml.length);
-      const modal = document.getElementById('modal-overlay');
-      console.log('[DEBUG] Modal overlay element:', modal);
-
-      if (!modal) {
-        console.error('[DEBUG] Modal overlay element not found!');
-        this.showError('Modal overlay not found');
+      
+      // Use ModalManager to create and show the modal
+      const modalManager = this.getModalManager();
+      if (!modalManager) {
+        console.error('[DEBUG] ModalManager not available!');
+        this.showError('Modal system not available');
         return;
       }
 
-      console.log('[DEBUG] Setting modal HTML and displaying');
-      modal.innerHTML = modalHtml;
-      modal.classList.add('active');
+      console.log('[DEBUG] Creating dynamic modal via ModalManager');
+      // Extract the inner content from the modal HTML
+      const modalContent = modalHtml.substring(modalHtml.indexOf('<div class="modal-header">'), modalHtml.lastIndexOf('</div>') + 6);
+      modalManager.createDynamicModal('site-settings-modal', modalContent);
+
+      console.log('[DEBUG] Opening modal via ModalManager');
+      await modalManager.openModal('site-settings-modal');
 
       console.log('[DEBUG] Modal displayed, setting up event handlers');
-      // Setup event handlers
-      this.setupSiteSettingsModalEvents();
-
-      // Initialize character counts and validation
-      this.updateCharacterCounts();
-      this.validateBaseUrl();
+      // Setup event handlers with a slight delay to ensure DOM is ready
+      setTimeout(() => {
+        this.setupSiteSettingsModalEvents();
+        
+        // Initialize character counts and validation
+        this.updateCharacterCounts();
+        this.validateBaseUrl();
+      }, 50);
 
     } catch (error) {
       console.error('Failed to open site settings modal:', error);

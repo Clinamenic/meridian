@@ -10,7 +10,11 @@ export class DeployManager extends ModuleBase {
   }
 
   async onInit() {
-    // Placeholder for initialization logic
+    console.log('[DeployManager] Initializing...');
+    
+    // Setup deploy-related event listeners
+    this.setupDeployEvents();
+    
     console.log('[DeployManager] Initialized');
   }
 
@@ -44,12 +48,12 @@ export class DeployManager extends ModuleBase {
       if (e.target && e.target.id === 'deploy-workflow-btn') {
         // Check if Quartz is initialized before proceeding
         try {
-          const isInitialized = await this.getApp().checkQuartzInitialized();
+          const isInitialized = await this.checkQuartzInitialized();
           if (!isInitialized) {
             this.getApp().showError('Please initialize Quartz first before deploying');
             return;
           }
-          await this.getApp().deploySite();
+          await this.deploySite();
         } catch (error) {
           console.error('Error in deploy button handler:', error);
           this.getApp().showError(`Deploy failed: ${error.message}`);

@@ -92,6 +92,61 @@ export class UnifiedDatabaseManager {
         )
       `;
 
+      // Custom Properties Tables for Enhanced Resource Management
+      const createGlobalPropertyKeysTable = `
+        CREATE TABLE IF NOT EXISTS global_property_keys (
+          property_key TEXT PRIMARY KEY,
+          display_name TEXT NOT NULL,
+          data_type TEXT NOT NULL DEFAULT 'string',
+          usage_count INTEGER DEFAULT 0,
+          last_used TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `;
+
+      const createGlobalPropertyValuesTable = `
+        CREATE TABLE IF NOT EXISTS global_property_values (
+          id TEXT PRIMARY KEY,
+          property_key TEXT NOT NULL,
+          property_value TEXT NOT NULL,
+          usage_count INTEGER DEFAULT 0,
+          last_used TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (property_key) REFERENCES global_property_keys(property_key) ON DELETE CASCADE,
+          UNIQUE(property_key, property_value)
+        )
+      `;
+
+      const createResourceCustomPropertiesTable = `
+        CREATE TABLE IF NOT EXISTS resource_custom_properties (
+          resource_id TEXT NOT NULL,
+          property_key TEXT NOT NULL,
+          property_value TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          PRIMARY KEY (resource_id, property_key),
+          FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
+          FOREIGN KEY (property_key) REFERENCES global_property_keys(property_key)
+        )
+      `;
+
+      // Alternative Locations Table for Multi-Location Resource Management
+      const createAlternativeLocationsTable = `
+        CREATE TABLE IF NOT EXISTS resource_alternative_locations (
+          id TEXT PRIMARY KEY,
+          resource_id TEXT NOT NULL,
+          location_type TEXT NOT NULL,
+          location_value TEXT NOT NULL,
+          is_accessible BOOLEAN DEFAULT NULL,
+          last_verified TEXT,
+          metadata TEXT,
+          is_external_arweave BOOLEAN DEFAULT false,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
+        )
+      `;
+
       const createIndexes = `
         CREATE INDEX IF NOT EXISTS idx_resources_title ON resources (title);
         CREATE INDEX IF NOT EXISTS idx_resources_type ON resources (resource_type);
@@ -100,6 +155,13 @@ export class UnifiedDatabaseManager {
         CREATE INDEX IF NOT EXISTS idx_resources_modified_at ON resources (modified_at_timestamp);
         CREATE INDEX IF NOT EXISTS idx_resource_tags_resource_id ON resource_tags (resource_id);
         CREATE INDEX IF NOT EXISTS idx_resource_tags_tag ON resource_tags (tag);
+        CREATE INDEX IF NOT EXISTS idx_resource_custom_properties_resource_id ON resource_custom_properties(resource_id);
+        CREATE INDEX IF NOT EXISTS idx_resource_custom_properties_key ON resource_custom_properties(property_key);
+        CREATE INDEX IF NOT EXISTS idx_global_property_values_key ON global_property_values(property_key);
+        CREATE INDEX IF NOT EXISTS idx_global_property_keys_usage ON global_property_keys(usage_count DESC, last_used DESC);
+        CREATE INDEX IF NOT EXISTS idx_global_property_values_usage ON global_property_values(property_key, usage_count DESC, last_used DESC);
+        CREATE INDEX IF NOT EXISTS idx_alt_locations_resource_id ON resource_alternative_locations(resource_id);
+        CREATE INDEX IF NOT EXISTS idx_alt_locations_type ON resource_alternative_locations(location_type);
       `;
 
       this.db!.serialize(() => {
@@ -114,6 +176,38 @@ export class UnifiedDatabaseManager {
         this.db!.run(createTagsTable, (err: Error | null) => {
           if (err) {
             console.error('[UnifiedDatabaseManager] Failed to create tags table:', err);
+            reject(err);
+            return;
+          }
+        });
+
+        this.db!.run(createGlobalPropertyKeysTable, (err: Error | null) => {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to create global property keys table:', err);
+            reject(err);
+            return;
+          }
+        });
+
+        this.db!.run(createGlobalPropertyValuesTable, (err: Error | null) => {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to create global property values table:', err);
+            reject(err);
+            return;
+          }
+        });
+
+        this.db!.run(createResourceCustomPropertiesTable, (err: Error | null) => {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to create resource custom properties table:', err);
+            reject(err);
+            return;
+          }
+        });
+
+        this.db!.run(createAlternativeLocationsTable, (err: Error | null) => {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to create alternative locations table:', err);
             reject(err);
             return;
           }
@@ -1117,6 +1211,303 @@ export class UnifiedDatabaseManager {
           });
         });
       });
+    });
+  }
+
+  // ===== CUSTOM PROPERTIES MANAGEMENT =====
+
+  /**
+   * Add a custom property to a resource
+   */
+  async addCustomProperty(resourceId: string, propertyKey: string, propertyValue: string, dataType: string = 'string'): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    const now = new Date().toISOString();
+
+    return new Promise((resolve, reject) => {
+      this.db!.serialize(() => {
+        // Ensure property key exists in global keys
+        this.db!.run(
+          `INSERT OR REPLACE INTO global_property_keys 
+           (property_key, display_name, data_type, usage_count, last_used, created_at, updated_at)
+           VALUES (?, ?, ?, COALESCE((SELECT usage_count FROM global_property_keys WHERE property_key = ?), 0) + 1, ?, 
+                   COALESCE((SELECT created_at FROM global_property_keys WHERE property_key = ?), ?), ?)`,
+          [propertyKey, propertyKey, dataType, propertyKey, now, propertyKey, now, now],
+          function(err: Error | null) {
+            if (err) {
+              console.error('[UnifiedDatabaseManager] Failed to update global property key:', err);
+              reject(err);
+              return;
+            }
+          }
+        );
+
+        // Ensure property value exists in global values
+        const valueId = this.generateId();
+        this.db!.run(
+          `INSERT OR REPLACE INTO global_property_values 
+           (id, property_key, property_value, usage_count, last_used, created_at)
+           VALUES (COALESCE((SELECT id FROM global_property_values WHERE property_key = ? AND property_value = ?), ?), 
+                   ?, ?, COALESCE((SELECT usage_count FROM global_property_values WHERE property_key = ? AND property_value = ?), 0) + 1, ?, ?)`,
+          [propertyKey, propertyValue, valueId, propertyKey, propertyValue, propertyKey, propertyValue, now, now],
+          function(err: Error | null) {
+            if (err) {
+              console.error('[UnifiedDatabaseManager] Failed to update global property value:', err);
+              reject(err);
+              return;
+            }
+          }
+        );
+
+        // Set resource property value
+        this.db!.run(
+          `INSERT OR REPLACE INTO resource_custom_properties 
+           (resource_id, property_key, property_value, created_at, updated_at)
+           VALUES (?, ?, ?, COALESCE((SELECT created_at FROM resource_custom_properties WHERE resource_id = ? AND property_key = ?), ?), ?)`,
+          [resourceId, propertyKey, propertyValue, resourceId, propertyKey, now, now],
+          function(err: Error | null) {
+            if (err) {
+              console.error('[UnifiedDatabaseManager] Failed to set resource custom property:', err);
+              reject(err);
+              return;
+            }
+            resolve();
+          }
+        );
+      });
+    });
+  }
+
+  /**
+   * Get all custom properties for a resource
+   */
+  async getCustomProperties(resourceId: string): Promise<{ [key: string]: string }> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.db!.all(
+        'SELECT property_key, property_value FROM resource_custom_properties WHERE resource_id = ?',
+        [resourceId],
+        (err: Error | null, rows: any[]) => {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to get custom properties:', err);
+            reject(err);
+            return;
+          }
+
+          const properties: { [key: string]: string } = {};
+          rows.forEach(row => {
+            properties[row.property_key] = row.property_value;
+          });
+
+          resolve(properties);
+        }
+      );
+    });
+  }
+
+  /**
+   * Get property key suggestions for autocomplete
+   */
+  async getPropertyKeySuggestions(searchTerm: string = ''): Promise<Array<{ property_key: string; usage_count: number }>> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.db!.all(
+        `SELECT property_key, usage_count
+         FROM global_property_keys
+         WHERE property_key LIKE ?
+         ORDER BY usage_count DESC, last_used DESC
+         LIMIT 10`,
+        [`%${searchTerm}%`],
+        (err: Error | null, rows: any[]) => {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to get property key suggestions:', err);
+            reject(err);
+            return;
+          }
+          resolve(rows);
+        }
+      );
+    });
+  }
+
+  /**
+   * Get property value suggestions for autocomplete
+   */
+  async getPropertyValueSuggestions(propertyKey: string, searchTerm: string = ''): Promise<Array<{ property_value: string; usage_count: number }>> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.db!.all(
+        `SELECT property_value, usage_count
+         FROM global_property_values
+         WHERE property_key = ? AND property_value LIKE ?
+         ORDER BY usage_count DESC, last_used DESC
+         LIMIT 10`,
+        [propertyKey, `%${searchTerm}%`],
+        (err: Error | null, rows: any[]) => {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to get property value suggestions:', err);
+            reject(err);
+            return;
+          }
+          resolve(rows);
+        }
+      );
+    });
+  }
+
+  /**
+   * Remove a custom property from a resource
+   */
+  async removeCustomProperty(resourceId: string, propertyKey: string): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.db!.run(
+        'DELETE FROM resource_custom_properties WHERE resource_id = ? AND property_key = ?',
+        [resourceId, propertyKey],
+        function(err: Error | null) {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to remove custom property:', err);
+            reject(err);
+            return;
+          }
+          resolve();
+        }
+      );
+    });
+  }
+
+  // ===== ALTERNATIVE LOCATIONS MANAGEMENT =====
+
+  /**
+   * Add an alternative location for a resource
+   */
+  async addAlternativeLocation(resourceId: string, locationType: string, locationValue: string, metadata: any = null, isExternalArweave: boolean = false): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    const id = this.generateId();
+    const now = new Date().toISOString();
+    const metadataJson = metadata ? JSON.stringify(metadata) : null;
+
+    return new Promise((resolve, reject) => {
+      this.db!.run(
+        `INSERT INTO resource_alternative_locations 
+         (id, resource_id, location_type, location_value, metadata, is_external_arweave, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, resourceId, locationType, locationValue, metadataJson, isExternalArweave ? 1 : 0, now],
+        function(err: Error | null) {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to add alternative location:', err);
+            reject(err);
+            return;
+          }
+          resolve();
+        }
+      );
+    });
+  }
+
+  /**
+   * Get all alternative locations for a resource
+   */
+  async getAlternativeLocations(resourceId: string): Promise<Array<any>> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.db!.all(
+        `SELECT id, location_type, location_value, is_accessible, last_verified, metadata, is_external_arweave, created_at
+         FROM resource_alternative_locations
+         WHERE resource_id = ?
+         ORDER BY created_at DESC`,
+        [resourceId],
+        (err: Error | null, rows: any[]) => {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to get alternative locations:', err);
+            reject(err);
+            return;
+          }
+
+          const locations = rows.map(row => ({
+            id: row.id,
+            locationType: row.location_type,
+            locationValue: row.location_value,
+            isAccessible: row.is_accessible,
+            lastVerified: row.last_verified,
+            metadata: row.metadata ? JSON.parse(row.metadata) : null,
+            isExternalArweave: Boolean(row.is_external_arweave),
+            createdAt: row.created_at
+          }));
+
+          resolve(locations);
+        }
+      );
+    });
+  }
+
+  /**
+   * Remove an alternative location
+   */
+  async removeAlternativeLocation(locationId: string): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    return new Promise((resolve, reject) => {
+      this.db!.run(
+        'DELETE FROM resource_alternative_locations WHERE id = ?',
+        [locationId],
+        function(err: Error | null) {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to remove alternative location:', err);
+            reject(err);
+            return;
+          }
+          resolve();
+        }
+      );
+    });
+  }
+
+  /**
+   * Update alternative location accessibility status
+   */
+  async updateAlternativeLocationAccessibility(locationId: string, isAccessible: boolean): Promise<void> {
+    if (!this.db) {
+      throw new Error('Database not initialized');
+    }
+
+    const now = new Date().toISOString();
+
+    return new Promise((resolve, reject) => {
+      this.db!.run(
+        'UPDATE resource_alternative_locations SET is_accessible = ?, last_verified = ? WHERE id = ?',
+        [isAccessible ? 1 : 0, now, locationId],
+        function(err: Error | null) {
+          if (err) {
+            console.error('[UnifiedDatabaseManager] Failed to update alternative location accessibility:', err);
+            reject(err);
+            return;
+          }
+          resolve();
+        }
+      );
     });
   }
 

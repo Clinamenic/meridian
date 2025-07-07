@@ -49,6 +49,10 @@ export class UnifiedResourceManager extends ModuleBase {
     // Emit initialization event for module coordination
     this.emit('unifiedResourceManagerInitializing');
     
+    // Load filter state first (before rendering panel)
+    console.log('[UnifiedResourceManager] Loading filter state...');
+    this.loadFilterState();
+    
     // Don't load resources yet - wait for workspace to be selected
     console.log('[UnifiedResourceManager] Setting up panel and event listeners...');
     this.renderUnifiedPanel();
@@ -257,6 +261,19 @@ export class UnifiedResourceManager extends ModuleBase {
     
     container.innerHTML = html;
     
+    // Restore search input value from state
+    const searchInput = container.querySelector('#unified-search');
+    if (searchInput) {
+      searchInput.value = this.state.filters.searchTerm;
+    }
+    
+    // Restore filter logic button state
+    const filterLogicBtn = container.querySelector('#unified-filter-logic-btn');
+    if (filterLogicBtn) {
+      filterLogicBtn.setAttribute('data-logic', this.state.filters.filterLogic);
+      filterLogicBtn.setAttribute('title', `Toggle Filter Logic: ${this.state.filters.filterLogic === 'any' ? 'ANY' : 'ALL'} of these tags`);
+    }
+    
     // Always set up event listeners after rendering
     this.setupUnifiedEventListeners();
     this.setupResourceEventListeners();
@@ -406,13 +423,10 @@ export class UnifiedResourceManager extends ModuleBase {
    */
   getFilteredResources() {
     let filtered = this.state.resources;
-    console.log('[UnifiedResourceManager] getFilteredResources called - starting with', filtered.length, 'resources');
-    console.log('[UnifiedResourceManager] Active tags in getFilteredResources:', Array.from(this.state.filters.activeTags));
 
     // Apply search filter
     if (this.state.filters.searchTerm) {
       const searchTerm = this.state.filters.searchTerm.toLowerCase();
-      const beforeSearch = filtered.length;
       filtered = filtered.filter(resource => {
         const title = (resource.properties["dc:title"] || "").toLowerCase();
         const description = (resource.properties["meridian:description"] || "").toLowerCase();
@@ -424,14 +438,11 @@ export class UnifiedResourceManager extends ModuleBase {
                url.includes(searchTerm) || 
                tags.includes(searchTerm);
       });
-      console.log('[UnifiedResourceManager] After search filter:', beforeSearch, '->', filtered.length);
     }
 
     // Apply tag filters
     if (this.state.filters.activeTags.size > 0) {
-      const beforeTags = filtered.length;
       const activeTagsArray = Array.from(this.state.filters.activeTags);
-      console.log('[UnifiedResourceManager] Applying tag filters with active tags:', activeTagsArray);
       
       filtered = filtered.filter(resource => {
         const resourceTags = new Set(resource.properties["meridian:tags"] || []);
@@ -444,12 +455,8 @@ export class UnifiedResourceManager extends ModuleBase {
           return activeTagsArray.every(tag => resourceTags.has(tag));
         }
       });
-      console.log('[UnifiedResourceManager] After tag filter:', beforeTags, '->', filtered.length, 'Active tags:', activeTagsArray);
-    } else {
-      console.log('[UnifiedResourceManager] No active tag filters to apply');
     }
 
-    console.log('[UnifiedResourceManager] Final filtered count:', filtered.length);
     return filtered;
   }
 
@@ -458,7 +465,6 @@ export class UnifiedResourceManager extends ModuleBase {
    */
   renderTagFilters() {
     const allTags = this.getAllTags();
-    console.log('[UnifiedResourceManager] renderTagFilters - active tags:', Array.from(this.state.filters.activeTags));
     
     if (allTags.length === 0) {
       return '<div class="no-tags">No tags yet</div>';
@@ -487,7 +493,8 @@ export class UnifiedResourceManager extends ModuleBase {
   getAllTags() {
     const tagSet = new Set();
     this.state.resources.forEach(resource => {
-      (resource.properties["meridian:tags"] || []).forEach(tag => tagSet.add(tag));
+      const tags = resource.properties["meridian:tags"] || [];
+      tags.forEach(tag => tagSet.add(tag));
     });
     return Array.from(tagSet).sort();
   }
@@ -592,6 +599,8 @@ export class UnifiedResourceManager extends ModuleBase {
       return;
     }
 
+    console.log('[UnifiedResourceManager] Setting up unified event listeners');
+
     // Add resource button
     const addBtn = unifiedPanel.querySelector('#add-unified-resource-btn');
     if (addBtn) {
@@ -613,6 +622,9 @@ export class UnifiedResourceManager extends ModuleBase {
         
         // Apply filters
         this.applyFilters();
+        
+        // Save filter state
+        this.saveFilterState();
         
         // Emit search change event
         this.emit('searchChanged', {
@@ -641,6 +653,9 @@ export class UnifiedResourceManager extends ModuleBase {
         
         // Apply filters
         this.applyFilters();
+        
+        // Save filter state
+        this.saveFilterState();
         
         // Emit filter logic change event
         this.emit('filterLogicChanged', {
@@ -805,8 +820,8 @@ export class UnifiedResourceManager extends ModuleBase {
       }
     });
     
-    // Update UI
-    this.updateUI();
+    // Optimized UI update - only update collapse-related elements
+    this.updateCollapseStateOnly();
     
     // Save collapse state
     this.saveCollapseState();
@@ -837,8 +852,8 @@ export class UnifiedResourceManager extends ModuleBase {
       }
     });
     
-    // Update UI
-    this.updateUI();
+    // Optimized UI update - only update the specific resource
+    this.updateResourceCollapseOnly(resourceId);
     
     // Save collapse state
     this.saveCollapseState();
@@ -854,12 +869,10 @@ export class UnifiedResourceManager extends ModuleBase {
    * Unified UI update method (Meridian-compliant)
    */
   updateUI() {
-    console.log('[UnifiedResourceManager] updateUI called - active tags:', Array.from(this.state.filters.activeTags));
     this.updateTagFilters(); // Update tag filters first
     this.updateResourceList(); // Then update resource list
     this.updateButtonStates(); // Then update other button states
     this.updateCounts(); // Finally update counts
-    console.log('[UnifiedResourceManager] updateUI completed');
   }
 
   /**
@@ -885,14 +898,49 @@ export class UnifiedResourceManager extends ModuleBase {
       );
     }
     
-    // Update individual collapse buttons
+    // Update individual collapse buttons and resource items
     document.querySelectorAll('.resource-collapse-btn').forEach(btn => {
       const resourceId = btn.dataset.resourceId;
-      const isCollapsed = this.state.collapse.collapsedItems.has(resourceId);
-      btn.closest('.resource-item').classList.toggle('collapsed', isCollapsed);
+      const resourceItem = btn.closest('.resource-item');
+      if (resourceItem) {
+        const isCollapsed = this.state.collapse.collapsedItems.has(resourceId);
+        resourceItem.classList.toggle('collapsed', isCollapsed);
+      }
     });
     
     // Note: Tag filter buttons are now handled by updateTagFilters() to avoid conflicts
+  }
+
+  /**
+   * Optimized update for collapse state only (no re-rendering)
+   */
+  updateCollapseStateOnly() {
+    // Update collapse all button
+    const collapseAllBtn = document.getElementById('unified-collapse-all-btn');
+    if (collapseAllBtn) {
+      collapseAllBtn.setAttribute('data-state', this.state.collapse.globalState);
+      collapseAllBtn.setAttribute('title', 
+        this.state.collapse.globalState === 'expanded' ? 'Collapse All Resources' : 'Expand All Resources'
+      );
+    }
+    
+    // Update all resource items' collapse state
+    document.querySelectorAll('.resource-item').forEach(item => {
+      const resourceId = item.dataset.id;
+      const isCollapsed = this.state.collapse.collapsedItems.has(resourceId);
+      item.classList.toggle('collapsed', isCollapsed);
+    });
+  }
+
+  /**
+   * Optimized update for single resource collapse only
+   */
+  updateResourceCollapseOnly(resourceId) {
+    const resourceItem = document.querySelector(`.resource-item[data-id="${resourceId}"]`);
+    if (resourceItem) {
+      const isCollapsed = this.state.collapse.collapsedItems.has(resourceId);
+      resourceItem.classList.toggle('collapsed', isCollapsed);
+    }
   }
 
   /**
@@ -912,11 +960,9 @@ export class UnifiedResourceManager extends ModuleBase {
    * Update tag filters
    */
   updateTagFilters() {
-    console.log('[UnifiedResourceManager] updateTagFilters called - active tags:', Array.from(this.state.filters.activeTags));
     const container = document.getElementById('unified-tag-filter-list');
     if (container) {
       const newHtml = this.renderTagFilters();
-      console.log('[UnifiedResourceManager] Re-rendering tag filters with HTML:', newHtml.substring(0, 200) + '...');
       container.innerHTML = newHtml;
     }
   }
@@ -931,8 +977,13 @@ export class UnifiedResourceManager extends ModuleBase {
     
     const countElement = document.getElementById('unified-count-text');
     if (countElement) {
-      const resourceText = visibleCount === 1 ? 'Resource' : 'Resources';
-      countElement.textContent = `${visibleCount} of ${totalCount} ${resourceText}`;
+      // Calculate the number of digits needed for zero-padding
+      const totalDigits = totalCount.toString().length;
+      
+      // Format the visible count with leading zeros to match total count digits
+      const paddedVisibleCount = visibleCount.toString().padStart(totalDigits, '0');
+      
+      countElement.textContent = `${paddedVisibleCount}/${totalCount}`;
     }
   }
 
@@ -958,20 +1009,13 @@ export class UnifiedResourceManager extends ModuleBase {
    * Toggle tag filter (Meridian-compliant)
    */
   toggleTagFilter(tag) {
-    console.log('[UnifiedResourceManager] Toggling tag filter:', tag);
-    console.log('[UnifiedResourceManager] Current active tags before toggle:', Array.from(this.state.filters.activeTags));
-    
     const newActiveTags = new Set(this.state.filters.activeTags);
     
     if (newActiveTags.has(tag)) {
       newActiveTags.delete(tag);
-      console.log('[UnifiedResourceManager] Removed tag filter:', tag);
     } else {
       newActiveTags.add(tag);
-      console.log('[UnifiedResourceManager] Added tag filter:', tag);
     }
-    
-    console.log('[UnifiedResourceManager] New active tags before state update:', Array.from(newActiveTags));
     
     // Update state
     this.updateState({
@@ -980,11 +1024,11 @@ export class UnifiedResourceManager extends ModuleBase {
       }
     });
     
-    console.log('[UnifiedResourceManager] Active tags after state update:', Array.from(this.state.filters.activeTags));
-    console.log('[UnifiedResourceManager] State filters object after update:', this.state.filters);
-    
     // Update UI to reflect the new filter state
     this.updateUI();
+    
+    // Save filter state
+    this.saveFilterState();
     
     // Emit filter change event
     this.emit('filtersApplied', {
@@ -1062,6 +1106,14 @@ export class UnifiedResourceManager extends ModuleBase {
     if (filterLogicBtn) {
       filterLogicBtn.setAttribute('data-logic', 'any');
       filterLogicBtn.setAttribute('title', 'Toggle Filter Logic: ANY of these tags');
+    }
+    
+    // Clear filter state from localStorage
+    try {
+      localStorage.removeItem('unifiedFilterState');
+      console.log('[UnifiedResourceManager] Cleared filter state from localStorage');
+    } catch (error) {
+      console.warn('[UnifiedResourceManager] Failed to clear filter state from localStorage:', error);
     }
     
     // Update UI to reflect cleared filters
@@ -1187,6 +1239,45 @@ export class UnifiedResourceManager extends ModuleBase {
       localStorage.setItem('unifiedCollapseState', JSON.stringify(state));
     } catch (error) {
       console.warn('[UnifiedResourceManager] Failed to save collapse state:', error);
+    }
+  }
+
+  /**
+   * Load filter state from localStorage (Meridian-compliant)
+   */
+  loadFilterState() {
+    try {
+      const saved = localStorage.getItem('unifiedFilterState');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        this.updateState({
+          filters: {
+            searchTerm: parsed.searchTerm || '',
+            activeTags: new Set(parsed.activeTags || []),
+            filterLogic: parsed.filterLogic || 'any'
+          }
+        }, false); // Don't emit event during initialization
+        console.log('[UnifiedResourceManager] Loaded filter state:', parsed);
+      }
+    } catch (error) {
+      console.warn('[UnifiedResourceManager] Failed to load filter state:', error);
+    }
+  }
+
+  /**
+   * Save filter state to localStorage (Meridian-compliant)
+   */
+  saveFilterState() {
+    try {
+      const filterState = {
+        searchTerm: this.state.filters.searchTerm,
+        activeTags: Array.from(this.state.filters.activeTags),
+        filterLogic: this.state.filters.filterLogic
+      };
+      localStorage.setItem('unifiedFilterState', JSON.stringify(filterState));
+      console.log('[UnifiedResourceManager] Saved filter state:', filterState);
+    } catch (error) {
+      console.warn('[UnifiedResourceManager] Failed to save filter state:', error);
     }
   }
 
@@ -1390,8 +1481,32 @@ export class UnifiedResourceManager extends ModuleBase {
             <h4>Review & Confirm</h4>
             <p>Review the files and metadata before adding them.</p>
             
+            <!-- Bulk Tag Management -->
+            <div class="bulk-tag-management">
+              <h5>Bulk Tags</h5>
+              <p>Add tags to all resources being added:</p>
+              <div class="bulk-tag-input">
+                <div class="tag-input-container">
+                  <input type="text" class="tag-input" id="bulk-tag-input" placeholder="add tag to all resources...">
+                  <button type="button" class="add-tag-btn" id="bulk-add-tag-btn" disabled>+</button>
+                </div>
+                <div class="tag-autocomplete" id="bulk-tag-autocomplete" style="display: none;"></div>
+              </div>
+              <div class="bulk-tags-list" id="bulk-tags-list">
+                <!-- Bulk tags will appear here -->
+              </div>
+            </div>
+            
+            <!-- Resource Previews -->
+            <div class="resource-previews-section">
+              <h5>Resource Previews</h5>
+              <div id="internal-resource-previews">
+                <!-- Resource previews will appear here -->
+              </div>
+            </div>
+            
             <div id="review-summary">
-              <!-- Review summary will appear here -->
+              <!-- Additional review summary will appear here -->
             </div>
           </div>
         </div>
@@ -1450,9 +1565,31 @@ export class UnifiedResourceManager extends ModuleBase {
             <h4>Review & Confirm</h4>
             <p>Review the extracted metadata before adding resources.</p>
             
-            <div id="external-review-list">
-              <!-- External resources review will appear here -->
+            <!-- Bulk Tag Management -->
+            <div class="bulk-tag-management">
+              <h5>Bulk Tags</h5>
+              <p>Add tags to all resources being added:</p>
+              <div class="bulk-tag-input">
+                <div class="tag-input-container">
+                  <input type="text" class="tag-input" id="external-bulk-tag-input" placeholder="add tag to all resources...">
+                  <button type="button" class="add-tag-btn" id="external-bulk-add-tag-btn" disabled>+</button>
+                </div>
+                <div class="tag-autocomplete" id="external-bulk-tag-autocomplete" style="display: none;"></div>
+              </div>
+              <div class="bulk-tags-list" id="external-bulk-tags-list">
+                <!-- Bulk tags will appear here -->
+              </div>
             </div>
+            
+            <!-- Resource Previews -->
+            <div class="resource-previews-section">
+              <h5>Resource Previews</h5>
+              <div id="external-resource-previews">
+                <!-- Resource previews will appear here -->
+              </div>
+            </div>
+            
+
           </div>
         </div>
       </div>
@@ -1514,6 +1651,9 @@ export class UnifiedResourceManager extends ModuleBase {
           tags: []
         },
         individualMetadata: {},
+        resourcePreviews: [], // NEW: Generated previews for review phase
+        bulkTags: [], // NEW: Tags applied to all resources
+        individualTags: {}, // NEW: Tags per resource {resourceId: [tags]}
         arweaveSettings: {
           enabled: false,
           uploadTags: [], // Array of {key, value} objects (from UploadManager pattern)
@@ -1527,6 +1667,9 @@ export class UnifiedResourceManager extends ModuleBase {
       external: {
         urls: [],
         processingResults: [],
+        resourcePreviews: [], // NEW: Generated previews for review phase
+        bulkTags: [], // NEW: Tags applied to all resources
+        individualTags: {}, // NEW: Tags per resource
         phase: 'input'
       }
     };
@@ -1719,7 +1862,10 @@ export class UnifiedResourceManager extends ModuleBase {
         }
       }, 100);
     } else if (phase === 'review') {
-      console.log('[UnifiedResourceManager] Showing review phase, calling renderReviewPhase');
+      console.log('[UnifiedResourceManager] Showing review phase, generating previews and setting up tag management');
+      this.generateInternalResourcePreviews();
+      this.renderBulkTags('internal');
+      this.setupBulkTagEventListeners();
       this.renderReviewPhase();
     }
     
@@ -1750,6 +1896,14 @@ export class UnifiedResourceManager extends ModuleBase {
     });
 
     this.modalState.external.phase = phase;
+    
+    // Generate previews when entering review phase
+    if (phase === 'review') {
+      this.generateExternalResourcePreviews();
+      this.renderBulkTags('external');
+      this.setupBulkTagEventListeners();
+    }
+    
     this.updateModalButtons();
   }
 
@@ -1973,7 +2127,6 @@ export class UnifiedResourceManager extends ModuleBase {
     }
 
     this.showExternalPhase('review');
-    this.updateExternalReviewDisplay();
   }
 
   /**
@@ -1993,29 +2146,7 @@ export class UnifiedResourceManager extends ModuleBase {
     }
   }
 
-  /**
-   * Update external review display
-   */
-  updateExternalReviewDisplay() {
-    const modal = document.getElementById('unified-resource-modal');
-    if (!modal) return;
 
-    const reviewList = modal.querySelector('#external-review-list');
-    const results = this.modalState.external.processingResults;
-
-    if (results.length === 0) {
-      reviewList.innerHTML = '<p>No resources to review</p>';
-    } else {
-      reviewList.innerHTML = results.map(result => `
-        <div class="review-item">
-          <h5>${this.escapeHtml(result.title)}</h5>
-          <p>${this.escapeHtml(result.description)}</p>
-          <p><strong>URL:</strong> ${this.escapeHtml(result.url)}</p>
-          <p><strong>Tags:</strong> ${result.tags.join(', ')}</p>
-        </div>
-      `).join('');
-    }
-  }
 
   /**
    * Add modal resources
@@ -2053,9 +2184,13 @@ export class UnifiedResourceManager extends ModuleBase {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
+      const previewId = `preview-${i}`;
       const resourceId = await this.generateResourceId();
       const contentHash = await this.generateContentHash(file.name);
       const now = new Date().toISOString();
+
+      // Get accumulated tags for this resource
+      const accumulatedTags = this.accumulateResourceTags(previewId);
 
       // Check if this file was uploaded to Arweave during the modal flow
       const arweaveResult = arweaveSettings.uploadResults[i];
@@ -2077,7 +2212,7 @@ export class UnifiedResourceManager extends ModuleBase {
         properties: {
           'dc:title': bulkMetadata.title || file.name,
           'dc:type': 'document',
-          'meridian:tags': bulkMetadata.tags || [],
+          'meridian:tags': accumulatedTags,
           'meridian:description': bulkMetadata.description || '',
           'meridian:arweave_hashes': arweaveHashes // Add Arweave hashes with tags
         },
@@ -2118,10 +2253,15 @@ export class UnifiedResourceManager extends ModuleBase {
   async addExternalResources() {
     const results = this.modalState.external.processingResults;
 
-    for (const result of results) {
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      const previewId = `preview-${i}`;
       const resourceId = await this.generateResourceId();
       const contentHash = await this.generateContentHash(result.url);
       const now = new Date().toISOString();
+
+      // Get accumulated tags for this resource
+      const accumulatedTags = this.accumulateResourceTags(previewId);
 
       const resource = {
         id: resourceId,
@@ -2130,7 +2270,7 @@ export class UnifiedResourceManager extends ModuleBase {
         properties: {
           'dc:title': result.title,
           'dc:type': 'web-page',
-          'meridian:tags': result.tags,
+          'meridian:tags': accumulatedTags,
           'meridian:description': result.description,
         },
         locations: {
@@ -2341,11 +2481,499 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Edit unified resource
+   * Edit unified resource - opens dynamic modal with full editing capabilities
    */
-  editUnifiedResource(resourceId) {
-    // TODO: Implement edit functionality
-    console.log('Edit resource:', resourceId);
+  async editUnifiedResource(resourceId) {
+    console.log(`[UnifiedResourceManager] Opening edit modal for resource: ${resourceId}`);
+    
+    try {
+      // Find the resource in our state
+      const resource = this.state.resources.find(r => r.id === resourceId);
+      if (!resource) {
+        throw new Error(`Resource not found: ${resourceId}`);
+      }
+
+      // Load additional data from database if available
+      let customProperties = {};
+      let alternativeLocations = [];
+      
+      try {
+        // Try to load from database (will fail gracefully if not available)
+        if (window.api && window.api.database) {
+          customProperties = await window.api.database.getCustomProperties(resourceId);
+          alternativeLocations = await window.api.database.getAlternativeLocations(resourceId);
+        }
+      } catch (error) {
+        console.log('[UnifiedResourceManager] Database not available, using basic editing mode');
+      }
+
+      this.editingResourceId = resourceId;
+      
+      // Initialize modal tags with current resource tags
+      this.modalTags = [...(resource.properties['meridian:tags'] || [])];
+      
+      const modalContent = this.generateEditModalContent(resource, customProperties, alternativeLocations);
+
+      // Get ModalManager using the correct pattern
+      const modalManager = this.getApp().getModalManager();
+      if (!modalManager) {
+        console.error('[UnifiedResourceManager] ModalManager not available');
+        this.showError('Modal system not available');
+        return;
+      }
+
+      // Create dynamic modal
+      const modal = modalManager.createDynamicModal(
+        'edit-resource-dynamic',
+        modalContent,
+        {
+          onClose: () => this.handleEditModalClose(resourceId),
+          className: 'edit-resource-modal large-modal'
+        }
+      );
+
+      // Setup modal event listeners after creation
+      this.setupEditModalEventListeners();
+
+      // Open the modal
+      await modalManager.openModal('edit-resource-dynamic');
+
+      console.log(`[UnifiedResourceManager] Edit modal opened for resource: ${resourceId}`);
+      
+    } catch (error) {
+      console.error('[UnifiedResourceManager] Failed to open edit modal:', error);
+      this.showError('Failed to open edit modal: ' + error.message);
+    }
+  }
+
+  /**
+   * Generate dynamic modal content for editing resources
+   */
+  generateEditModalContent(resource, customProperties, alternativeLocations) {
+    const tags = resource.properties['meridian:tags'] || [];
+    
+    return `
+      <div class="modal-header">
+        <h3>Edit Resource</h3>
+        <div class="resource-type-indicator">
+          <span class="type-badge" id="resource-type-badge">${resource.state.type === 'internal' ? 'Internal' : 'External'} Resource</span>
+        </div>
+        <button class="modal-close" type="button">×</button>
+      </div>
+
+      <div class="modal-content">
+        ${this.generateBasicInfoSection(resource)}
+        ${this.generateUnifiedLocationSection(resource)}
+        ${this.generateCustomPropertiesSection(customProperties)}
+        ${this.generateTagsSection(tags)}
+      </div>
+
+      <div class="modal-footer">
+        <div class="footer-left">
+          <button type="button" class="secondary-btn" id="edit-resource-cancel">Cancel</button>
+        </div>
+        <div class="footer-right">
+          <button type="button" class="primary-btn" id="edit-resource-save">Save Changes</button>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate basic resource information section
+   */
+  generateBasicInfoSection(resource) {
+    return `
+      <div class="form-section">
+        <h4>Basic Information</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-resource-title">Title</label>
+            <input 
+              type="text" 
+              id="edit-resource-title" 
+              value="${this.escapeHtml(resource.properties['dc:title'] || '')}"
+              placeholder="Resource title"
+            />
+          </div>
+          <div class="form-group">
+            <label for="edit-resource-type">Type</label>
+            <select id="edit-resource-type">
+              <option value="document" ${resource.properties['dc:type'] === 'document' ? 'selected' : ''}>Document</option>
+              <option value="image" ${resource.properties['dc:type'] === 'image' ? 'selected' : ''}>Image</option>
+              <option value="video" ${resource.properties['dc:type'] === 'video' ? 'selected' : ''}>Video</option>
+              <option value="audio" ${resource.properties['dc:type'] === 'audio' ? 'selected' : ''}>Audio</option>
+              <option value="dataset" ${resource.properties['dc:type'] === 'dataset' ? 'selected' : ''}>Dataset</option>
+              <option value="software" ${resource.properties['dc:type'] === 'software' ? 'selected' : ''}>Software</option>
+              <option value="other" ${resource.properties['dc:type'] === 'other' ? 'selected' : ''}>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="edit-resource-description">Description</label>
+          <textarea 
+            id="edit-resource-description" 
+            placeholder="Resource description"
+            rows="3"
+          >${this.escapeHtml(resource.properties['meridian:description'] || '')}</textarea>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate unified location section with hierarchical organization
+   */
+  generateUnifiedLocationSection(resource, customProperties, alternativeLocations) {
+    const currentValue = resource.locations.primary.value || '';
+    
+    return `
+      <div class="form-section">
+        <h4>Resource Location</h4>
+        
+        <!-- Internal Section -->
+        <div class="location-section internal-section">
+          <h5>Internal</h5>
+          <div class="form-group">
+            <label for="edit-file-path">File Path</label>
+            <div class="file-path-browser">
+              <input 
+                type="text" 
+                id="edit-file-path" 
+                class="readonly-field"
+                value="${resource.locations.primary.type === 'file-path' ? this.escapeHtml(currentValue) : ''}"
+                readonly
+                placeholder="No file selected"
+              />
+              <button type="button" class="secondary-btn" id="browse-file-btn">Browse</button>
+            </div>
+            <div class="file-status" id="file-status">
+              ${resource.locations.primary.type === 'file-path' ? this.generateFileStatusIndicator(resource) : ''}
+            </div>
+          </div>
+        </div>
+        
+        <!-- External Section -->
+        <div class="location-section external-section">
+          <h5>External</h5>
+          
+          <!-- Primary URL -->
+          <div class="form-group">
+            <label for="edit-primary-url">Primary URL</label>
+            <input 
+              type="url" 
+              id="edit-primary-url" 
+              value="${resource.locations.primary.type === 'http-url' ? this.escapeHtml(currentValue) : ''}"
+              placeholder="https://example.com/resource"
+            />
+            <div class="url-validation" id="url-validation">
+              ${resource.locations.primary.type === 'http-url' ? this.generateUrlValidationIndicator(resource) : ''}
+            </div>
+          </div>
+          
+          <!-- Alternative Locations Subsection -->
+          <div class="alternative-locations-subsection">
+            <h6>Alternative URLs</h6>
+            <div class="alternative-locations-list" id="alternative-locations-list">
+              ${this.generateAlternativeLocationsList(alternativeLocations)}
+            </div>
+            <div class="alternative-url-input">
+              <input 
+                type="url" 
+                id="alternative-url-input" 
+                placeholder="https://example.com/alternative"
+                class="alternative-url-field"
+              />
+              <button type="button" class="add-alternative-url-btn" id="add-alternative-url-btn" title="Add Alternative URL">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M6 2V10M2 6H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Arweave Uploads Subsection -->
+          <div class="arweave-uploads-subsection">
+            <h6>Arweave Uploads</h6>
+            <div class="arweave-uploads-list" id="arweave-uploads-list">
+              ${this.generateArweaveUploadsList(resource)}
+            </div>
+            <div class="arweave-hash-input">
+              <input 
+                type="text" 
+                id="arweave-hash-input" 
+                placeholder="Arweave hash (43 characters)"
+                class="arweave-hash-field"
+              />
+              <button type="button" class="add-arweave-hash-btn" id="add-arweave-hash-btn" title="Add Arweave Hash">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M6 2V10M2 6H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="location-help">
+          <p class="help-text">
+            <strong>Resource Type Logic:</strong><br>
+            • If a local file path is specified → <strong>Internal Resource</strong><br>
+            • If only an external URL is specified → <strong>External Resource</strong><br>
+            • Both can be specified (file path takes precedence for type determination)
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate custom properties section
+   */
+  generateCustomPropertiesSection(customProperties) {
+    const propertiesArray = Object.entries(customProperties);
+    
+    return `
+      <div class="form-section">
+        <h4>Index Metadata Properties</h4>
+        <div id="custom-properties-container">
+          ${propertiesArray.map((prop, index) => this.generateCustomPropertyItem(prop[0], prop[1], index)).join('')}
+          <div class="custom-property-item" id="new-property-template">
+            <div class="form-row">
+              <div class="form-group">
+                <input 
+                  type="text" 
+                  class="property-key-input" 
+                  placeholder="Property name"
+                />
+                <div class="property-key-autocomplete" style="display: none;"></div>
+              </div>
+              <div class="form-group">
+                <input 
+                  type="text" 
+                  class="property-value-input" 
+                  placeholder="Property value"
+                />
+                <div class="property-value-autocomplete" style="display: none;"></div>
+              </div>
+              <div class="form-group">
+                <button type="button" class="secondary-btn add-property-btn">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate a custom property item
+   */
+  generateCustomPropertyItem(key, value, index) {
+    return `
+      <div class="custom-property-item" data-index="${index}">
+        <div class="form-row">
+          <div class="form-group">
+            <input 
+              type="text" 
+              class="property-key-input" 
+              value="${this.escapeHtml(key)}"
+              placeholder="Property name"
+              readonly
+            />
+          </div>
+          <div class="form-group">
+            <input 
+              type="text" 
+              class="property-value-input" 
+              value="${this.escapeHtml(value)}"
+              placeholder="Property value"
+            />
+          </div>
+          <div class="form-group">
+            <button type="button" class="secondary-btn remove-property-btn">Remove</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate alternative locations list for the external section
+   */
+  generateAlternativeLocationsList(alternativeLocations) {
+    if (!alternativeLocations || alternativeLocations.length === 0) {
+      return '<p class="no-alternative-locations">No alternative URLs added yet</p>';
+    }
+
+    return alternativeLocations.map((location, index) => 
+      this.generateAlternativeLocationItem(location, index)
+    ).join('');
+  }
+
+  /**
+   * Generate Arweave uploads list for the external section
+   */
+  generateArweaveUploadsList(resource) {
+    const arweaveHashes = resource.provenance
+      ?.filter(entry => entry.toLocation.type === 'http-url' && entry.toLocation.value.includes('arweave.net'))
+      .map(entry => ({
+        hash: entry.toLocation.value.split('/').pop(),
+        timestamp: entry.timestamp,
+        link: entry.toLocation.value
+      })) || [];
+
+    if (arweaveHashes.length === 0) {
+      return '<p class="no-arweave-uploads">No Arweave uploads found</p>';
+    }
+
+    return arweaveHashes.map((upload, index) => `
+      <div class="arweave-upload-item">
+        <div class="arweave-upload-info">
+          <a href="${this.escapeHtml(upload.link)}" target="_blank" class="arweave-upload-link">
+            ${this.escapeHtml(upload.hash)}
+          </a>
+          <span class="arweave-upload-timestamp">${this.formatDate(upload.timestamp)}</span>
+        </div>
+        <div class="arweave-upload-actions">
+          <button type="button" class="secondary-btn" onclick="unifiedResourceManager.copyToClipboard('${this.escapeHtml(upload.link)}')">
+            Copy Link
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /**
+   * Generate alternative locations section
+   */
+  generateAlternativeLocationsSection(alternativeLocations) {
+    return `
+      <div class="form-section">
+        <h4>Alternative Locations</h4>
+        <div id="alternative-locations-container">
+          ${alternativeLocations.map((location, index) => this.generateAlternativeLocationItem(location, index)).join('')}
+          <div class="alternative-location-actions">
+            <button type="button" class="secondary-btn" id="add-url-location-btn">Add URL</button>
+            <button type="button" class="secondary-btn" id="add-arweave-hash-btn">Add Arweave Hash</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate an alternative location item
+   */
+  generateAlternativeLocationItem(location, index) {
+    const typeLabel = location.locationType === 'arweave-hash' ? 'Arweave' : 'URL';
+    const isExternal = location.isExternalArweave ? ' (External)' : '';
+    
+    return `
+      <div class="alternative-location-item" data-location-id="${location.id}">
+        <div class="location-header">
+          <span class="location-type">${typeLabel}${isExternal}</span>
+          <button type="button" class="secondary-btn remove-location-btn">Remove</button>
+        </div>
+        <div class="location-content">
+          <input 
+            type="text" 
+            class="location-value-input" 
+            value="${this.escapeHtml(location.locationValue)}"
+            ${location.isExternalArweave ? '' : 'readonly'}
+            placeholder="${location.locationType === 'arweave-hash' ? 'Arweave transaction hash' : 'Alternative URL'}"
+          />
+          ${this.generateLocationStatusIndicator(location)}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate tags section
+   */
+  generateTagsSection(tags) {
+    return `
+      <div class="form-section">
+        <h4>Index Tags</h4>
+        <div class="resource-tag-input">
+          <input 
+            type="text" 
+            id="edit-resource-tag-input" 
+            placeholder="Add a tag..."
+            class="tag-input"
+          />
+          <button type="button" class="add-tag-btn" id="edit-add-tag-btn" title="Add Tag">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 2V10M2 6H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="tag-autocomplete" style="display: none;"></div>
+        </div>
+        <div class="resource-tags" id="edit-resource-tags-list">
+          ${tags.map(tag => `
+            <span class="resource-tag" data-tag="${this.escapeHtml(tag)}">
+              ${this.escapeHtml(tag)}
+              <button type="button" class="remove-tag-btn">×</button>
+            </span>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate file status indicator
+   */
+  generateFileStatusIndicator(resource) {
+    const isAccessible = resource.locations.primary.accessible;
+    const lastVerified = resource.locations.primary.lastVerified;
+    
+    return `
+      <div class="file-status-indicator ${isAccessible ? 'accessible' : 'inaccessible'}">
+        <span class="status-icon">${isAccessible ? '✓' : '⚠'}</span>
+        <span class="status-text">
+          ${isAccessible ? 'File accessible' : 'File not found'}
+          ${lastVerified ? ` (verified ${this.formatDate(lastVerified)})` : ''}
+        </span>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate URL validation indicator
+   */
+  generateUrlValidationIndicator(resource) {
+    const isAccessible = resource.locations.primary.accessible;
+    const lastVerified = resource.locations.primary.lastVerified;
+    
+    return `
+      <div class="url-validation ${isAccessible ? 'valid' : 'invalid'}">
+        <span class="validation-icon">${isAccessible ? '✓' : '⚠'}</span>
+        <span class="validation-text">
+          ${isAccessible ? 'URL accessible' : 'URL not accessible'}
+          ${lastVerified ? ` (verified ${this.formatDate(lastVerified)})` : ''}
+        </span>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate location status indicator
+   */
+  generateLocationStatusIndicator(location) {
+    if (location.isAccessible === null) {
+      return '<div class="location-status pending">Not verified</div>';
+    }
+    
+    return `
+      <div class="location-status ${location.isAccessible ? 'accessible' : 'inaccessible'}">
+        <span class="status-icon">${location.isAccessible ? '✓' : '⚠'}</span>
+        <span class="status-text">
+          ${location.isAccessible ? 'Accessible' : 'Not accessible'}
+          ${location.lastVerified ? ` (${this.formatDate(location.lastVerified)})` : ''}
+        </span>
+      </div>
+    `;
   }
 
   /**
@@ -2450,6 +3078,9 @@ export class UnifiedResourceManager extends ModuleBase {
       
       // Update UI
       this.updateUI();
+      
+      // Ensure collapse state is properly applied after UI update
+      this.updateCollapseStateOnly();
       
       console.log(`[UnifiedResourceManager] Loaded ${this.state.resources.length} resources from backend`);
       
@@ -3415,6 +4046,529 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
+   * Generate internal resource previews for review phase
+   */
+  generateInternalResourcePreviews() {
+    const files = this.modalState.internal.selectedFiles;
+    const bulkMetadata = this.modalState.internal.bulkMetadata;
+    const bulkTags = this.modalState.internal.bulkTags;
+    const individualTags = this.modalState.internal.individualTags;
+    
+    // Generate preview data for each file
+    this.modalState.internal.resourcePreviews = files.map((file, index) => {
+      const resourceId = `preview-${index}`;
+      const combinedTags = [...bulkTags, ...(individualTags[resourceId] || [])];
+      
+      return {
+        id: resourceId,
+        file: file,
+        title: bulkMetadata.title || file.name,
+        description: bulkMetadata.description || '',
+        tags: combinedTags,
+        type: 'internal',
+        path: file.path || file.name,
+        size: file.size
+      };
+    });
+    
+    this.renderInternalResourcePreviews();
+  }
+
+  /**
+   * Render internal resource previews
+   */
+  renderInternalResourcePreviews() {
+    const modal = document.getElementById('unified-resource-modal');
+    if (!modal) return;
+
+    const previewsContainer = modal.querySelector('#internal-resource-previews');
+    const previews = this.modalState.internal.resourcePreviews;
+
+    if (previews.length === 0) {
+      previewsContainer.innerHTML = '<p>No resources to preview</p>';
+      return;
+    }
+
+    previewsContainer.innerHTML = previews.map(preview => `
+      <div class="review-resource-item" data-resource-id="${preview.id}">
+        <div class="resource-header">
+          <div class="resource-info">
+            <h4 class="resource-title">${this.escapeHtml(preview.title)}</h4>
+            <div class="resource-path">
+              <span class="file-status-indicator physical"></span>
+              ${this.escapeHtml(preview.path)}
+            </div>
+            ${preview.description ? `
+              <p class="resource-description">${this.escapeHtml(preview.description)}</p>
+            ` : ''}
+            <div class="resource-metadata">
+              <span class="resource-metadata-item">
+                <span class="resource-metadata-label">Type:</span>
+                <span class="resource-metadata-value">${preview.type}</span>
+              </span>
+              <span class="resource-metadata-item">
+                <span class="resource-metadata-label">Size:</span>
+                <span class="resource-metadata-value">${this.formatFileSize(preview.size)}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="resource-tags">
+          <div class="resource-tag-input">
+            <div class="tag-input-container">
+              <input type="text" class="tag-input" placeholder="add tag..." data-resource-id="${preview.id}">
+              <button class="add-tag-btn" data-resource-id="${preview.id}" disabled>+</button>
+            </div>
+            <div class="tag-autocomplete" id="autocomplete-${preview.id}" style="display: none;"></div>
+          </div>
+          
+          ${preview.tags && preview.tags.length > 0 ? 
+            preview.tags.map(tag => `
+              <span class="resource-tag">
+                ${this.escapeHtml(tag)}
+                <button class="remove-tag-btn" data-resource-id="${preview.id}" data-tag="${this.escapeHtml(tag)}" title="Remove tag">×</button>
+              </span>
+            `).join('') : ''
+          }
+        </div>
+      </div>
+    `).join('');
+
+    // Setup individual tag event listeners for previews
+    this.setupIndividualTagEventListeners();
+  }
+
+  /**
+   * Generate external resource previews for review phase
+   */
+  generateExternalResourcePreviews() {
+    const results = this.modalState.external.processingResults;
+    const bulkTags = this.modalState.external.bulkTags;
+    const individualTags = this.modalState.external.individualTags;
+    
+    // Generate preview data for each result
+    this.modalState.external.resourcePreviews = results.map((result, index) => {
+      const resourceId = `preview-${index}`;
+      const combinedTags = [...bulkTags, ...(individualTags[resourceId] || [])];
+      
+      return {
+        id: resourceId,
+        title: result.title,
+        description: result.description,
+        url: result.url,
+        tags: combinedTags,
+        type: 'external'
+      };
+    });
+    
+    this.renderExternalResourcePreviews();
+  }
+
+  /**
+   * Render external resource previews
+   */
+  renderExternalResourcePreviews() {
+    const modal = document.getElementById('unified-resource-modal');
+    if (!modal) return;
+
+    const previewsContainer = modal.querySelector('#external-resource-previews');
+    const previews = this.modalState.external.resourcePreviews;
+
+    if (previews.length === 0) {
+      previewsContainer.innerHTML = '<p>No resources to preview</p>';
+      return;
+    }
+
+    previewsContainer.innerHTML = previews.map(preview => `
+      <div class="review-resource-item" data-resource-id="${preview.id}">
+        <div class="resource-header">
+          <div class="resource-info">
+            <h4 class="resource-title">${this.escapeHtml(preview.title)}</h4>
+            <div class="resource-path">
+              <span class="file-status-indicator external"></span>
+              ${this.escapeHtml(preview.url)}
+            </div>
+            ${preview.description ? `
+              <p class="resource-description">${this.escapeHtml(preview.description)}</p>
+            ` : ''}
+            <div class="resource-metadata">
+              <span class="resource-metadata-item">
+                <span class="resource-metadata-label">Type:</span>
+                <span class="resource-metadata-value">${preview.type}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="resource-tags">
+          <div class="resource-tag-input">
+            <div class="tag-input-container">
+              <input type="text" class="tag-input" placeholder="add tag..." data-resource-id="${preview.id}">
+              <button class="add-tag-btn" data-resource-id="${preview.id}" disabled>+</button>
+            </div>
+            <div class="tag-autocomplete" id="autocomplete-${preview.id}" style="display: none;"></div>
+          </div>
+          
+          ${preview.tags && preview.tags.length > 0 ? 
+            preview.tags.map(tag => `
+              <span class="resource-tag">
+                ${this.escapeHtml(tag)}
+                <button class="remove-tag-btn" data-resource-id="${preview.id}" data-tag="${this.escapeHtml(tag)}" title="Remove tag">×</button>
+              </span>
+            `).join('') : ''
+          }
+        </div>
+      </div>
+    `).join('');
+
+    // Setup individual tag event listeners for previews
+    this.setupIndividualTagEventListeners();
+  }
+
+  /**
+   * Setup bulk tag event listeners
+   */
+  setupBulkTagEventListeners() {
+    const modal = document.getElementById('unified-resource-modal');
+    if (!modal) return;
+
+    // Internal bulk tag management
+    const internalBulkTagInput = modal.querySelector('#bulk-tag-input');
+    const internalBulkAddTagBtn = modal.querySelector('#bulk-add-tag-btn');
+    const internalBulkTagAutocomplete = modal.querySelector('#bulk-tag-autocomplete');
+
+    if (internalBulkTagInput && internalBulkAddTagBtn) {
+      // Input event for enabling/disabling add button
+      internalBulkTagInput.addEventListener('input', (e) => {
+        const value = e.target.value.trim();
+        internalBulkAddTagBtn.disabled = !value;
+      });
+
+      // Add tag button click
+      internalBulkAddTagBtn.addEventListener('click', () => {
+        const value = internalBulkTagInput.value.trim();
+        if (value) {
+          this.addBulkTag(value, 'internal');
+          internalBulkTagInput.value = '';
+          internalBulkAddTagBtn.disabled = true;
+        }
+      });
+
+      // Enter key to add tag
+      internalBulkTagInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const value = e.target.value.trim();
+          if (value) {
+            this.addBulkTag(value, 'internal');
+            e.target.value = '';
+            internalBulkAddTagBtn.disabled = true;
+          }
+        }
+      });
+
+      // Setup autocomplete for internal bulk tags
+      this.setupBulkTagAutocomplete(internalBulkTagInput, internalBulkTagAutocomplete, 'internal');
+    }
+
+    // External bulk tag management
+    const externalBulkTagInput = modal.querySelector('#external-bulk-tag-input');
+    const externalBulkAddTagBtn = modal.querySelector('#external-bulk-add-tag-btn');
+    const externalBulkTagAutocomplete = modal.querySelector('#external-bulk-tag-autocomplete');
+
+    if (externalBulkTagInput && externalBulkAddTagBtn) {
+      // Input event for enabling/disabling add button
+      externalBulkTagInput.addEventListener('input', (e) => {
+        const value = e.target.value.trim();
+        externalBulkAddTagBtn.disabled = !value;
+      });
+
+      // Add tag button click
+      externalBulkAddTagBtn.addEventListener('click', () => {
+        const value = externalBulkTagInput.value.trim();
+        if (value) {
+          this.addBulkTag(value, 'external');
+          externalBulkTagInput.value = '';
+          externalBulkAddTagBtn.disabled = true;
+        }
+      });
+
+      // Enter key to add tag
+      externalBulkTagInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const value = e.target.value.trim();
+          if (value) {
+            this.addBulkTag(value, 'external');
+            e.target.value = '';
+            externalBulkAddTagBtn.disabled = true;
+          }
+        }
+      });
+
+      // Setup autocomplete for external bulk tags
+      this.setupBulkTagAutocomplete(externalBulkTagInput, externalBulkTagAutocomplete, 'external');
+    }
+  }
+
+  /**
+   * Setup bulk tag autocomplete
+   */
+  setupBulkTagAutocomplete(input, autocompleteContainer, tabType) {
+    if (!input || !autocompleteContainer) return;
+
+    const tagManager = this.getModule('TagManager');
+    if (!tagManager) return;
+
+    const autocomplete = new TagAutocomplete({
+      inputSelector: `#${input.id}`,
+      autocompleteSelector: `#${autocompleteContainer.id}`,
+      getSuggestions: (inputValue) => tagManager.getIntelligentResourceTagSuggestions(inputValue, [], 8),
+      onTagSelect: (tag) => {
+        this.addBulkTag(tag, tabType);
+        input.value = '';
+        input.parentElement.querySelector('.add-tag-btn').disabled = true;
+      },
+      onInputChange: (inputElement) => {
+        const value = inputElement.value.trim();
+        inputElement.parentElement.querySelector('.add-tag-btn').disabled = !value;
+      }
+    });
+  }
+
+  /**
+   * Add bulk tag to all resources
+   */
+  addBulkTag(tagValue, tabType) {
+    const tag = tagValue.trim().toLowerCase();
+    if (!tag) return;
+
+    const state = this.modalState[tabType];
+    if (!state.bulkTags.includes(tag)) {
+      state.bulkTags.push(tag);
+      this.renderBulkTags(tabType);
+      this.updateResourcePreviews(tabType);
+    }
+  }
+
+  /**
+   * Remove bulk tag from all resources
+   */
+  removeBulkTag(tagValue, tabType) {
+    const tag = tagValue.trim().toLowerCase();
+    if (!tag) return;
+
+    const state = this.modalState[tabType];
+    const index = state.bulkTags.indexOf(tag);
+    if (index > -1) {
+      state.bulkTags.splice(index, 1);
+      this.renderBulkTags(tabType);
+      this.updateResourcePreviews(tabType);
+    }
+  }
+
+  /**
+   * Render bulk tags
+   */
+  renderBulkTags(tabType) {
+    const modal = document.getElementById('unified-resource-modal');
+    if (!modal) return;
+
+    const bulkTagsList = modal.querySelector(`#${tabType === 'internal' ? '' : 'external-'}bulk-tags-list`);
+    const bulkTags = this.modalState[tabType].bulkTags;
+
+    if (bulkTags.length === 0) {
+      bulkTagsList.innerHTML = '<p class="no-tags">No bulk tags added yet</p>';
+    } else {
+      bulkTagsList.innerHTML = bulkTags.map(tag => `
+        <span class="resource-tag">
+          ${this.escapeHtml(tag)}
+          <button class="remove-tag-btn" data-bulk-tag="${this.escapeHtml(tag)}" data-tab-type="${tabType}" title="Remove bulk tag">×</button>
+        </span>
+      `).join('');
+
+      // Add event listeners for remove buttons
+      bulkTagsList.querySelectorAll('.remove-tag-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const tag = e.target.dataset.bulkTag;
+          const tabType = e.target.dataset.tabType;
+          this.removeBulkTag(tag, tabType);
+        });
+      });
+    }
+  }
+
+  /**
+   * Update resource previews when tags change
+   */
+  updateResourcePreviews(tabType) {
+    if (tabType === 'internal') {
+      this.generateInternalResourcePreviews();
+    } else {
+      this.generateExternalResourcePreviews();
+    }
+  }
+
+  /**
+   * Setup individual tag event listeners for preview resources
+   */
+  setupIndividualTagEventListeners() {
+    const modal = document.getElementById('unified-resource-modal');
+    if (!modal) return;
+
+    // Setup tag inputs for individual resources
+    modal.querySelectorAll('.review-resource-item .tag-input').forEach(input => {
+      const resourceId = input.dataset.resourceId;
+      const addTagBtn = input.parentElement.querySelector('.add-tag-btn');
+      const autocompleteContainer = modal.querySelector(`#autocomplete-${resourceId}`);
+
+      // Input event for enabling/disabling add button
+      input.addEventListener('input', (e) => {
+        const value = e.target.value.trim();
+        addTagBtn.disabled = !value;
+      });
+
+      // Add tag button click
+      addTagBtn.addEventListener('click', () => {
+        const value = input.value.trim();
+        if (value) {
+          this.addIndividualTag(resourceId, value);
+          input.value = '';
+          addTagBtn.disabled = true;
+        }
+      });
+
+      // Enter key to add tag
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const value = e.target.value.trim();
+          if (value) {
+            this.addIndividualTag(resourceId, value);
+            e.target.value = '';
+            addTagBtn.disabled = true;
+          }
+        }
+      });
+
+      // Setup autocomplete for individual tags
+      this.setupIndividualTagAutocomplete(input, autocompleteContainer, resourceId);
+    });
+
+    // Setup remove tag buttons
+    modal.querySelectorAll('.review-resource-item .remove-tag-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const resourceId = e.target.dataset.resourceId;
+        const tag = e.target.dataset.tag;
+        this.removeIndividualTag(resourceId, tag);
+      });
+    });
+  }
+
+  /**
+   * Setup individual tag autocomplete
+   */
+  setupIndividualTagAutocomplete(input, autocompleteContainer, resourceId) {
+    if (!input || !autocompleteContainer) return;
+
+    const tagManager = this.getModule('TagManager');
+    if (!tagManager) return;
+
+    const autocomplete = new TagAutocomplete({
+      inputSelector: `input[data-resource-id="${resourceId}"]`,
+      autocompleteSelector: `#autocomplete-${resourceId}`,
+      getSuggestions: (inputValue) => tagManager.getIntelligentResourceTagSuggestions(inputValue, [], 8),
+      onTagSelect: (tag) => {
+        this.addIndividualTag(resourceId, tag);
+        input.value = '';
+        input.parentElement.querySelector('.add-tag-btn').disabled = true;
+      },
+      onInputChange: (inputElement) => {
+        const value = inputElement.value.trim();
+        inputElement.parentElement.querySelector('.add-tag-btn').disabled = !value;
+      }
+    });
+  }
+
+  /**
+   * Add individual tag to specific resource
+   */
+  addIndividualTag(resourceId, tagValue) {
+    const tag = tagValue.trim().toLowerCase();
+    if (!tag) return;
+
+    // Determine which tab this resource belongs to
+    const internalPreview = this.modalState.internal.resourcePreviews.find(p => p.id === resourceId);
+    const externalPreview = this.modalState.external.resourcePreviews.find(p => p.id === resourceId);
+
+    if (internalPreview) {
+      if (!this.modalState.internal.individualTags[resourceId]) {
+        this.modalState.internal.individualTags[resourceId] = [];
+      }
+      if (!this.modalState.internal.individualTags[resourceId].includes(tag)) {
+        this.modalState.internal.individualTags[resourceId].push(tag);
+        this.generateInternalResourcePreviews();
+      }
+    } else if (externalPreview) {
+      if (!this.modalState.external.individualTags[resourceId]) {
+        this.modalState.external.individualTags[resourceId] = [];
+      }
+      if (!this.modalState.external.individualTags[resourceId].includes(tag)) {
+        this.modalState.external.individualTags[resourceId].push(tag);
+        this.generateExternalResourcePreviews();
+      }
+    }
+  }
+
+  /**
+   * Remove individual tag from specific resource
+   */
+  removeIndividualTag(resourceId, tagValue) {
+    const tag = tagValue.trim().toLowerCase();
+    if (!tag) return;
+
+    // Determine which tab this resource belongs to
+    const internalPreview = this.modalState.internal.resourcePreviews.find(p => p.id === resourceId);
+    const externalPreview = this.modalState.external.resourcePreviews.find(p => p.id === resourceId);
+
+    if (internalPreview && this.modalState.internal.individualTags[resourceId]) {
+      const index = this.modalState.internal.individualTags[resourceId].indexOf(tag);
+      if (index > -1) {
+        this.modalState.internal.individualTags[resourceId].splice(index, 1);
+        this.generateInternalResourcePreviews();
+      }
+    } else if (externalPreview && this.modalState.external.individualTags[resourceId]) {
+      const index = this.modalState.external.individualTags[resourceId].indexOf(tag);
+      if (index > -1) {
+        this.modalState.external.individualTags[resourceId].splice(index, 1);
+        this.generateExternalResourcePreviews();
+      }
+    }
+  }
+
+  /**
+   * Accumulate tags for a specific resource
+   */
+  accumulateResourceTags(resourceId) {
+    // Determine which tab this resource belongs to
+    const internalPreview = this.modalState.internal.resourcePreviews.find(p => p.id === resourceId);
+    const externalPreview = this.modalState.external.resourcePreviews.find(p => p.id === resourceId);
+
+    if (internalPreview) {
+      const bulkTags = this.modalState.internal.bulkTags;
+      const individualTags = this.modalState.internal.individualTags[resourceId] || [];
+      return [...new Set([...bulkTags, ...individualTags])]; // Remove duplicates
+    } else if (externalPreview) {
+      const bulkTags = this.modalState.external.bulkTags;
+      const individualTags = this.modalState.external.individualTags[resourceId] || [];
+      return [...new Set([...bulkTags, ...individualTags])]; // Remove duplicates
+    }
+
+    return [];
+  }
+
+  /**
    * Setup metadata capture for the metadata phase
    */
   setupMetadataCapture() {
@@ -3495,5 +4649,1033 @@ export class UnifiedResourceManager extends ModuleBase {
     });
     
     this.updateArweaveUploadSummary();
+  }
+
+  /**
+   * Setup event listeners for the edit modal
+   */
+  setupEditModalEventListeners() {
+    // Close button in header
+    const closeBtn = document.querySelector('#edit-resource-dynamic .modal-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        const modalManager = this.getApp().getModalManager();
+        if (modalManager) {
+          modalManager.closeModal('edit-resource-dynamic');
+        }
+      });
+    }
+
+    // Cancel button
+    const cancelBtn = document.getElementById('edit-resource-cancel');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        const modalManager = this.getApp().getModalManager();
+        if (modalManager) {
+          modalManager.closeModal('edit-resource-dynamic');
+        }
+      });
+    }
+
+    // Save button
+    const saveBtn = document.getElementById('edit-resource-save');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        this.handleEditSubmit();
+      });
+    }
+
+
+
+    // File browser button
+    const browseBtn = document.getElementById('browse-file-btn');
+    if (browseBtn) {
+      browseBtn.addEventListener('click', () => {
+        this.browseForFile();
+      });
+    }
+
+    // Real-time type badge updates
+    const urlInput = document.getElementById('edit-primary-url');
+    const filePathInput = document.getElementById('edit-file-path');
+    const typeBadge = document.getElementById('resource-type-badge');
+    
+    if (urlInput && filePathInput && typeBadge) {
+      const updateTypeBadge = () => {
+        const hasFilePath = filePathInput.value.trim();
+        const hasUrl = urlInput.value.trim();
+        
+        if (hasFilePath) {
+          typeBadge.textContent = 'Internal Resource';
+          typeBadge.className = 'type-badge internal';
+        } else if (hasUrl) {
+          typeBadge.textContent = 'External Resource';
+          typeBadge.className = 'type-badge external';
+        } else {
+          typeBadge.textContent = 'Undefined Resource';
+          typeBadge.className = 'type-badge undefined';
+        }
+      };
+      
+      urlInput.addEventListener('input', updateTypeBadge);
+      filePathInput.addEventListener('input', updateTypeBadge);
+      
+      // Initial update
+      updateTypeBadge();
+    }
+
+    // Custom property management
+    this.setupCustomPropertyEventListeners();
+
+    // Alternative location management
+    this.setupAlternativeLocationEventListeners();
+
+    // Tags management
+    this.setupEditTagEventListeners();
+  }
+
+  /**
+   * Setup custom property event listeners
+   */
+  setupCustomPropertyEventListeners() {
+    const container = document.getElementById('custom-properties-container');
+    if (!container) return;
+
+    // Add property button
+    const addBtn = container.querySelector('.add-property-btn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        this.addCustomProperty();
+      });
+    }
+
+    // Remove property buttons
+    container.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove-property-btn')) {
+        this.removeCustomProperty(e.target.closest('.custom-property-item'));
+      }
+    });
+
+    // Property key autocomplete
+    const keyInputs = container.querySelectorAll('.property-key-input:not([readonly])');
+    keyInputs.forEach(input => {
+      this.setupPropertyKeyAutocomplete(input);
+    });
+
+    // Property value autocomplete
+    const valueInputs = container.querySelectorAll('.property-value-input');
+    valueInputs.forEach(input => {
+      this.setupPropertyValueAutocomplete(input);
+    });
+  }
+
+  /**
+   * Setup alternative location event listeners
+   */
+  setupAlternativeLocationEventListeners() {
+    // Alternative URL input and button
+    const alternativeUrlInput = document.getElementById('alternative-url-input');
+    const addUrlBtn = document.getElementById('add-alternative-url-btn');
+    
+    if (addUrlBtn && alternativeUrlInput) {
+      const addAlternativeUrl = () => {
+        const url = alternativeUrlInput.value.trim();
+        if (url && this.isValidUrl(url)) {
+          const currentAlternativeLocations = this.getAlternativeLocationsFromModal();
+          if (!currentAlternativeLocations.some(loc => loc.url === url)) {
+            currentAlternativeLocations.push({ url, type: 'url' });
+            this.updateAlternativeLocationsList(currentAlternativeLocations);
+            alternativeUrlInput.value = '';
+          }
+        }
+      };
+      
+      addUrlBtn.addEventListener('click', addAlternativeUrl);
+      alternativeUrlInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          addAlternativeUrl();
+        }
+      });
+    }
+
+    // Arweave Hash input and button
+    const arweaveHashInput = document.getElementById('arweave-hash-input');
+    const addArweaveBtn = document.getElementById('add-arweave-hash-btn');
+    
+    if (addArweaveBtn && arweaveHashInput) {
+      const addArweaveHash = () => {
+        const hash = arweaveHashInput.value.trim();
+        if (hash && this.isValidArweaveHash(hash)) {
+          const currentAlternativeLocations = this.getAlternativeLocationsFromModal();
+          if (!currentAlternativeLocations.some(loc => loc.url === hash)) {
+            currentAlternativeLocations.push({ url: hash, type: 'arweave' });
+            this.updateAlternativeLocationsList(currentAlternativeLocations);
+            arweaveHashInput.value = '';
+          }
+        }
+      };
+      
+      addArweaveBtn.addEventListener('click', addArweaveHash);
+      arweaveHashInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          addArweaveHash();
+        }
+      });
+    }
+
+    // Remove location buttons (now in alternative-locations-list)
+    const locationsList = document.getElementById('alternative-locations-list');
+    if (locationsList) {
+      locationsList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-location-btn')) {
+          this.removeAlternativeLocation(e.target.closest('.alternative-location-item'));
+        }
+      });
+    }
+  }
+
+  /**
+   * Setup tag editing event listeners
+   */
+  setupEditTagEventListeners() {
+    const tagInput = document.getElementById('edit-resource-tag-input');
+    const addTagBtn = document.getElementById('edit-add-tag-btn');
+    const tagsList = document.getElementById('edit-resource-tags-list');
+
+    if (tagInput && addTagBtn) {
+      const addTag = () => {
+        const tagValue = tagInput.value.trim();
+        if (tagValue) {
+          this.addEditTag(tagValue);
+          tagInput.value = '';
+        }
+      };
+
+      // Add tag button click
+      addTagBtn.addEventListener('click', addTag);
+
+      // Tag input handling (Enter key)
+      tagInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          addTag();
+          e.preventDefault();
+        }
+      });
+
+      // Tag autocomplete setup
+      this.setupTagAutocomplete(tagInput);
+    }
+
+    if (tagsList) {
+      // Tag removal
+      tagsList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-tag-btn')) {
+          const tagElement = e.target.closest('.resource-tag');
+          const tag = tagElement?.getAttribute('data-tag');
+          if (tag) {
+            this.removeEditTag(tag);
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * Handle edit modal close
+   */
+  handleEditModalClose(resourceId) {
+    console.log(`[UnifiedResourceManager] Edit modal closed for resource: ${resourceId}`);
+    this.editingResourceId = null;
+    
+    // Clean up any event listeners or temporary state
+    this.cleanupEditModal();
+  }
+
+  /**
+   * Clean up edit modal
+   */
+  cleanupEditModal() {
+    // Clean up any autocomplete instances or other resources
+    if (this.editModalAutocompletes) {
+      this.editModalAutocompletes.forEach(instance => {
+        if (instance && typeof instance.cleanup === 'function') {
+          instance.cleanup();
+        }
+      });
+      this.editModalAutocompletes = [];
+    }
+  }
+
+  // ===== EDIT MODAL FUNCTIONALITY =====
+
+
+
+  /**
+   * Handle edit form submission
+   */
+  async handleEditSubmit() {
+    console.log('[UnifiedResourceManager] Handling edit form submission');
+    
+    try {
+      if (!this.editingResourceId) {
+        throw new Error('No resource being edited');
+      }
+
+      // Collect form data
+      const formData = this.collectEditFormData();
+      
+      // Validate form data
+      const validation = this.validateEditFormData(formData);
+      if (!validation.isValid) {
+        this.showError(validation.message);
+        return;
+      }
+
+      // Update resource
+      await this.updateResourceFromForm(this.editingResourceId, formData);
+      
+      // Close modal and refresh
+      const modalManager = this.getApp().getModalManager();
+      if (modalManager) {
+        modalManager.closeModal('edit-resource-dynamic');
+      }
+      this.showSuccess('Resource updated successfully');
+      
+      // Refresh the resource list
+      await this.loadUnifiedResources();
+      
+    } catch (error) {
+      console.error('[UnifiedResourceManager] Failed to submit edit form:', error);
+      this.showError('Failed to save changes: ' + error.message);
+    }
+  }
+
+  /**
+   * Collect edit form data
+   */
+  collectEditFormData() {
+    const formData = {
+      title: document.getElementById('edit-resource-title')?.value?.trim() || '',
+      type: document.getElementById('edit-resource-type')?.value || 'document',
+      description: document.getElementById('edit-resource-description')?.value?.trim() || '',
+      customProperties: {},
+      alternativeLocations: [],
+      tags: []
+    };
+
+    // Collect both location fields
+    formData.filePath = document.getElementById('edit-file-path')?.value?.trim() || '';
+    formData.primaryUrl = document.getElementById('edit-primary-url')?.value?.trim() || '';
+
+    // Collect custom properties
+    const propertyItems = document.querySelectorAll('.custom-property-item:not(#new-property-template)');
+    propertyItems.forEach(item => {
+      const keyInput = item.querySelector('.property-key-input');
+      const valueInput = item.querySelector('.property-value-input');
+      if (keyInput && valueInput && keyInput.value.trim() && valueInput.value.trim()) {
+        formData.customProperties[keyInput.value.trim()] = valueInput.value.trim();
+      }
+    });
+
+    // Collect alternative locations
+    const locationItems = document.querySelectorAll('.alternative-location-item');
+    locationItems.forEach(item => {
+      const locationId = item.dataset.locationId;
+      const valueInput = item.querySelector('.location-value-input');
+      if (valueInput && valueInput.value.trim()) {
+        formData.alternativeLocations.push({
+          id: locationId,
+          value: valueInput.value.trim()
+        });
+      }
+    });
+
+    // Collect tags from modalTags array
+    formData.tags = [...(this.modalTags || [])];
+
+    return formData;
+  }
+
+  /**
+   * Validate edit form data
+   */
+  validateEditFormData(formData) {
+    if (!formData.title) {
+      return { isValid: false, message: 'Title is required' };
+    }
+
+    // Check if we have either a file path or URL
+    const hasFilePath = formData.filePath && formData.filePath.trim();
+    const hasUrl = formData.primaryUrl && formData.primaryUrl.trim();
+    
+    if (!hasFilePath && !hasUrl) {
+      return { isValid: false, message: 'Either a file path or URL is required' };
+    }
+
+    // Validate URL if provided
+    if (hasUrl) {
+      try {
+        new URL(formData.primaryUrl);
+      } catch (e) {
+        return { isValid: false, message: 'Invalid URL format' };
+      }
+    }
+
+    // Validate file path if provided
+    if (hasFilePath && !formData.filePath.trim()) {
+      return { isValid: false, message: 'File path cannot be empty' };
+    }
+
+    return { isValid: true };
+  }
+
+  /**
+   * Update resource from form data
+   */
+  async updateResourceFromForm(resourceId, formData) {
+    // Find resource in state
+    const resourceIndex = this.state.resources.findIndex(r => r.id === resourceId);
+    if (resourceIndex === -1) {
+      throw new Error('Resource not found in state');
+    }
+
+    const resource = this.state.resources[resourceIndex];
+    
+    // Update basic properties
+    resource.properties['dc:title'] = formData.title;
+    resource.properties['dc:type'] = formData.type;
+    resource.properties['meridian:description'] = formData.description;
+    resource.properties['meridian:tags'] = formData.tags;
+
+    // Update location and type based on form data
+    const hasFilePath = formData.filePath && formData.filePath.trim();
+    const hasUrl = formData.primaryUrl && formData.primaryUrl.trim();
+    
+    if (hasFilePath) {
+      // Internal resource (file path takes precedence)
+      resource.state.type = 'internal';
+      resource.locations.primary.type = 'file-path';
+      resource.locations.primary.value = formData.filePath;
+    } else if (hasUrl) {
+      // External resource (only URL provided)
+      resource.state.type = 'external';
+      resource.locations.primary.type = 'http-url';
+      resource.locations.primary.value = formData.primaryUrl;
+    }
+    // If neither is provided, validation should have caught this
+
+    // Update timestamps
+    const now = new Date().toISOString();
+    resource.metadata['meridian:modified'] = now;
+
+    // Update in database if available
+    if (window.api && window.api.database) {
+      try {
+        // Update main resource
+        await window.api.database.updateResource(resourceId, {
+          title: formData.title,
+          description: formData.description,
+          location_value: formData.filePath || formData.primaryUrl || resource.locations.primary.value,
+          state_type: resource.state.type, // Update the resource type
+          modified_at: now,
+          modified_at_timestamp: Date.now()
+        });
+
+        // Update custom properties
+        const existingProperties = await window.api.database.getCustomProperties(resourceId);
+        
+        // Remove properties that were deleted
+        for (const key of Object.keys(existingProperties)) {
+          if (!(key in formData.customProperties)) {
+            await window.api.database.removeCustomProperty(resourceId, key);
+          }
+        }
+
+        // Add or update properties
+        for (const [key, value] of Object.entries(formData.customProperties)) {
+          await window.api.database.addCustomProperty(resourceId, key, value);
+        }
+
+        // Update tags
+        const currentTags = resource.properties['meridian:tags'] || [];
+        
+        // Remove old tags
+        for (const tag of currentTags) {
+          if (!formData.tags.includes(tag)) {
+            await window.api.database.removeTagFromResource(resourceId, tag);
+          }
+        }
+
+        // Add new tags
+        for (const tag of formData.tags) {
+          if (!currentTags.includes(tag)) {
+            await window.api.database.addTagToResource(resourceId, tag);
+          }
+        }
+
+      } catch (error) {
+        console.error('[UnifiedResourceManager] Database update failed:', error);
+        // Continue with in-memory update even if database fails
+      }
+    }
+
+    // Update state
+    this.updateState({ 
+      resources: [...this.state.resources.slice(0, resourceIndex), resource, ...this.state.resources.slice(resourceIndex + 1)]
+    });
+
+    // Save to JSON if no database
+    if (!window.api || !window.api.database) {
+      await this.saveUnifiedResources();
+    }
+  }
+
+  /**
+   * Browse for file (internal resources)
+   */
+  async browseForFile() {
+    console.log('[UnifiedResourceManager] Opening file browser');
+    
+    try {
+      if (!window.api || !window.api.openFileDialog) {
+        this.showError('File browser not available');
+        return;
+      }
+
+      const result = await window.api.openFileDialog({
+        title: 'Select Resource File',
+        buttonLabel: 'Select',
+        filters: [
+          { name: 'All Files', extensions: ['*'] },
+          { name: 'Documents', extensions: ['txt', 'md', 'pdf', 'doc', 'docx'] },
+          { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'svg'] },
+          { name: 'Videos', extensions: ['mp4', 'avi', 'mov', 'mkv'] },
+          { name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'flac'] }
+        ],
+        properties: ['openFile']
+      });
+
+      if (result && result.filePaths && result.filePaths.length > 0) {
+        const selectedPath = result.filePaths[0];
+        
+        // Update file path input
+        const filePathInput = document.getElementById('edit-file-path');
+        if (filePathInput) {
+          filePathInput.value = selectedPath;
+        }
+
+        // Update file status
+        this.updateFileStatus(selectedPath);
+      }
+      
+    } catch (error) {
+      console.error('[UnifiedResourceManager] File browser failed:', error);
+      this.showError('Failed to open file browser: ' + error.message);
+    }
+  }
+
+  /**
+   * Update file status indicator
+   */
+  async updateFileStatus(filePath) {
+    const statusContainer = document.getElementById('file-status');
+    if (!statusContainer) return;
+
+    try {
+      // Check if file exists
+      const exists = window.api && window.api.fs ? await window.api.fs.exists(filePath) : true;
+      
+      statusContainer.innerHTML = `
+        <div class="file-status-indicator ${exists ? 'accessible' : 'inaccessible'}">
+          <span class="status-icon">${exists ? '✓' : '⚠'}</span>
+          <span class="status-text">
+            ${exists ? 'File accessible' : 'File not found'}
+            (updated ${this.formatDate(new Date().toISOString())})
+          </span>
+        </div>
+      `;
+    } catch (error) {
+      console.error('[UnifiedResourceManager] Failed to check file status:', error);
+    }
+  }
+
+  /**
+   * Add custom property
+   */
+  async addCustomProperty() {
+    console.log('[UnifiedResourceManager] Adding custom property');
+    
+    const template = document.getElementById('new-property-template');
+    if (!template) return;
+
+    const keyInput = template.querySelector('.property-key-input');
+    const valueInput = template.querySelector('.property-value-input');
+    
+    const key = keyInput?.value?.trim();
+    const value = valueInput?.value?.trim();
+
+    if (!key || !value) {
+      this.showError('Both property name and value are required');
+      return;
+    }
+
+    // Check for duplicates
+    const existingKeys = Array.from(document.querySelectorAll('.custom-property-item:not(#new-property-template) .property-key-input'))
+      .map(input => input.value.trim());
+    
+    if (existingKeys.includes(key)) {
+      this.showError('Property name already exists');
+      return;
+    }
+
+    // Create new property item
+    const container = document.getElementById('custom-properties-container');
+    const newIndex = container.querySelectorAll('.custom-property-item:not(#new-property-template)').length;
+    
+    const newItem = document.createElement('div');
+    newItem.innerHTML = this.generateCustomPropertyItem(key, value, newIndex);
+    newItem.className = 'custom-property-item';
+    newItem.dataset.index = newIndex;
+
+    // Insert before template
+    container.insertBefore(newItem.firstElementChild, template);
+
+    // Clear template inputs
+    keyInput.value = '';
+    valueInput.value = '';
+
+    // Setup autocomplete for the new item
+    const newKeyInput = newItem.querySelector('.property-key-input');
+    const newValueInput = newItem.querySelector('.property-value-input');
+    
+    if (!newKeyInput.readOnly) {
+      this.setupPropertyKeyAutocomplete(newKeyInput);
+    }
+    this.setupPropertyValueAutocomplete(newValueInput);
+
+    console.log(`[UnifiedResourceManager] Added custom property: ${key} = ${value}`);
+  }
+
+  /**
+   * Remove custom property
+   */
+  removeCustomProperty(propertyItem) {
+    if (!propertyItem) return;
+
+    const keyInput = propertyItem.querySelector('.property-key-input');
+    const key = keyInput?.value?.trim();
+    
+    console.log(`[UnifiedResourceManager] Removing custom property: ${key}`);
+    propertyItem.remove();
+  }
+
+  /**
+   * Setup property key autocomplete
+   */
+  async setupPropertyKeyAutocomplete(input) {
+    if (!input) return;
+
+    try {
+      const suggestions = window.api && window.api.database ? 
+        await window.api.database.getPropertyKeySuggestions() : 
+        this.getLocalPropertyKeySuggestions();
+
+      const autocomplete = new TagAutocomplete(input, {
+        suggestions: suggestions || [],
+        placeholder: 'Enter property name...',
+        caseSensitive: false,
+        allowCustomValues: true,
+        maxSuggestions: 10
+      });
+
+      this.tagAutocompletes.push(autocomplete);
+      
+    } catch (error) {
+      console.error('[UnifiedResourceManager] Failed to setup property key autocomplete:', error);
+    }
+  }
+
+  /**
+   * Setup property value autocomplete
+   */
+  async setupPropertyValueAutocomplete(input) {
+    if (!input) return;
+
+    const keyInput = input.closest('.custom-property-item')?.querySelector('.property-key-input');
+    const key = keyInput?.value?.trim();
+
+    if (!key) return;
+
+    try {
+      const suggestions = window.api && window.api.database ? 
+        await window.api.database.getPropertyValueSuggestions(key) : 
+        this.getLocalPropertyValueSuggestions(key);
+
+      const autocomplete = new TagAutocomplete(input, {
+        suggestions: suggestions || [],
+        placeholder: 'Enter property value...',
+        caseSensitive: false,
+        allowCustomValues: true,
+        maxSuggestions: 10
+      });
+
+      this.tagAutocompletes.push(autocomplete);
+      
+    } catch (error) {
+      console.error('[UnifiedResourceManager] Failed to setup property value autocomplete:', error);
+    }
+  }
+
+  /**
+   * Get local property key suggestions from existing resources
+   */
+  getLocalPropertyKeySuggestions() {
+    const keys = new Set();
+    
+    this.state.resources.forEach(resource => {
+      if (resource.customProperties) {
+        Object.keys(resource.customProperties).forEach(key => keys.add(key));
+      }
+    });
+
+    return Array.from(keys).sort();
+  }
+
+  /**
+   * Get local property value suggestions for a specific key
+   */
+  getLocalPropertyValueSuggestions(key) {
+    const values = new Set();
+    
+    this.state.resources.forEach(resource => {
+      if (resource.customProperties && resource.customProperties[key]) {
+        values.add(resource.customProperties[key]);
+      }
+    });
+
+    return Array.from(values).sort();
+  }
+
+  /**
+   * Validate URL format
+   */
+  isValidUrl(url) {
+    try {
+      new URL(url);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Validate Arweave hash format
+   */
+  isValidArweaveHash(hash) {
+    return /^[A-Za-z0-9_-]{43}$/.test(hash);
+  }
+
+  /**
+   * Get alternative locations from modal
+   */
+  getAlternativeLocationsFromModal() {
+    const locationsList = document.getElementById('alternative-locations-list');
+    if (!locationsList) return [];
+
+    const locationItems = locationsList.querySelectorAll('.alternative-location-item');
+    return Array.from(locationItems).map(item => {
+      const url = item.querySelector('.location-value')?.textContent?.trim();
+      const type = item.querySelector('.location-type')?.textContent?.trim() === 'Arweave' ? 'arweave' : 'url';
+      return { url, type };
+    }).filter(loc => loc.url);
+  }
+
+  /**
+   * Update alternative locations list in modal
+   */
+  updateAlternativeLocationsList(alternativeLocations) {
+    const locationsList = document.getElementById('alternative-locations-list');
+    if (!locationsList) return;
+
+    locationsList.innerHTML = this.generateAlternativeLocationsList(alternativeLocations);
+  }
+
+  /**
+   * Add alternative URL location (legacy method - kept for compatibility)
+   */
+  async addAlternativeUrl() {
+    console.log('[UnifiedResourceManager] Adding alternative URL');
+    
+    const urlInput = document.getElementById('new-alternative-url');
+    if (!urlInput) return;
+
+    const url = urlInput.value.trim();
+    if (!url) {
+      this.showError('URL is required');
+      return;
+    }
+
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch (error) {
+      this.showError('Please enter a valid URL');
+      return;
+    }
+
+    // Check for duplicates
+    const existingUrls = Array.from(document.querySelectorAll('.alternative-location-item .location-value'))
+      .map(el => el.textContent.trim());
+    
+    if (existingUrls.includes(url)) {
+      this.showError('This URL already exists in alternative locations');
+      return;
+    }
+
+    // Create new alternative location item
+    const container = document.getElementById('alternative-locations-container');
+    const newIndex = container.querySelectorAll('.alternative-location-item').length;
+    
+    const newItem = document.createElement('div');
+    newItem.innerHTML = this.generateAlternativeLocationItem({
+      type: 'external_url',
+      value: url,
+      accessibility: {
+        status: 'unknown',
+        lastChecked: new Date().toISOString()
+      }
+    }, newIndex);
+    newItem.className = 'alternative-location-item';
+    newItem.dataset.index = newIndex;
+
+    container.appendChild(newItem.firstElementChild);
+
+    // Clear input
+    urlInput.value = '';
+
+    // Check URL accessibility
+    this.checkUrlAccessibility(url, newIndex);
+
+    console.log(`[UnifiedResourceManager] Added alternative URL: ${url}`);
+  }
+
+  /**
+   * Add external Arweave hash location
+   */
+  async addExternalArweaveHash() {
+    console.log('[UnifiedResourceManager] Adding external Arweave hash');
+    
+    const hashInput = document.getElementById('new-arweave-hash');
+    if (!hashInput) return;
+
+    const hash = hashInput.value.trim();
+    if (!hash) {
+      this.showError('Arweave hash is required');
+      return;
+    }
+
+    // Basic Arweave hash validation (43 characters, base64url)
+    if (!/^[A-Za-z0-9_-]{43}$/.test(hash)) {
+      this.showError('Please enter a valid Arweave transaction hash (43 characters)');
+      return;
+    }
+
+    // Check for duplicates
+    const existingHashes = Array.from(document.querySelectorAll('.alternative-location-item .location-value'))
+      .map(el => el.textContent.trim());
+    
+    if (existingHashes.includes(hash)) {
+      this.showError('This Arweave hash already exists in alternative locations');
+      return;
+    }
+
+    // Create new alternative location item
+    const container = document.getElementById('alternative-locations-container');
+    const newIndex = container.querySelectorAll('.alternative-location-item').length;
+    
+    const arweaveUrl = `https://arweave.net/${hash}`;
+    const newItem = document.createElement('div');
+    newItem.innerHTML = this.generateAlternativeLocationItem({
+      type: 'external_arweave',
+      value: arweaveUrl,
+      accessibility: {
+        status: 'unknown',
+        lastChecked: new Date().toISOString()
+      }
+    }, newIndex);
+    newItem.className = 'alternative-location-item';
+    newItem.dataset.index = newIndex;
+
+    container.appendChild(newItem.firstElementChild);
+
+    // Clear input
+    hashInput.value = '';
+
+    // Check Arweave accessibility
+    this.checkUrlAccessibility(arweaveUrl, newIndex);
+
+    console.log(`[UnifiedResourceManager] Added external Arweave hash: ${hash}`);
+  }
+
+  /**
+   * Remove alternative location
+   */
+  removeAlternativeLocation(locationItem) {
+    if (!locationItem) return;
+
+    const locationValue = locationItem.querySelector('.location-value')?.textContent?.trim();
+    console.log(`[UnifiedResourceManager] Removing alternative location: ${locationValue}`);
+    
+    locationItem.remove();
+  }
+
+  /**
+   * Check URL accessibility
+   */
+  async checkUrlAccessibility(url, index) {
+    try {
+      const statusElement = document.querySelector(`[data-index="${index}"] .location-status`);
+      if (!statusElement) return;
+
+      statusElement.innerHTML = '<span class="status-checking">Checking...</span>';
+
+      // Use a simple fetch to check accessibility
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      const response = await fetch(url, {
+        method: 'HEAD',
+        signal: controller.signal,
+        mode: 'no-cors' // Handle CORS issues
+      });
+
+      clearTimeout(timeoutId);
+
+      // For no-cors mode, we can only check if the request didn't fail
+      statusElement.innerHTML = this.generateLocationStatusIndicator({
+        accessibility: {
+          status: 'accessible',
+          lastChecked: new Date().toISOString()
+        }
+      });
+
+    } catch (error) {
+      console.warn(`[UnifiedResourceManager] URL check failed for ${url}:`, error);
+      
+      const statusElement = document.querySelector(`[data-index="${index}"] .location-status`);
+      if (statusElement) {
+        statusElement.innerHTML = this.generateLocationStatusIndicator({
+          accessibility: {
+            status: 'inaccessible',
+            lastChecked: new Date().toISOString(),
+            error: error.message
+          }
+        });
+      }
+    }
+  }
+
+  /**
+   * Add tag to edit form
+   */
+  async addEditTag() {
+    console.log('[UnifiedResourceManager] Adding tag to edit form');
+    
+    const tagInput = document.getElementById('edit-resource-tag-input');
+    if (!tagInput) return;
+
+    const tagValue = tagInput.value.trim();
+    if (!tagValue) {
+      this.showError('Tag value is required');
+      return;
+    }
+
+    // Check for duplicates
+    const existingTags = Array.from(document.querySelectorAll('.modal-tags-list .modal-tag'))
+      .map(tag => tag.textContent.replace('×', '').trim());
+    
+    if (existingTags.includes(tagValue)) {
+      this.showError('Tag already exists');
+      return;
+    }
+
+    // Add to modal tags array
+    if (!this.modalTags.includes(tagValue)) {
+      this.modalTags.push(tagValue);
+    }
+
+    // Update UI
+    this.renderEditModalTags();
+
+    // Clear input
+    tagInput.value = '';
+
+    console.log(`[UnifiedResourceManager] Added tag: ${tagValue}`);
+  }
+
+  /**
+   * Remove tag from edit form
+   */
+  removeEditTag(tagValue) {
+    if (!tagValue) return;
+
+    console.log(`[UnifiedResourceManager] Removing tag: ${tagValue}`);
+    
+    // Remove from modal tags array
+    const index = this.modalTags.indexOf(tagValue);
+    if (index > -1) {
+      this.modalTags.splice(index, 1);
+    }
+
+    // Update UI
+    this.renderEditModalTags();
+  }
+
+  /**
+   * Render edit modal tags
+   */
+  renderEditModalTags() {
+    const container = document.querySelector('.modal-tags-list');
+    if (!container) return;
+
+    container.innerHTML = this.modalTags.map(tag => `
+      <span class="modal-tag">
+        ${this.escapeHtml(tag)}
+        <button 
+          type="button" 
+          data-tag="${this.escapeHtml(tag)}" 
+          title="Remove tag"
+        >×</button>
+      </span>
+    `).join('');
+  }
+
+  /**
+   * Setup tag autocomplete for edit modal
+   */
+  async setupTagAutocomplete(input) {
+    if (!input) return;
+
+    try {
+      const allTags = this.getAllTags();
+      
+      const autocomplete = new TagAutocomplete(input, {
+        suggestions: allTags,
+        placeholder: 'Enter tag...',
+        caseSensitive: false,
+        allowCustomValues: true,
+        maxSuggestions: 10,
+        onSelect: (tag) => {
+          // Auto-add tag when selected from autocomplete
+          input.value = tag;
+          this.addEditTag();
+        }
+      });
+
+      this.tagAutocompletes.push(autocomplete);
+      
+    } catch (error) {
+      console.error('[UnifiedResourceManager] Failed to setup tag autocomplete:', error);
+    }
   }
 } 
