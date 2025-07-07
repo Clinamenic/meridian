@@ -5,6 +5,41 @@ All notable changes to Meridian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-07-03
+
+### Added
+
+- **Enhanced Add Resource Modal**: Comprehensive bulk and individual tag management system
+- **Bulk Tag Management**: Add tags to all resources at once during review phase for both internal and external resources
+- **Individual Tag Management**: Add/remove tags for each resource individually during review phase
+- **Resource Preview System**: Preview resource items with accumulated tags before final confirmation
+- **Tag Accumulation**: Automatic combination of bulk and individual tags during resource creation
+- **Flexible Modal Tab System**: Dynamic tab width distribution supporting any number of tabs
+- **Improved Resource Preview Styling**: Resource previews now match main resource list design
+
+### Changed
+
+- **Modal Tab Styling**: Updated to match main app tabs with consistent height, background, and typography
+- **Resource Preview Layout**: Enhanced preview items with proper spacing, typography, and tag styling
+- **Tag Input Integration**: Unified tag suggestions and autocomplete for both bulk and individual inputs
+- **Review Phase Enhancement**: Streamlined review process with comprehensive tag management capabilities
+- **UI Consistency**: Modal tabs now use same styling as main application tabs
+
+### Technical Improvements
+
+- **Code Organization**: Removed legacy backup files and improved code structure
+- **Database Integration**: Enhanced unified database manager with additional functionality
+- **Event Handling**: Improved tag management event listeners and autocomplete integration
+- **Responsive Design**: Modal tabs automatically adjust width based on number of tabs
+- **Performance**: Optimized resource preview generation and tag accumulation
+
+### User Experience
+
+- **Intuitive Tag Management**: Clear separation between bulk and individual tag operations
+- **Visual Consistency**: Resource previews provide accurate representation of final items
+- **Flexible Workflow**: Support for both bulk operations and fine-grained individual control
+- **Modern Interface**: Consistent styling across all modal components
+
 ## [0.4.0] - 2025-07-03
 
 ### Added
