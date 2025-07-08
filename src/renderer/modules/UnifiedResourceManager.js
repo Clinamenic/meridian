@@ -2099,8 +2099,8 @@ export class UnifiedResourceManager extends ModuleBase {
       this.addProcessingLog(`Processing: ${url}`);
 
       try {
-        // Extract metadata using the same method as ResourceManager
-        const metadata = await window.electronAPI.collate.extractMetadata(url);
+        // Extract metadata using the unified API
+        const metadata = await window.electronAPI.unified.extractMetadata(url);
         
         // Add result with extracted metadata
         this.modalState.external.processingResults.push({

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { Platform, Resource, ArweaveUpload, SocialPost, ArweaveAccount } from '../types';
+import { Platform, ArweaveUpload, SocialPost, ArweaveAccount } from '../types';
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
@@ -8,28 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectWorkspace: () => ipcRenderer.invoke('select-workspace'),
   getWorkspace: () => ipcRenderer.invoke('get-workspace'),
 
-  // Collate APIs
-  collate: {
-    loadData: () => ipcRenderer.invoke('collate:load-data'),
-    addResource: (resourceData: Omit<Resource, 'id' | 'createdAt' | 'modifiedAt'>) => 
-      ipcRenderer.invoke('collate:add-resource', resourceData),
-    updateResource: (id: string, updates: Partial<Resource>) => 
-      ipcRenderer.invoke('collate:update-resource', id, updates),
-    addTagToResource: (resourceId: string, tag: string) => 
-      ipcRenderer.invoke('collate:add-tag-to-resource', resourceId, tag),
-    removeTagFromResource: (resourceId: string, tag: string) => 
-      ipcRenderer.invoke('collate:remove-tag-from-resource', resourceId, tag),
-    renameTag: (oldTag: string, newTag: string) => 
-      ipcRenderer.invoke('collate:rename-tag', oldTag, newTag),
-    deleteTag: (tag: string) => 
-      ipcRenderer.invoke('collate:delete-tag', tag),
-    removeResource: (resourceId: string) => 
-      ipcRenderer.invoke('collate:remove-resource', resourceId),
-    extractMetadata: (url: string) => 
-      ipcRenderer.invoke('collate:extract-metadata', url),
-    exportResources: (format: string, data: any, filename: string) => 
-      ipcRenderer.invoke('collate:export-resources', format, data, filename),
-  },
+
 
   // Archive APIs
   archive: {
@@ -223,17 +202,7 @@ export interface ElectronAPI {
   selectWorkspace: () => Promise<{ success: boolean; path?: string }>;
   getWorkspace: () => Promise<string | null>;
   
-  collate: {
-    loadData: () => Promise<any>;
-    addResource: (resourceData: Omit<Resource, 'id' | 'createdAt' | 'modifiedAt'>) => Promise<Resource>;
-    updateResource: (id: string, updates: Partial<Resource>) => Promise<Resource>;
-    addTagToResource: (resourceId: string, tag: string) => Promise<Resource>;
-    removeTagFromResource: (resourceId: string, tag: string) => Promise<Resource>;
-    renameTag: (oldTag: string, newTag: string) => Promise<void>;
-    deleteTag: (tag: string) => Promise<void>;
-    removeResource: (resourceId: string) => Promise<void>;
-    extractMetadata: (url: string) => Promise<any>;
-  };
+
   
   archive: {
     loadData: () => Promise<any>;

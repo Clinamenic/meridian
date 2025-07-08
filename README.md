@@ -1,18 +1,19 @@
 # Meridian: Local-First Multi-Tool Interface
 
-Meridian is a local-first Electron desktop application that bridges individual knowledge management with global social coordination. The app features three core tools: **Collate** (URL resource management), **Archive** (Arweave upload), and **Broadcast** (social media scheduling).
+Meridian is a local-first Electron desktop application that bridges individual knowledge management with global social coordination. The app features three core tools: **Unified Resource Manager** (URL and file resource management), **Archive** (Arweave upload), and **Broadcast** (social media scheduling).
 
 **Version 1.0.0** - First stable release with comprehensive modular architecture
 
 ## Features
 
-### Collate - URL Resource Manager
+### Unified Resource Manager
 
-- Add and organize web resources with metadata extraction
+- Add and organize web resources and local files with metadata extraction
 - Tag-based organization with search and filtering
 - Automatic title, description, and image extraction
-- Local JSON storage with workspace integration
+- Local SQLite database with workspace integration
 - Duplicate URL detection and management
+- Unified interface for both web resources and file management
 
 ### Archive - Arweave Upload Tool
 
@@ -110,20 +111,22 @@ npm run package
 
 ```
 <workspace>/
-├── data/
-│   ├── collate.json       # Resource collection
-│   ├── archive.json       # Arweave uploads
-│   └── broadcast.json     # Social posts
-└── attachments/           # Local file cache
+├── .meridian/
+│   ├── data/
+│   │   ├── unified.db     # Unified resource database
+│   │   ├── archive.json   # Arweave uploads
+│   │   └── broadcast.json # Social posts
+│   └── attachments/       # Local file cache
 ```
 
-### Collate Tool
+### Unified Resource Manager
 
-- Click "Add Resource" to add a new URL
+- Click "Add Resource" to add a new URL or local file
 - Use "Extract Metadata" to automatically fill title and description
 - Add comma-separated tags for organization
 - Use the search bar to filter resources
 - Click on tag filters to narrow results
+- Manage both web resources and local files in one interface
 
 ### Archive Tool
 

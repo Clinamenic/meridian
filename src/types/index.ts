@@ -1,4 +1,5 @@
-// Resource types for Collate tool
+// Resource types for Unified Resource Management System
+/** @deprecated Use UnifiedResource instead */
 export interface Resource {
   id: string;
   url: string;
@@ -8,12 +9,6 @@ export interface Resource {
   tags: string[];
   createdAt: string;
   modifiedAt: string;
-}
-
-export interface CollateData {
-  resources: Resource[];
-  tags: { [tag: string]: number }; // tag usage count
-  lastModified: string;
 }
 
 // Enhanced Arweave types for Archive tool with UUID-based file registry
@@ -203,7 +198,6 @@ export interface BroadcastDataV2 {
   version: string;
 }
 
-// Template and validation types
 export interface ValidationResult {
   isValid: boolean;
   errors: ValidationError[];
@@ -255,7 +249,6 @@ export interface PostResult {
   platform: Platform;
 }
 
-// Credential management types
 export interface CredentialStore {
   bluesky?: { jwt: string; refreshToken: string };
   farcaster?: { appKey: string; jwt: string };
@@ -269,21 +262,18 @@ export interface CredentialStore {
   };
 }
 
-// Application state types
 export interface AppState {
-  currentTool: "collate" | "archive" | "broadcast";
+  currentTool: "unified" | "archive" | "broadcast";
   workspacePath?: string;
   isLoading: boolean;
 }
 
-// IPC message types
 export interface IPCMessage<T = unknown> {
   type: string;
   payload?: T;
   requestId?: string;
 }
 
-// Platform integration types
 export interface BlueskyPost {
   text: string;
   createdAt: string;
@@ -319,9 +309,8 @@ export interface FarcasterCast {
   mentions?: number[];
 }
 
-// Utility types
 export type Platform = "bluesky" | "farcaster" | "twitter" | "x" | "github";
-export type ToolName = "collate" | "archive" | "broadcast";
+export type ToolName = "unified" | "archive" | "broadcast";
 export type PostStatus = "draft" | "scheduled" | "posted" | "failed";
 export type UploadStatus = "pending" | "confirmed" | "failed";
 
@@ -355,7 +344,6 @@ export interface SiteSettings {
   };
 }
 
-// GitHub integration types
 export interface GitHubAccount {
   id: string; // UUID
   nickname: string; // User-defined name
@@ -394,7 +382,6 @@ export interface DeployResult {
   error?: string;
 }
 
-// Unified Resource types for Unified tool
 export interface UnifiedResource {
   id: string;
   uri: string;

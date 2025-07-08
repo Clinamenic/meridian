@@ -109,9 +109,7 @@ export class ModuleLoader {
     // Register modules in dependency order
     // TagManager has no dependencies, so it can be loaded first
     await this.registerModule('tagManager', TagManager);
-    
-          // ResourceManager and ArchiveManager replaced by UnifiedResourceManager
-    
+      
           // UnifiedResourceManager depends on TagManager
     console.log('[ModuleLoader] About to register UnifiedResourceManager...');
     await this.registerModule('unifiedResourceManager', UnifiedResourceManager);

@@ -8,10 +8,9 @@ console.log('[App] ===== APP.JS LOADED =====');
 // Main Application Logic
 class MeridianApp {
   constructor() {
-    this.currentTool = 'collate';
+    this.currentTool = 'unified';
     this.workspacePath = null;
     this.data = {
-      collate: null,
       archive: null,
       deploy: null,
       broadcast: null,
@@ -23,11 +22,6 @@ class MeridianApp {
     this.filterLogic = 'any'; // Default to 'any' (OR logic)
 
     // Collapse state management
-    this.collateCollapseState = {
-      globalState: 'expanded', // 'expanded' or 'collapsed'
-      collapsedItems: new Set() // Track individually collapsed items
-    };
-
     this.archiveCollapseState = {
       globalState: 'expanded', // 'expanded' or 'collapsed'
       collapsedItems: new Set() // Track individually collapsed items
@@ -153,57 +147,12 @@ class MeridianApp {
     // No need to call setupModalEvents() or setupModalTabEvents() here
 
     // Tool-specific events
-    this.setupCollateEvents();
     this.setupArchiveEvents();
     // Unified events are handled by UnifiedResourceManager
     this.setupGlobalSearchEvents();
 
     // Account management events are now handled by AccountManager
     // No need to call setupAccountManagementEvents() here
-  }
-
-  // Modal events are now handled by ModalManager
-  // setupModalEvents() and setupModalTabEvents() have been moved to ModalManager
-
-  setupCollateEvents() {
-    console.log('[App] setupCollateEvents called');
-
-    // Legacy method - collate events now handled by UnifiedResourceManager
-    // All resource-related functionality has been migrated to the unified system
-    console.log('[App] setupCollateEvents called - functionality migrated to UnifiedResourceManager');
-
-
-    // Delegate to TagManager for tag-related events
-    const tagManager = this.getTagManager();
-    if (tagManager) {
-      // Search functionality
-      const resourceSearch = document.getElementById('resource-search');
-      if (resourceSearch) {
-        resourceSearch.addEventListener('input', (e) => {
-          tagManager.currentSearchTerm = e.target.value;
-          tagManager.applyAllFilters();
-        });
-      }
-
-      // Filter logic control
-      tagManager.initializeFilterLogic();
-
-      // Clear filters button
-      const clearFiltersBtn = document.getElementById('clear-filters-btn');
-      if (clearFiltersBtn) {
-        clearFiltersBtn.addEventListener('click', () => {
-          tagManager.clearAllFilters();
-        });
-      }
-    }
-
-    // Tag autocomplete is now handled by TagManager module
-
-    // Bulk add events
-    this.setupBulkAddEvents();
-
-    // Export events
-    this.setupExportEvents();
   }
 
   setupArchiveEvents() {
@@ -340,8 +289,8 @@ class MeridianApp {
 
         // Ensure a tool is active
         if (!activeTab) {
-          console.log('[DEBUG] No active tool, activating Collate tool');
-          await this.switchTool('collate');
+          console.log('[DEBUG] No active tool, activating Unified tool');
+          await this.switchTool('unified');
 
           // Verify activation worked
           const newActiveTab = document.querySelector('.tab-btn.active');
@@ -553,11 +502,6 @@ class MeridianApp {
     console.log(`[DEBUG switchTool] Loading data for tool: ${toolName}`);
     try {
       switch (toolName) {
-        case 'collate':
-          console.log(`[DEBUG switchTool] Loading collate data...`);
-          await this.loadCollateData();
-          console.log(`[DEBUG switchTool] Collate data loaded successfully`);
-          break;
         case 'archive':
           console.log(`[DEBUG switchTool] Loading archive data...`);
           await this.loadArchiveData();
@@ -606,7 +550,6 @@ class MeridianApp {
     
     try {
       // Load all tool data regardless of which tab is active
-      await this.loadCollateData();
       await this.loadArchiveData();
       await this.loadUnifiedData();
       
@@ -630,12 +573,9 @@ class MeridianApp {
   async loadToolData() {
     // Check current active tool and load its data
     const activeTab = document.querySelector('.tab-btn.active');
-    const toolName = activeTab ? activeTab.dataset.tool : 'collate';
+    const toolName = activeTab ? activeTab.dataset.tool : 'unified';
 
     switch (toolName) {
-      case 'collate':
-        await this.loadCollateData();
-        break;
       case 'archive':
         await this.loadArchiveData();
         break;
@@ -671,9 +611,7 @@ class MeridianApp {
   }
 
   // Legacy method - collate data loading handled by UnifiedResourceManager
-  async loadCollateData() {
-    console.log('[App] loadCollateData called - functionality migrated to UnifiedResourceManager');
-  }
+  // loadCollateData() - REMOVED: Functionality migrated to UnifiedResourceManager
 
   // ===== UNIFIED TAG AUTOCOMPLETE SETUP =====
 
@@ -861,10 +799,12 @@ class MeridianApp {
   }
 
   isUrlDuplicate(url) {
-    if (!this.data.collate || !this.data.collate.resources) {
+    // Check for duplicates using UnifiedResourceManager
+    const unifiedManager = this.getUnifiedResourceManager();
+    if (!unifiedManager) {
       return false;
     }
-    return this.data.collate.resources.some(resource => resource.url === url);
+    return unifiedManager.hasResourceWithUrl(url);
   }
 
   renderUrlReview() {
@@ -938,7 +878,7 @@ class MeridianApp {
         this.addLogEntry(`Processing: ${urlData.url}`, 'info');
 
         // Extract metadata
-        const metadata = await window.electronAPI.collate.extractMetadata(urlData.url);
+        const metadata = await window.electronAPI.unified.extractMetadata(urlData.url);
 
         // Create resource data
         const tagManager = this.getTagManager();
@@ -950,8 +890,13 @@ class MeridianApp {
           tags: [...bulkTags], // Apply bulk tags
         };
 
-        // Add the resource
-        await window.electronAPI.collate.addResource(resourceData);
+        // Add the resource using UnifiedResourceManager
+        const unifiedManager = this.getUnifiedResourceManager();
+        if (unifiedManager) {
+          await unifiedManager.addResource(resourceData);
+        } else {
+          throw new Error('UnifiedResourceManager not available');
+        }
 
         successful++;
         results.push({ url: urlData.url, success: true, title: resourceData.title });
@@ -977,7 +922,11 @@ class MeridianApp {
     // Show results
     setTimeout(() => {
       this.showBulkResults(results, successful, failed);
-      this.loadCollateData(); // Refresh the collate view
+      // Refresh the unified view
+      const unifiedManager = this.getUnifiedResourceManager();
+      if (unifiedManager) {
+        unifiedManager.refreshData();
+      }
     }, 500);
   }
 
@@ -1798,9 +1747,12 @@ class MeridianApp {
     const results = [];
     const lowerQuery = query.toLowerCase();
 
-    // Search Collate resources
-    if (this.data.collate && this.data.collate.resources) {
-      this.data.collate.resources.forEach(resource => {
+    // Search Unified resources
+    // Search Unified resources (if available)
+    const unifiedManager = this.getUnifiedResourceManager();
+    if (unifiedManager) {
+      const resources = unifiedManager.getAllResources();
+      resources.forEach(resource => {
         const titleMatch = resource.title.toLowerCase().includes(lowerQuery);
         const descMatch = (resource.description || '').toLowerCase().includes(lowerQuery);
         const urlMatch = resource.url.toLowerCase().includes(lowerQuery);
@@ -1811,7 +1763,7 @@ class MeridianApp {
             type: 'resource',
             title: resource.title,
             description: resource.description || resource.url,
-            source: 'Collate',
+            source: 'Unified',
             data: resource
           });
         }
@@ -1887,8 +1839,8 @@ class MeridianApp {
 
     // Switch to the appropriate tool and highlight the result
     switch (result.source.toLowerCase()) {
-      case 'collate':
-        await this.switchTool('collate');
+      case 'unified':
+        await this.switchTool('unified');
         // Optionally highlight the specific resource
         break;
       case 'archive':

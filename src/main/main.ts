@@ -16,6 +16,9 @@ import DeployManager from './deploy-manager';
 import ConfigManager from './config-manager';
 import { GitHubManager } from './github-manager';
 import { UnifiedDatabaseManager } from './unified-database-manager';
+import { 
+  UnifiedResource 
+} from '../types';
 
 class MeridianApp {
   private mainWindow: BrowserWindow | null = null;
@@ -85,7 +88,7 @@ class MeridianApp {
       }
     });
 
-    // App quit - cleanup database connections
+        // App quit - cleanup database connections
     app.on('before-quit', async () => {
       try {
         await this.unifiedDatabaseManager.close();
@@ -189,46 +192,7 @@ class MeridianApp {
       return this.dataManager.getWorkspacePath();
     });
 
-    // Collate IPC handlers
-    ipcMain.handle('collate:load-data', async () => {
-      return await this.dataManager.loadCollateData();
-    });
 
-    ipcMain.handle('collate:add-resource', async (_, resourceData) => {
-      return await this.dataManager.addResource(resourceData);
-    });
-
-    ipcMain.handle('collate:update-resource', async (_, id, updates) => {
-      return await this.dataManager.updateResource(id, updates);
-    });
-
-    ipcMain.handle('collate:add-tag-to-resource', async (_, resourceId, tag) => {
-      return await this.dataManager.addTagToResource(resourceId, tag);
-    });
-
-    ipcMain.handle('collate:remove-tag-from-resource', async (_, resourceId, tag) => {
-      return await this.dataManager.removeTagFromResource(resourceId, tag);
-    });
-
-    ipcMain.handle('collate:rename-tag', async (_, oldTag, newTag) => {
-      return await this.dataManager.renameTag(oldTag, newTag);
-    });
-
-    ipcMain.handle('collate:delete-tag', async (_, tag) => {
-      return await this.dataManager.deleteTag(tag);
-    });
-
-    ipcMain.handle('collate:remove-resource', async (_, resourceId) => {
-      return await this.dataManager.removeResource(resourceId);
-    });
-
-    ipcMain.handle('collate:extract-metadata', async (_, url) => {
-      return await this.metadataExtractor.extractMetadata(url);
-    });
-
-    ipcMain.handle('collate:export-resources', async (_, format, data, filename) => {
-      return await this.dataManager.exportResources(format, data, filename);
-    });
 
     // Unified IPC handlers
     ipcMain.handle('unified:load-data', async () => {
@@ -767,6 +731,10 @@ class MeridianApp {
     ipcMain.handle('get-app-version', async () => {
       return packageJson.version;
     });
+  }
+
+  private generateId(): string {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
   }
 }
 

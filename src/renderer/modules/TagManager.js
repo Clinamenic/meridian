@@ -430,7 +430,8 @@ export class TagManager extends ModuleBase {
         autocompleteSelector: `#tag-autocomplete-${resourceId}`,
         getSuggestions: (inputValue) => {
           // Get current resource's existing tags to exclude from suggestions
-          const resource = this.getData().collate?.resources?.find(r => r.id === resourceId);
+          const unifiedManager = this.app.getUnifiedResourceManager();
+          const resource = unifiedManager ? unifiedManager.getResourceById(resourceId) : null;
           const excludeTags = resource?.tags || [];
           return this.getIntelligentTagSuggestions(inputValue, excludeTags, 5);
         },
