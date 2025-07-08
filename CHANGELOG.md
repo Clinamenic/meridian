@@ -5,6 +5,39 @@ All notable changes to Meridian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2025-07-07
+
+### Changed
+
+- **BREAKING CHANGE**: Complete removal of legacy collate system
+- **Code Consolidation**: Eliminated duplicate functionality between collate and unified systems
+- **API Simplification**: Removed collate-specific IPC handlers and preload APIs
+- **Type System Cleanup**: Removed CollateData, CollateResource, and related interfaces
+- **Documentation Update**: Updated README.md to reflect unified resource management system
+
+### Removed
+
+- **Collate Types**: CollateData, CollateResource, and all collate-related interfaces
+- **Collate Methods**: All collate methods from DataManager class (loadCollateData, saveCollateData, etc.)
+- **Collate IPC Handlers**: All collate: handlers from main process
+- **Collate Preload APIs**: All collate. API definitions from preload script
+- **Collate CSS Styles**: Removed collate panel styling from styles.css
+- **Migration Utilities**: Removed collate-to-unified migration functions
+
+### Technical Improvements
+
+- **Maintainability**: Streamlined codebase with single unified resource management system
+- **Performance**: Reduced code complexity and eliminated duplicate functionality
+- **API Consistency**: Single unified API for all resource management operations
+- **Type Safety**: Cleaner type system with deprecated Resource interface and active UnifiedResource
+
+### Migration Notes
+
+- All collate functionality has been consolidated into the unified resource management system
+- No data loss - all resources are accessible through the unified interface
+- The unified system provides enhanced functionality for both web resources and local files
+- Legacy collate API calls will no longer work - use unified APIs instead
+
 ## [0.5.0] - 2025-07-03
 
 ### Added
