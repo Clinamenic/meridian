@@ -5,6 +5,27 @@ All notable changes to Meridian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2025-01-14
+
+### Changed
+
+- **Architecture Improvement**: Replaced UnifiedResourceManager.js with new ResourceManager.js following modular architecture pattern
+- **Code Modernization**: Updated resource management to use ModuleBase inheritance for better maintainability
+- **Backward Compatibility**: Maintained legacy state aliases to ensure existing functionality continues to work
+- **Documentation Enhancement**: Comprehensive README improvements with detailed installation instructions
+
+### Added
+
+- **Installation Guide**: Enhanced README with step-by-step setup instructions and actual repository URL
+- **Troubleshooting Section**: Added common issue resolution guide for new users
+- **Prerequisites Documentation**: Detailed system requirements with download links for Node.js, Git, and optional tools
+
+### Technical Improvements
+
+- **Modular Architecture**: ResourceManager now follows Meridian's standardized modular pattern
+- **Code Consolidation**: Unified resource management system with improved organization
+- **Development Experience**: Better onboarding documentation for new contributors and users
+
 ## [0.5.1] - 2025-07-07
 
 ### Changed
