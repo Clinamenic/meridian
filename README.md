@@ -126,10 +126,9 @@ npm run package
 <workspace>/
 ├── .meridian/
 │   ├── data/
-│   │   ├── unified.db     # Unified resource database
-│   │   ├── archive.json   # Arweave uploads
-│   │   └── broadcast.json # Social posts
-│   └── attachments/       # Local file cache
+│   │   ├── unified_resources.db  # Unified database for all resources and Arweave uploads
+│   │   └── broadcast.json        # Social posts and scheduling
+│   └── attachments/              # Local file cache
 ```
 
 ### Unified Resource Manager
@@ -182,7 +181,8 @@ npm run package
 ### Workspace Integration
 
 - Choose any directory as your workspace
-- Data is stored in JSON format for portability
+- Resources and Arweave data stored in unified SQLite database for efficiency
+- Social media data stored in portable JSON format
 - Export to Markdown, CSV, or other formats
 - Compatible with Obsidian vaults and note-taking apps
 
