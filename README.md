@@ -62,26 +62,39 @@ Meridian is a local-first Electron desktop application that bridges individual k
 
 ### Prerequisites
 
-- Node.js 22+ (required for deployment functionality)
-- npm 10.9.2+ (required for package management)
-- arkb CLI (for Arweave functionality)
+- **Node.js 22+** (required for deployment functionality)
+  - Download from [nodejs.org](https://nodejs.org/) - choose the LTS version
+- **npm 10.9.2+** (usually included with Node.js)
+  - Verify with: `npm --version`
+- **Git** (for cloning the repository)
+  - Download from [git-scm.com](https://git-scm.com/)
+- **arkb CLI** (optional, for Arweave functionality)
+  - Install with: `npm install -g arkb`
 
-### Setup
+### Quick Start
 
 ```bash
-# Clone the repository
-git clone <repository-url>
+# 1. Clone the repository
+git clone https://github.com/Clinamenic/meridian.git
 cd meridian
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Build the application
+# 3. Build the application
 npm run build
 
-# Start the application
+# 4. Start the application
 npm start
 ```
+
+**First Launch:** When you first start Meridian, you'll be prompted to select a workspace directory. This can be any folder where you want to store your data. The app will create `.meridian/data/` and `.meridian/attachments/` subdirectories within your chosen workspace.
+
+### Troubleshooting
+
+- **Build errors:** Ensure you're using Node.js 22+ with `node --version`
+- **Permission errors:** On macOS/Linux, you may need to use `sudo` for global npm installs
+- **App won't start:** Check that all dependencies installed successfully with `npm list --depth=0`
 
 ### Development
 

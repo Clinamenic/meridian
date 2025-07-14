@@ -277,10 +277,13 @@ export class ModalManager extends ModuleBase {
    */
   createDynamicModal(modalId, content, options = {}) {
     console.log(`[ModalManager] Creating dynamic modal: ${modalId}`);
+    console.log(`[ModalManager] Debug - Content length: ${content.length}`);
+    console.log(`[ModalManager] Debug - Options:`, options);
     
     // Remove existing modal if it exists
     const existingModal = document.getElementById(modalId);
     if (existingModal) {
+      console.log(`[ModalManager] Debug - Removing existing modal: ${modalId}`);
       existingModal.remove();
     }
     
@@ -290,10 +293,16 @@ export class ModalManager extends ModuleBase {
     modal.className = 'modal';
     modal.innerHTML = content;
     
+    console.log(`[ModalManager] Debug - Modal element created:`, modal);
+    console.log(`[ModalManager] Debug - Modal HTML:`, modal.outerHTML.substring(0, 500) + '...');
+    
     // Add to modal overlay
     const overlay = document.getElementById('modal-overlay');
     if (overlay) {
       overlay.appendChild(modal);
+      console.log(`[ModalManager] Debug - Modal added to overlay`);
+    } else {
+      console.error(`[ModalManager] Debug - Modal overlay not found!`);
     }
     
     // Setup events for the new modal

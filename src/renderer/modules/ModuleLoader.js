@@ -102,18 +102,18 @@ export class ModuleLoader {
     const { BroadcastManager } = await import('./BroadcastManager.js');
     const { DeployManager } = await import('./DeployManager.js');
     const { UploadManager } = await import('./UploadManager.js');
-    console.log('[ModuleLoader] Importing UnifiedResourceManager...');
-    const { UnifiedResourceManager } = await import('./UnifiedResourceManager.js');
-    console.log('[ModuleLoader] UnifiedResourceManager imported:', UnifiedResourceManager);
+    console.log('[ModuleLoader] Importing ResourceManager...');
+    const { ResourceManager } = await import('./ResourceManager.js');
+    console.log('[ModuleLoader] ResourceManager imported:', ResourceManager);
     
     // Register modules in dependency order
     // TagManager has no dependencies, so it can be loaded first
     await this.registerModule('tagManager', TagManager);
       
-          // UnifiedResourceManager depends on TagManager
-    console.log('[ModuleLoader] About to register UnifiedResourceManager...');
-    await this.registerModule('unifiedResourceManager', UnifiedResourceManager);
-    console.log('[ModuleLoader] UnifiedResourceManager registered successfully');
+          // ResourceManager depends on TagManager
+    console.log('[ModuleLoader] About to register ResourceManager...');
+    await this.registerModule('resourceManager', ResourceManager);
+    console.log('[ModuleLoader] ResourceManager registered successfully');
     
     // ModalManager has no dependencies, can be loaded anytime
     await this.registerModule('modalManager', ModalManager);

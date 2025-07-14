@@ -42,7 +42,8 @@ class MeridianApp {
     this.credentialManager = CredentialManager.getInstance();
     this.dataManager = new DataManager();
     this.metadataExtractor = new MetadataExtractor();
-    this.arweaveManager = new ArweaveManager(this.dataManager);
+    this.unifiedDatabaseManager = new UnifiedDatabaseManager();
+    this.arweaveManager = new ArweaveManager(this.dataManager, this.unifiedDatabaseManager);
     this.atprotoManager = new ATProtoManager(this.dataManager);
     this.xManager = new XManager(this.dataManager);
     this.socialManager = new SocialManager();
@@ -52,7 +53,6 @@ class MeridianApp {
     this.deployManager = new DeployManager();
     this.configManager = ConfigManager.getInstance();
     this.githubManager = new GitHubManager();
-    this.unifiedDatabaseManager = new UnifiedDatabaseManager();
 
     // Initialize centralized account state manager
     this.accountStateManager = AccountStateManager.getInstance(
@@ -194,8 +194,8 @@ class MeridianApp {
 
 
 
-    // Unified IPC handlers
-    ipcMain.handle('unified:load-data', async () => {
+    // Resource IPC handlers (was Unified)
+    ipcMain.handle('resource:load-data', async () => {
       try {
         const resources = await this.unifiedDatabaseManager.getAllResources();
         const tags = await this.unifiedDatabaseManager.getTagCounts();
@@ -206,107 +206,127 @@ class MeridianApp {
           version: '2.0'
         };
       } catch (error) {
-        console.error('[Main] Failed to load unified data from database:', error);
+        console.error('[Main] Failed to load resource data from database:', error);
         // Fallback to JSON if database fails
         return await this.dataManager.loadUnifiedData();
       }
     });
 
-    ipcMain.handle('unified:save-data', async (_, data) => {
+    ipcMain.handle('resource:save-data', async (_, data) => {
       try {
         await this.unifiedDatabaseManager.importFromJSON(data);
         return { success: true };
       } catch (error) {
-        console.error('[Main] Failed to save unified data to database:', error);
+        console.error('[Main] Failed to save resource data to database:', error);
         // Fallback to JSON if database fails
         return await this.dataManager.saveUnifiedData(data);
       }
     });
 
-    ipcMain.handle('unified:add-resource', async (_, resource) => {
+    ipcMain.handle('resource:add-resource', async (_, resource) => {
       try {
         return await this.unifiedDatabaseManager.addResource(resource);
       } catch (error) {
-        console.error('[Main] Failed to add unified resource to database:', error);
+        console.error('[Main] Failed to add resource to database:', error);
         // Fallback to JSON if database fails
         return await this.dataManager.addUnifiedResource(resource);
       }
     });
 
-    ipcMain.handle('unified:update-resource', async (_, id, updates) => {
+    ipcMain.handle('resource:update-resource', async (_, id, updates) => {
       try {
         return await this.unifiedDatabaseManager.updateResource(id, updates);
       } catch (error) {
-        console.error('[Main] Failed to update unified resource in database:', error);
+        console.error('[Main] Failed to update resource in database:', error);
         // Fallback to JSON if database fails
         return await this.dataManager.updateUnifiedResource(id, updates);
       }
     });
 
-    ipcMain.handle('unified:remove-resource', async (_, id) => {
+    ipcMain.handle('resource:remove-resource', async (_, id) => {
       try {
         await this.unifiedDatabaseManager.removeResource(id);
         return { success: true };
       } catch (error) {
-        console.error('[Main] Failed to remove unified resource from database:', error);
+        console.error('[Main] Failed to remove resource from database:', error);
         // Fallback to JSON if database fails
         return await this.dataManager.removeUnifiedResource(id);
       }
     });
 
-    ipcMain.handle('unified:add-tag-to-resource', async (_, resourceId, tag) => {
+    ipcMain.handle('resource:add-tag-to-resource', async (_, resourceId, tag) => {
       try {
         return await this.unifiedDatabaseManager.addTagToResource(resourceId, tag);
       } catch (error) {
-        console.error('[Main] Failed to add tag to unified resource in database:', error);
+        console.error('[Main] Failed to add tag to resource in database:', error);
         // Fallback to JSON if database fails
         return await this.dataManager.addTagToUnifiedResource(resourceId, tag);
       }
     });
 
-    ipcMain.handle('unified:remove-tag-from-resource', async (_, resourceId, tag) => {
+    ipcMain.handle('resource:remove-tag-from-resource', async (_, resourceId, tag) => {
       try {
         return await this.unifiedDatabaseManager.removeTagFromResource(resourceId, tag);
       } catch (error) {
-        console.error('[Main] Failed to remove tag from unified resource in database:', error);
+        console.error('[Main] Failed to remove tag from resource in database:', error);
         // Fallback to JSON if database fails
         return await this.dataManager.removeTagFromUnifiedResource(resourceId, tag);
       }
     });
 
     // New unified database-specific handlers
-    ipcMain.handle('unified:export-to-json', async () => {
+    ipcMain.handle('resource:export-to-json', async () => {
       try {
         return await this.unifiedDatabaseManager.exportToJSON();
       } catch (error) {
-        console.error('[Main] Failed to export unified data to JSON:', error);
+        console.error('[Main] Failed to export resource data to JSON:', error);
         throw error;
       }
     });
 
-    ipcMain.handle('unified:export-to-database', async (_, exportData) => {
+    ipcMain.handle('resource:export-to-database', async (_, exportData) => {
       try {
         return await this.unifiedDatabaseManager.exportToDatabase(exportData);
       } catch (error) {
-        console.error('[Main] Failed to export unified database:', error);
+        console.error('[Main] Failed to export resource database:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     });
 
-    ipcMain.handle('unified:get-stats', async () => {
+    ipcMain.handle('resource:get-stats', async () => {
       try {
         return await this.unifiedDatabaseManager.getStats();
       } catch (error) {
-        console.error('[Main] Failed to get unified database stats:', error);
+        console.error('[Main] Failed to get resource database stats:', error);
         throw error;
       }
     });
 
-    ipcMain.handle('unified:search-resources', async (_, criteria) => {
+    ipcMain.handle('resource:search-resources', async (_, criteria) => {
       try {
         return await this.unifiedDatabaseManager.searchResources(criteria);
       } catch (error) {
-        console.error('[Main] Failed to search unified resources:', error);
+        console.error('[Main] Failed to search resources:', error);
+        throw error;
+      }
+    });
+
+    // Add Arweave upload to resource handler
+    ipcMain.handle('resource:add-arweave-upload-to-resource', async (_, resourceId, uploadRecord) => {
+      try {
+        return await this.unifiedDatabaseManager.addArweaveUploadToResource(resourceId, uploadRecord);
+      } catch (error) {
+        console.error('[Main] Failed to add Arweave upload to resource:', error);
+        return { success: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    });
+
+    // Add metadata extraction handler
+    ipcMain.handle('resource:extract-metadata', async (_, url) => {
+      try {
+        return await this.metadataExtractor.extractMetadata(url);
+      } catch (error) {
+        console.error('[Main] Failed to extract metadata:', error);
         throw error;
       }
     });

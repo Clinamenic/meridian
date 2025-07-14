@@ -63,9 +63,9 @@
       <main class="main-content">
         <!-- Tab Navigation -->
         <nav class="tab-navigation">
-          <button class="tab-btn active" data-tool="unified">
+          <button class="tab-btn active" data-tool="resource">
             <span class="tab-icon"></span>
-            <span class="tab-label">Unified</span>
+            <span class="tab-label">Resources</span>
           </button>
           <button class="tab-btn" data-tool="deploy">
             <span class="tab-icon"></span>
@@ -79,9 +79,9 @@
 
         <!-- Tool Panels -->
         <div class="tool-panels">
-          <!-- Unified Panel -->
-          <div id="unified-panel" class="tool-panel active">
-            <!-- Content will be rendered by UnifiedResourceManager -->
+          <!-- Resource Panel -->
+          <div id="resource-panel" class="tool-panel active">
+            <!-- Content will be rendered by ResourceManager -->
           </div>
 
           <!-- Deploy Panel -->
@@ -1262,6 +1262,19 @@
             <h4>Select Export Format:</h4>
 
             <div class="export-option">
+              <button class="export-option-btn" data-format="db">
+                <div class="export-option-header">
+                  <strong>SQLite Database</strong>
+                </div>
+                <div class="export-option-description">
+                  Complete SQLite database with all resource data, tags, and
+                  metadata. Best for backup or transferring to another
+                  workspace.
+                </div>
+              </button>
+            </div>
+
+            <div class="export-option">
               <button class="export-option-btn" data-format="json">
                 <div class="export-option-header">
                   <strong>JSON Export</strong>
@@ -1289,78 +1302,6 @@
               <button class="export-option-btn" data-format="bookmarks">
                 <div class="export-option-header">
                   <strong>Browser Bookmarks</strong>
-                </div>
-                <div class="export-option-description">
-                  HTML bookmarks file compatible with Chrome, Firefox, Safari,
-                  and Edge. Organized by tags.
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Unified Export Modal -->
-      <div id="unified-export-modal" class="modal">
-        <div class="modal-header">
-          <h3>Export Unified Resources</h3>
-          <button class="modal-close">&times;</button>
-        </div>
-        <div class="modal-content">
-          <div class="export-info">
-            <p id="unified-export-resource-count">
-              Ready to export unified resources
-            </p>
-            <p
-              id="unified-export-filter-info"
-              class="export-filter-description"
-            ></p>
-          </div>
-
-          <div class="export-options">
-            <h4>Select Export Format:</h4>
-
-            <div class="export-option">
-              <button class="export-option-btn" data-format="db">
-                <div class="export-option-header">
-                  <strong>SQLite Database</strong>
-                </div>
-                <div class="export-option-description">
-                  Complete SQLite database with all resource data, tags, and
-                  metadata. Best for backup or transferring to another
-                  workspace.
-                </div>
-              </button>
-            </div>
-
-            <div class="export-option">
-              <button class="export-option-btn" data-format="json">
-                <div class="export-option-header">
-                  <strong>JSON Export</strong>
-                </div>
-                <div class="export-option-description">
-                  Complete resource data with metadata, tags, and timestamps.
-                  Best for backup or re-importing.
-                </div>
-              </button>
-            </div>
-
-            <div class="export-option">
-              <button class="export-option-btn" data-format="txt">
-                <div class="export-option-header">
-                  <strong>Text URLs</strong>
-                </div>
-                <div class="export-option-description">
-                  Simple text file with one URL per line. Perfect for sharing or
-                  importing into other tools.
-                </div>
-              </button>
-            </div>
-
-            <div class="export-option">
-              <button class="export-option-btn" data-format="html">
-                <div class="export-option-header">
-                  <strong>HTML Bookmarks</strong>
                 </div>
                 <div class="export-option-description">
                   HTML bookmarks file compatible with Chrome, Firefox, Safari,
@@ -1571,172 +1512,6 @@
           <div id="quartz-init-content">
             <!-- Content will be dynamically populated based on initialization status -->
           </div>
-        </div>
-      </div>
-
-      <!-- Edit Resource Item Modal -->
-      <div id="edit-resource-item-modal" class="modal large-modal">
-        <div class="modal-header">
-          <h3>Resource Item Details</h3>
-          <button class="modal-close">&times;</button>
-        </div>
-        <div class="modal-content">
-          <form id="edit-resource-item-form">
-            <!-- File Information Section -->
-            <div class="form-section">
-              <h4>File Information</h4>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="edit-resource-uuid">UUID</label>
-                  <input
-                    type="text"
-                    id="edit-resource-uuid"
-                    readonly
-                    class="readonly-field"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="edit-resource-filepath">File Path</label>
-                  <input
-                    type="text"
-                    id="edit-resource-filepath"
-                    readonly
-                    class="readonly-field"
-                  />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="edit-resource-filesize">File Size</label>
-                  <input
-                    type="text"
-                    id="edit-resource-filesize"
-                    readonly
-                    class="readonly-field"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="edit-resource-mimetype-display">MIME Type</label>
-                  <input
-                    type="text"
-                    id="edit-resource-mimetype-display"
-                    readonly
-                    class="readonly-field"
-                  />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="edit-resource-created">Created</label>
-                  <input
-                    type="text"
-                    id="edit-resource-created"
-                    readonly
-                    class="readonly-field"
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="edit-resource-modified">Modified</label>
-                  <input
-                    type="text"
-                    id="edit-resource-modified"
-                    readonly
-                    class="readonly-field"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Editable Metadata Section -->
-            <div class="form-section">
-              <h4>Editable Metadata</h4>
-
-              <div class="form-group">
-                <label for="edit-resource-title">Title</label>
-                <input
-                  type="text"
-                  id="edit-resource-title"
-                  placeholder="Title"
-                  required
-                />
-              </div>
-
-              <div class="form-group">
-                <label for="edit-resource-author">Author</label>
-                <input
-                  type="text"
-                  id="edit-resource-author"
-                  placeholder="Author (optional)"
-                />
-              </div>
-
-              <div class="form-group virtual-only" style="display: none">
-                <label for="edit-resource-mimetype">MIME Type</label>
-                <input
-                  type="text"
-                  id="edit-resource-mimetype"
-                  placeholder="e.g., text/markdown, image/png"
-                />
-                <div class="field-help">
-                  MIME type can only be edited for virtual files
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label>Tags</label>
-                <div class="modal-resource-tags">
-                  <div class="modal-resource-tag-input">
-                    <div class="tag-input-container">
-                      <input
-                        type="text"
-                        id="edit-resource-tag-input"
-                        class="tag-input"
-                        placeholder="add tag..."
-                      />
-                      <button
-                        type="button"
-                        class="add-tag-btn"
-                        id="edit-resource-add-tag-btn"
-                        disabled
-                      >
-                        +
-                      </button>
-                    </div>
-                    <div
-                      class="tag-autocomplete modal-tag-autocomplete"
-                      id="edit-resource-tag-autocomplete"
-                      style="display: none"
-                    ></div>
-                  </div>
-                  <div class="modal-tags-list" id="edit-resource-tags-list">
-                    <!-- Tags rendered here -->
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Arweave Uploads Section -->
-            <div
-              class="form-section"
-              id="edit-resource-arweave-section"
-              style="display: none"
-            >
-              <h4>Arweave Uploads</h4>
-              <div id="edit-resource-arweave-list">
-                <!-- Arweave uploads will be rendered here -->
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <button type="button" class="secondary-btn modal-cancel">
-                Cancel
-              </button>
-              <button type="submit" class="primary-btn">Update Item</button>
-            </div>
-          </form>
         </div>
       </div>
 

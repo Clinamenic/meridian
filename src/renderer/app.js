@@ -8,7 +8,7 @@ console.log('[App] ===== APP.JS LOADED =====');
 // Main Application Logic
 class MeridianApp {
   constructor() {
-    this.currentTool = 'unified';
+    this.currentTool = 'resource';
     this.workspacePath = null;
     this.data = {
       archive: null,
@@ -55,9 +55,9 @@ class MeridianApp {
       const moduleNames = this.moduleLoader.getModuleNames();
       console.log('[App] Loaded modules:', moduleNames);
       
-      // Check if UnifiedResourceManager is loaded
-      const unifiedManager = this.moduleLoader.getModule('unifiedResourceManager');
-      console.log('[App] UnifiedResourceManager found:', unifiedManager);
+      // Check if ResourceManager is loaded
+      const resourceManager = this.moduleLoader.getModule('resourceManager');
+      console.log('[App] ResourceManager found:', resourceManager);
     } catch (error) {
       console.error('[App] ===== FAILED TO INITIALIZE MODULAR SYSTEM =====', error);
       // Continue with initialization even if modular system fails
@@ -148,7 +148,7 @@ class MeridianApp {
 
     // Tool-specific events
     this.setupArchiveEvents();
-    // Unified events are handled by UnifiedResourceManager
+    // Resource events are handled by ResourceManager
     this.setupGlobalSearchEvents();
 
     // Account management events are now handled by AccountManager
@@ -157,8 +157,8 @@ class MeridianApp {
 
   setupArchiveEvents() {
     // Legacy method - archive events have been removed
-    // Archive functionality has been merged into UnifiedResourceManager
-    console.log('[App] setupArchiveEvents called - archive functionality migrated to UnifiedResourceManager');
+    // Archive functionality has been merged into ResourceManager
+    console.log('[App] setupArchiveEvents called - archive functionality migrated to ResourceManager');
   }
 
 
@@ -289,8 +289,8 @@ class MeridianApp {
 
         // Ensure a tool is active
         if (!activeTab) {
-          console.log('[DEBUG] No active tool, activating Unified tool');
-          await this.switchTool('unified');
+                  console.log('[DEBUG] No active tool, activating Resource tool');
+        await this.switchTool('resource');
 
           // Verify activation worked
           const newActiveTab = document.querySelector('.tab-btn.active');
@@ -507,15 +507,15 @@ class MeridianApp {
           await this.loadArchiveData();
           console.log(`[DEBUG switchTool] Archive data loaded successfully`);
           break;
-        case 'unified':
-          console.log(`[DEBUG switchTool] Loading unified data...`);
-          const unifiedResourceManager = this.getModule('unifiedResourceManager');
-          if (unifiedResourceManager) {
-            await unifiedResourceManager.loadUnifiedResources();
+        case 'resource':
+          console.log(`[DEBUG switchTool] Loading resource data...`);
+          const resourceManager = this.getModule('resourceManager');
+          if (resourceManager) {
+            await resourceManager.loadResources();
           } else {
-            console.error('[App] UnifiedResourceManager not available');
+            console.error('[App] ResourceManager not available');
           }
-          console.log(`[DEBUG switchTool] Unified data loaded successfully`);
+          console.log(`[DEBUG switchTool] Resource data loaded successfully`);
           break;
         case 'deploy':
           console.log(`[DEBUG switchTool] Loading deploy data...`);
@@ -551,7 +551,7 @@ class MeridianApp {
     try {
       // Load all tool data regardless of which tab is active
       await this.loadArchiveData();
-      await this.loadUnifiedData();
+              await this.loadResourceData();
       
       // Load deploy and broadcast data if managers are available
       const deployManager = this.getDeployManager();
@@ -573,15 +573,15 @@ class MeridianApp {
   async loadToolData() {
     // Check current active tool and load its data
     const activeTab = document.querySelector('.tab-btn.active');
-    const toolName = activeTab ? activeTab.dataset.tool : 'unified';
+            const toolName = activeTab ? activeTab.dataset.tool : 'resource';
 
     switch (toolName) {
       case 'archive':
         await this.loadArchiveData();
         break;
-      case 'unified':
-        await this.loadUnifiedData();
-        break;
+              case 'resource':
+          await this.loadResourceData();
+          break;
       case 'deploy':
         const deployManager = this.getDeployManager();
         if (deployManager) {
@@ -610,8 +610,8 @@ class MeridianApp {
     }
   }
 
-  // Legacy method - collate data loading handled by UnifiedResourceManager
-  // loadCollateData() - REMOVED: Functionality migrated to UnifiedResourceManager
+      // Legacy method - collate data loading handled by ResourceManager
+    // loadCollateData() - REMOVED: Functionality migrated to ResourceManager
 
   // ===== UNIFIED TAG AUTOCOMPLETE SETUP =====
 
@@ -622,8 +622,8 @@ class MeridianApp {
     return this.moduleLoader.getModule('tagManager');
   }
 
-  getUnifiedResourceManager() {
-    return this.moduleLoader.getModule('unifiedResourceManager');
+  getResourceManager() {
+    return this.moduleLoader.getModule('resourceManager');
   }
 
   getModalManager() {
@@ -799,8 +799,8 @@ class MeridianApp {
   }
 
   isUrlDuplicate(url) {
-    // Check for duplicates using UnifiedResourceManager
-    const unifiedManager = this.getUnifiedResourceManager();
+    // Check for duplicates using ResourceManager
+    const unifiedManager = this.getResourceManager();
     if (!unifiedManager) {
       return false;
     }
@@ -890,12 +890,12 @@ class MeridianApp {
           tags: [...bulkTags], // Apply bulk tags
         };
 
-        // Add the resource using UnifiedResourceManager
-        const unifiedManager = this.getUnifiedResourceManager();
+        // Add the resource using ResourceManager
+        const unifiedManager = this.getResourceManager();
         if (unifiedManager) {
           await unifiedManager.addResource(resourceData);
         } else {
-          throw new Error('UnifiedResourceManager not available');
+          throw new Error('ResourceManager not available');
         }
 
         successful++;
@@ -922,8 +922,8 @@ class MeridianApp {
     // Show results
     setTimeout(() => {
       this.showBulkResults(results, successful, failed);
-      // Refresh the unified view
-      const unifiedManager = this.getUnifiedResourceManager();
+      // Refresh the resource view
+      const unifiedManager = this.getResourceManager();
       if (unifiedManager) {
         unifiedManager.refreshData();
       }
@@ -1030,68 +1030,68 @@ class MeridianApp {
 
   // Export functionality
   setupExportEvents() {
-    // Legacy method - export functionality now handled by UnifiedResourceManager
-    // All export-related functionality has been migrated to the unified system
-    console.log('[App] setupExportEvents called - functionality migrated to UnifiedResourceManager');
+          // Legacy method - export functionality now handled by ResourceManager
+      // All export-related functionality has been migrated to the resource system
+      console.log('[App] setupExportEvents called - functionality migrated to ResourceManager');
   }
 
-  // Legacy method - export functionality now handled by UnifiedResourceManager
+  // Legacy method - export functionality now handled by ResourceManager
   openExportModal() {
-    console.log('[App] openExportModal called - functionality migrated to UnifiedResourceManager');
+    console.log('[App] openExportModal called - functionality migrated to ResourceManager');
   }
 
-  // Legacy method - export functionality now handled by UnifiedResourceManager
+  // Legacy method - export functionality now handled by ResourceManager
   updateExportModalContent(filteredResources) {
-    console.log('[App] updateExportModalContent called - functionality migrated to UnifiedResourceManager');
+    console.log('[App] updateExportModalContent called - functionality migrated to ResourceManager');
   }
 
-  // Legacy method - export functionality now handled by UnifiedResourceManager
+  // Legacy method - export functionality now handled by ResourceManager
   getFilteredResources() {
-    console.log('[App] getFilteredResources called - functionality migrated to UnifiedResourceManager');
+    console.log('[App] getFilteredResources called - functionality migrated to ResourceManager');
     return [];
   }
 
-  // Legacy method - export functionality now handled by UnifiedResourceManager
+  // Legacy method - export functionality now handled by ResourceManager
   async handleExport(format) {
-    console.log('[App] handleExport called - functionality migrated to UnifiedResourceManager');
+    console.log('[App] handleExport called - functionality migrated to ResourceManager');
   }
 
-  // Legacy method - export functionality now handled by UnifiedResourceManager
+  // Legacy method - export functionality now handled by ResourceManager
   generateExportData(resources, format) {
-    console.log('[App] generateExportData called - functionality migrated to UnifiedResourceManager');
+    console.log('[App] generateExportData called - functionality migrated to ResourceManager');
     return {};
   }
 
-  // Legacy method - export functionality now handled by UnifiedResourceManager
+  // Legacy method - export functionality now handled by ResourceManager
   generateExportFilename(format) {
-    console.log('[App] generateExportFilename called - functionality migrated to UnifiedResourceManager');
+    console.log('[App] generateExportFilename called - functionality migrated to ResourceManager');
     return 'export.json';
   }
 
   // Archive Tool
-  // Legacy method - archive data loading handled by UnifiedResourceManager
+  // Legacy method - archive data loading handled by ResourceManager
   async loadArchiveData() {
-    console.log('[App] loadArchiveData called - functionality migrated to UnifiedResourceManager');
+    console.log('[App] loadArchiveData called - functionality migrated to ResourceManager');
   }
 
-  // Unified Tool
-  async loadUnifiedData() {
-    console.log('[App] Loading unified data...');
+  // Resource Tool
+  async loadResourceData() {
+    console.log('[App] Loading resource data...');
 
     try {
-      // Use UnifiedResourceManager for loading unified data
-      const unifiedResourceManager = this.getModule('unifiedResourceManager');
-      if (unifiedResourceManager) {
-        await unifiedResourceManager.loadUnifiedResources();
+      // Use ResourceManager for loading resource data
+      const resourceManager = this.getModule('resourceManager');
+      if (resourceManager) {
+        await resourceManager.loadResources();
       } else {
-        console.error('[App] UnifiedResourceManager not available');
-        this.showError('Unified functionality not available');
+        console.error('[App] ResourceManager not available');
+        this.showError('Resource functionality not available');
       }
 
-      console.log('[App] Unified data loading complete');
+      console.log('[App] Resource data loading complete');
     } catch (error) {
-      console.error('[App] Failed to load unified data:', error);
-      this.showError('Failed to load unified data');
+      console.error('[App] Failed to load resource data:', error);
+      this.showError('Failed to load resource data');
     }
   }
 
@@ -1747,9 +1747,9 @@ class MeridianApp {
     const results = [];
     const lowerQuery = query.toLowerCase();
 
-    // Search Unified resources
-    // Search Unified resources (if available)
-    const unifiedManager = this.getUnifiedResourceManager();
+    // Search Resource resources
+    // Search Resource resources (if available)
+    const unifiedManager = this.getResourceManager();
     if (unifiedManager) {
       const resources = unifiedManager.getAllResources();
       resources.forEach(resource => {
@@ -1839,8 +1839,8 @@ class MeridianApp {
 
     // Switch to the appropriate tool and highlight the result
     switch (result.source.toLowerCase()) {
-      case 'unified':
-        await this.switchTool('unified');
+              case 'resource':
+          await this.switchTool('resource');
         // Optionally highlight the specific resource
         break;
       case 'archive':

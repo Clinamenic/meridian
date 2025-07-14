@@ -5,9 +5,10 @@ import * as path from 'path';
 import { tmpdir } from 'os';
 import { randomUUID } from 'crypto';
 import { createHash } from 'crypto';
-import { ArweaveUpload, UploadStatus, ArweaveAccount, FileRegistryEntry, ArweaveUploadRecord } from '../types';
+import { ArweaveUpload, UploadStatus, ArweaveAccount, FileRegistryEntry, ArweaveUploadRecord, UnifiedResource } from '../types';
 import { CredentialManager } from './credential-manager';
 import { DataManager } from './data-manager';
+import { UnifiedDatabaseManager } from './unified-database-manager';
 
 const execAsync = promisify(exec);
 
@@ -34,13 +35,15 @@ export class ArweaveManager {
   private arkbPath: string;
   private credentialManager: CredentialManager;
   private dataManager: DataManager;  
+  private unifiedDatabaseManager: UnifiedDatabaseManager;
   private tempWalletPath?: string;
 
-  constructor(dataManager: DataManager) {
+  constructor(dataManager: DataManager, unifiedDatabaseManager: UnifiedDatabaseManager) {
     // arkb should be available in node_modules
     this.arkbPath = 'arkb';
     this.credentialManager = CredentialManager.getInstance();
     this.dataManager = dataManager;
+    this.unifiedDatabaseManager = unifiedDatabaseManager;
   }
 
   /**
@@ -1089,18 +1092,89 @@ export class ArweaveManager {
   }
 
   /**
-   * Record Arweave upload in file registry
+   * Find or create resource in unified database by file path
+   */
+  private async findOrCreateResourceByPath(filePath: string, uuid: string): Promise<string> {
+    try {
+      // First try to find existing resource by file path
+      const existingResources = await this.unifiedDatabaseManager.getAllResources();
+      
+      // Search for a resource with matching file path in location
+      for (const resource of existingResources) {
+        if (resource.locations.primary.value === filePath) {
+          console.log(`Found existing resource by path: ${resource.id}`);
+          return resource.id;
+        }
+      }
+      
+      // If not found, create a new resource
+      const title = await this.extractTitle(filePath);
+      const author = await this.extractAuthor(filePath);
+      const mimeType = this.getMimeType(filePath);
+      
+      const stats = await fs.promises.stat(filePath);
+      const content = await fs.promises.readFile(filePath);
+      const contentHash = createHash('sha256').update(content).digest('hex');
+      
+      const now = new Date().toISOString();
+      
+      const newResource: Omit<UnifiedResource, 'id'> = {
+        uri: `file://${filePath}`,
+        contentHash: `sha256:${contentHash}`,
+        properties: {
+          'dc:title': title,
+          'dc:type': 'file',
+          'meridian:description': `File uploaded to Arweave`,
+          'meridian:tags': [],
+          'meridian:arweave_hashes': []
+        },
+        locations: {
+          primary: {
+            type: 'file-path',
+            value: filePath,
+            accessible: true,
+            lastVerified: now
+          },
+          alternatives: []
+        },
+        provenance: [],
+        state: {
+          type: 'internal',
+          accessible: true,
+          lastVerified: now,
+          verificationStatus: 'verified'
+        },
+        timestamps: {
+          created: now,
+          modified: now,
+          lastAccessed: now
+        }
+      };
+      
+      const createdResource = await this.unifiedDatabaseManager.addResource(newResource);
+      console.log(`Created new resource for upload: ${createdResource.id}`);
+      return createdResource.id;
+    } catch (error) {
+      console.error('Failed to find or create resource:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Record Arweave upload in unified database
    */
   private async recordArweaveUpload(filePath: string, uuid: string, transactionId: string, tags: string[]): Promise<void> {
     try {
-      // Ensure file is in registry
-      let registryEntry = await this.dataManager.getFileByUUID(uuid);
-      if (!registryEntry) {
-        registryEntry = await this.createRegistryEntry(filePath, uuid);
-        await this.dataManager.addOrUpdateFile(registryEntry);
+      // Find or create resource in unified database
+      const resourceId = await this.findOrCreateResourceByPath(filePath, uuid);
+      
+      // Get the current resource to update its arweave_hashes
+      const resource = await this.unifiedDatabaseManager.getResourceById(resourceId);
+      if (!resource) {
+        throw new Error(`Resource not found: ${resourceId}`);
       }
       
-      // Create Arweave upload record
+      // Create new Arweave upload record
       const arweaveUpload: ArweaveUploadRecord = {
         hash: transactionId,
         timestamp: new Date().toISOString(),
@@ -1108,12 +1182,35 @@ export class ArweaveManager {
         tags: tags
       };
       
-      // Add upload to registry
-      await this.dataManager.addArweaveUpload(uuid, arweaveUpload);
+      // Get existing arweave_hashes and add the new one
+      const existingHashes = resource.properties['meridian:arweave_hashes'] || [];
+      const updatedHashes = [...existingHashes, arweaveUpload];
       
-      console.log(`Arweave upload recorded in file registry: ${uuid} -> ${transactionId}`);
+      // Update the resource with the new arweave_hashes
+      const updates: Partial<UnifiedResource> = {
+        properties: {
+          ...resource.properties,
+          'meridian:arweave_hashes': updatedHashes
+        }
+      };
+      
+      await this.unifiedDatabaseManager.updateResource(resourceId, updates);
+      
+      console.log(`Arweave upload recorded in unified database: ${resourceId} -> ${transactionId}`);
+      
+      // Also record in old registry for backward compatibility
+      try {
+        let registryEntry = await this.dataManager.getFileByUUID(uuid);
+        if (!registryEntry) {
+          registryEntry = await this.createRegistryEntry(filePath, uuid);
+          await this.dataManager.addOrUpdateFile(registryEntry);
+        }
+        await this.dataManager.addArweaveUpload(uuid, arweaveUpload);
+      } catch (legacyError) {
+        console.warn('Failed to record in legacy registry (non-critical):', legacyError);
+      }
     } catch (error) {
-      console.error('Failed to record Arweave upload in registry:', error);
+      console.error('Failed to record Arweave upload in unified database:', error);
       // Don't throw - this is not critical for the upload itself
     }
   }

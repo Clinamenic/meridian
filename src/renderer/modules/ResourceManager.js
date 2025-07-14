@@ -2,11 +2,11 @@ import { ModuleBase } from './ModuleBase.js';
 import { TagAutocomplete } from '../components/TagAutocomplete.js';
 
 /**
- * UnifiedResourceManager - manages both internal (local) and external (web) resources
- * Foundation for unified resource management in Meridian
+ * ResourceManager - manages both internal (local) and external (web) resources
+ * Foundation for resource management in Meridian
  * Follows Meridian modular architecture pattern with ModuleBase inheritance
  */
-export class UnifiedResourceManager extends ModuleBase {
+export class ResourceManager extends ModuleBase {
   constructor(app) {
     super(app);
     
@@ -36,40 +36,40 @@ export class UnifiedResourceManager extends ModuleBase {
     this.tagAutocompletes = [];
     
     // Legacy state properties (to be removed after migration)
-    this.unifiedResources = this.state.resources; // Alias for backward compatibility
+    this.resources = this.state.resources; // Alias for backward compatibility
     this.activeTagFilters = this.state.filters.activeTags; // Alias for backward compatibility
     this.currentSearchTerm = this.state.filters.searchTerm; // Alias for backward compatibility
     this.filterLogic = this.state.filters.filterLogic; // Alias for backward compatibility
-    this.unifiedCollapseState = this.state.collapse; // Alias for backward compatibility
+    this.collapseState = this.state.collapse; // Alias for backward compatibility
   }
 
   async onInit() {
-    console.log('[UnifiedResourceManager] ===== INITIALIZING UNIFIED RESOURCE MANAGER =====');
+    console.log('[ResourceManager] ===== INITIALIZING RESOURCE MANAGER =====');
     
     // Emit initialization event for module coordination
-    this.emit('unifiedResourceManagerInitializing');
+    this.emit('resourceManagerInitializing');
     
     // Load filter state first (before rendering panel)
-    console.log('[UnifiedResourceManager] Loading filter state...');
+    console.log('[ResourceManager] Loading filter state...');
     this.loadFilterState();
     
     // Don't load resources yet - wait for workspace to be selected
-    console.log('[UnifiedResourceManager] Setting up panel and event listeners...');
-    this.renderUnifiedPanel();
-    console.log('[UnifiedResourceManager] Panel rendered and event listeners set up, initializing collapse state...');
+    console.log('[ResourceManager] Setting up panel and event listeners...');
+    this.renderResourcePanel();
+    console.log('[ResourceManager] Panel rendered and event listeners set up, initializing collapse state...');
     this.initializeCollapseState();
     
     // Emit initialization complete event
-    this.emit('unifiedResourceManagerInitialized', { 
-      moduleName: 'UnifiedResourceManager',
+    this.emit('resourceManagerInitialized', { 
+      moduleName: 'ResourceManager',
       state: this.state 
     });
     
-    console.log('[UnifiedResourceManager] ===== UNIFIED RESOURCE MANAGER INITIALIZED SUCCESSFULLY =====');
+    console.log('[ResourceManager] ===== RESOURCE MANAGER INITIALIZED SUCCESSFULLY =====');
   }
 
   async onCleanup() {
-    console.log('[UnifiedResourceManager] Cleaning up...');
+    console.log('[ResourceManager] Cleaning up...');
     
     // Clean up tag autocomplete instances
     this.cleanupTagAutocompletes();
@@ -78,9 +78,9 @@ export class UnifiedResourceManager extends ModuleBase {
     this.saveCollapseState();
     
     // Emit cleanup event
-    this.emit('unifiedResourceManagerCleanedUp');
+    this.emit('resourceManagerCleanedUp');
     
-    console.log('[UnifiedResourceManager] Cleaned up successfully');
+    console.log('[ResourceManager] Cleaned up successfully');
   }
 
   /**
@@ -118,7 +118,7 @@ export class UnifiedResourceManager extends ModuleBase {
     
     // Emit state change event if requested
     if (emitEvent) {
-      this.emit('unifiedResourceStateChanged', {
+      this.emit('resourceStateChanged', {
         oldState,
         newState: this.state,
         updates
@@ -149,18 +149,18 @@ export class UnifiedResourceManager extends ModuleBase {
    * Update legacy aliases for backward compatibility
    */
   updateLegacyAliases() {
-    this.unifiedResources = this.state.resources;
+    this.resources = this.state.resources;
     this.activeTagFilters = this.state.filters.activeTags;
     this.currentSearchTerm = this.state.filters.searchTerm;
     this.filterLogic = this.state.filters.filterLogic;
-    this.unifiedCollapseState = this.state.collapse;
+    this.collapseState = this.state.collapse;
   }
 
   /**
-   * Render the unified resource panel
+   * Render the resource panel
    */
-  renderUnifiedPanel() {
-    const container = document.getElementById('unified-panel');
+  renderResourcePanel() {
+    const container = document.getElementById('resource-panel');
     if (!container) return;
 
     // Create panel header following existing patterns
@@ -169,19 +169,19 @@ export class UnifiedResourceManager extends ModuleBase {
         <div class="panel-header-left">
           <div class="panel-actions">
             <button
-              id="add-unified-resource-btn"
+              id="add-resource-btn"
               class="panel-header-icon-btn"
-              title="Add Unified Resource"
+              title="Add Resource"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
               </svg>
             </button>
             <button
-              id="unified-collapse-all-btn"
+              id="resource-collapse-all-btn"
               class="panel-header-icon-btn"
-              title="${this.unifiedCollapseState.globalState === 'expanded' ? 'Collapse All Resources' : 'Expand All Resources'}"
-              data-state="${this.unifiedCollapseState.globalState}"
+              title="${this.collapseState.globalState === 'expanded' ? 'Collapse All Resources' : 'Expand All Resources'}"
+              data-state="${this.collapseState.globalState}"
             >
               <svg class="collapse-icon collapse-down" width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M4 2L8 6L12 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -193,7 +193,7 @@ export class UnifiedResourceManager extends ModuleBase {
               </svg>
             </button>
             <button
-              id="unified-export-btn"
+              id="resource-export-btn"
               class="panel-header-icon-btn"
               title="Export Resources"
             >
@@ -210,19 +210,19 @@ export class UnifiedResourceManager extends ModuleBase {
             </button>
           </div>
           <div class="resource-count">
-            <span id="unified-count-text">${this.getFilteredResources().length} Resources Listed</span>
+            <span id="resource-count-text">${this.getFilteredResources().length} Resources Listed</span>
           </div>
         </div>
         <div class="panel-header-right">
           <input
             type="text"
-            id="unified-search"
+            id="resource-search"
             class="search-input"
             placeholder="Search"
             value="${this.currentSearchTerm}"
           />
           <button
-            id="unified-filter-logic-btn"
+            id="resource-filter-logic-btn"
             class="panel-header-icon-btn"
             data-logic="${this.filterLogic}"
             title="Toggle Filter Logic: ${this.filterLogic === 'any' ? 'ANY' : 'ALL'} of these tags"
@@ -233,7 +233,7 @@ export class UnifiedResourceManager extends ModuleBase {
             </svg>
           </button>
           <button
-            id="unified-clear-filters-btn"
+            id="resource-clear-filters-btn"
             class="panel-header-icon-btn"
             title="Clear All Filters"
           >
@@ -247,12 +247,12 @@ export class UnifiedResourceManager extends ModuleBase {
 
       <div class="panel-content">
         <div class="main-content-area">
-          <div class="unified-resource-list" id="unified-resource-list">
-            ${this.renderUnifiedResourceList()}
+          <div class="resource-list" id="resource-list">
+            ${this.renderResourceList()}
           </div>
         </div>
         <div class="filters-sidebar">
-          <div class="tag-filter-list" id="unified-tag-filter-list">
+          <div class="tag-filter-list" id="resource-tag-filter-list">
             ${this.renderTagFilters()}
           </div>
         </div>
@@ -262,27 +262,27 @@ export class UnifiedResourceManager extends ModuleBase {
     container.innerHTML = html;
     
     // Restore search input value from state
-    const searchInput = container.querySelector('#unified-search');
+    const searchInput = container.querySelector('#resource-search');
     if (searchInput) {
       searchInput.value = this.state.filters.searchTerm;
     }
     
     // Restore filter logic button state
-    const filterLogicBtn = container.querySelector('#unified-filter-logic-btn');
+    const filterLogicBtn = container.querySelector('#resource-filter-logic-btn');
     if (filterLogicBtn) {
       filterLogicBtn.setAttribute('data-logic', this.state.filters.filterLogic);
       filterLogicBtn.setAttribute('title', `Toggle Filter Logic: ${this.state.filters.filterLogic === 'any' ? 'ANY' : 'ALL'} of these tags`);
     }
     
     // Always set up event listeners after rendering
-    this.setupUnifiedEventListeners();
     this.setupResourceEventListeners();
+    this.setupResourceItemEventListeners();
   }
 
   /**
-   * Render the unified resource list
+   * Render the resource list
    */
-  renderUnifiedResourceList() {
+  renderResourceList() {
     // Get filtered resources based on current search and tag filters
     const filteredResources = this.getFilteredResources();
     
@@ -308,49 +308,75 @@ export class UnifiedResourceManager extends ModuleBase {
                 <span class="file-status-indicator ${this.getResourceStatusIndicator(resource)}"></span>
                 ${this.escapeHtml(resource.locations.primary.value)}
               </div>
-              ${!isCollapsed && resource.properties["meridian:description"] ? `
-                <p class="resource-description">${this.escapeHtml(resource.properties["meridian:description"])}</p>
-              ` : ''}
-              
-              ${!isCollapsed ? `
-                <div class="resource-metadata">
-                  <span class="resource-metadata-item">
-                    <span class="resource-metadata-label">Type:</span>
-                    <span class="resource-metadata-value">${this.escapeHtml(resource.state.type)}</span>
-                  </span>
-                  <span class="resource-metadata-item">
-                    <span class="resource-metadata-label">Created:</span>
-                    <span class="resource-metadata-value">${this.formatDate(resource.timestamps.created)}</span>
-                  </span>
-                  ${arweaveHashes.length > 0 ? `
-                    <span class="resource-metadata-item">
-                      <span class="resource-metadata-label">Arweave Uploads:</span>
-                      <span class="resource-metadata-value">${arweaveHashes.length}</span>
-                    </span>
-                  ` : ''}
-                </div>
-              ` : ''}
             </div>
             <div class="resource-actions">
+              <button class="resource-action-btn edit-btn" data-resource-id="${resource.id}" title="Edit Resource">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button class="resource-action-btn remove-btn" data-resource-id="${resource.id}" title="Remove Resource">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
               <button class="resource-collapse-btn" data-resource-id="${resource.id}" title="Toggle details">
                 <svg width="12" height="12" viewBox="0 0 12 12">
                   <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
-              <div class="resource-actions-dropdown">
-                <button class="resource-actions-btn" data-resource-id="${resource.id}" title="Resource options">⋮</button>
-                <div class="resource-actions-menu" data-resource-id="${resource.id}">
-                  <button class="resource-actions-item edit-option" data-resource-id="${resource.id}">Edit</button>
-                  <button class="resource-actions-item remove-option" data-resource-id="${resource.id}">Remove</button>
-                </div>
-              </div>
             </div>
           </div>
           
-          ${!isCollapsed && arweaveHashes.length > 0 ? `
+          <div class="resource-body">
+            ${resource.properties["meridian:description"] ? `
+              <div class="resource-description">
+                ${this.escapeHtml(resource.properties["meridian:description"])}
+              </div>
+            ` : ''}
+            
+            <div class="resource-metadata">
+              <span class="resource-metadata-item">
+                <span class="resource-metadata-label">Type:</span>
+                <span class="resource-metadata-value">${this.escapeHtml(resource.state.type)}</span>
+              </span>
+              <span class="resource-metadata-item">
+                <span class="resource-metadata-label">Indexed:</span>
+                <span class="resource-metadata-value">${this.formatDate(resource.timestamps.created)}</span>
+              </span>
+            </div>
+          </div>
+          
+          <div class="resource-tags">
+            <div class="resource-tag-input">
+              <div class="tag-input-container">
+                <input type="text" class="tag-input" placeholder="add tag..." data-resource-id="${resource.id}">
+                <button class="add-tag-btn" data-resource-id="${resource.id}" disabled="">+</button>
+              </div>
+              <div class="tag-autocomplete" id="autocomplete-${resource.id}" style="display: none;"></div>
+            </div>
+            
+            ${resource.properties["meridian:tags"] && resource.properties["meridian:tags"].length > 0 ? 
+              resource.properties["meridian:tags"].map(tag => `
+                <span class="resource-tag">
+                  ${this.escapeHtml(tag)}
+                  <button class="remove-tag-btn" data-resource-id="${resource.id}" data-tag="${this.escapeHtml(tag)}" title="Remove tag">×</button>
+                </span>
+              `).join('') : ''
+            }
+          </div>
+          
+          ${arweaveHashes.length > 0 ? `
             <div class="resource-arweave-hashes">
               <div class="resource-hash-header" data-resource-id="${resource.id}">
                 <span class="resource-hash-count">${arweaveHashes.length} Arweave Upload${arweaveHashes.length > 1 ? 's' : ''}</span>
+                <button class="add-upload-btn" data-resource-id="${resource.id}" title="Upload file for this resource">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M6 2V10M2 6H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
                 <button class="resource-hash-toggle" data-resource-id="${resource.id}" title="Toggle upload history">
                   <svg class="resource-hash-toggle-icon" width="12" height="12" viewBox="0 0 12 12">
                     <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
@@ -365,13 +391,16 @@ export class UnifiedResourceManager extends ModuleBase {
                         ${this.truncateHash(hash.hash)}
                       </a>
                       <span class="resource-hash-timestamp">${this.formatDate(hash.timestamp)}</span>
-                      ${hash.tags && hash.tags.length > 0 ? `
+                      ${(() => {
+                        const filteredTags = hash.tags ? hash.tags.filter(tag => !tag.startsWith('uuid:') && !tag.startsWith('timestamp:')) : [];
+                        return filteredTags.length > 0 ? `
                         <div class="resource-hash-tags">
-                          ${hash.tags.map(tag => `
+                          ${filteredTags.map(tag => `
                             <span class="resource-hash-tag" title="${this.escapeHtml(tag)}">${this.escapeHtml(tag)}</span>
                           `).join('')}
                         </div>
-                      ` : ''}
+                      ` : '';
+                      })()}
                     </div>
                     <div class="resource-hash-actions">
                       <button class="resource-hash-action-btn copy-hash-btn" data-hash="${hash.hash}" title="Copy Hash">
@@ -391,28 +420,18 @@ export class UnifiedResourceManager extends ModuleBase {
                 `).join('')}
               </div>
             </div>
-          ` : ''}
-          
-          ${!isCollapsed ? `
-            <div class="resource-tags">
-              <div class="resource-tag-input">
-                <div class="tag-input-container">
-                  <input type="text" class="tag-input" placeholder="add tag..." data-resource-id="${resource.id}">
-                  <button class="add-tag-btn" data-resource-id="${resource.id}" disabled="">+</button>
-                </div>
-                <div class="tag-autocomplete" id="autocomplete-${resource.id}" style="display: none;"></div>
+          ` : `
+            <div class="resource-arweave-hashes">
+              <div class="resource-hash-header" data-resource-id="${resource.id}">
+                <span class="resource-hash-count">No Arweave uploads yet</span>
+                <button class="add-upload-btn" data-resource-id="${resource.id}" title="Upload file for this resource">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M6 2V10M2 6H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
               </div>
-              
-              ${resource.properties["meridian:tags"] && resource.properties["meridian:tags"].length > 0 ? 
-                resource.properties["meridian:tags"].map(tag => `
-                  <span class="resource-tag">
-                    ${this.escapeHtml(tag)}
-                    <button class="remove-tag-btn" data-resource-id="${resource.id}" data-tag="${this.escapeHtml(tag)}" title="Remove tag">×</button>
-                  </span>
-                `).join('') : ''
-              }
             </div>
-          ` : ''}
+          `}
         </div>
       `;
     }).join('');
@@ -482,6 +501,11 @@ export class UnifiedResourceManager extends ModuleBase {
             <span class="tag-filter-label">${this.escapeHtml(tag)}</span>
             <span class="tag-filter-count">${this.getTagCount(tag)}</span>
           </button>
+          <button class="tag-dropdown-btn" title="Tag options">⋮</button>
+          <div class="tag-dropdown-menu" data-tag="${this.escapeHtml(tag)}">
+            <button class="tag-dropdown-item edit-tag-option" data-tag="${this.escapeHtml(tag)}">Edit</button>
+            <button class="tag-dropdown-item delete-tag-option" data-tag="${this.escapeHtml(tag)}">Remove</button>
+          </div>
         </div>
       `;
     }).join('');
@@ -525,40 +549,57 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Setup event listeners for resource items (collapsed from setupUnifiedEventListeners)
+   * Setup event listeners for resource items (collapsed from setupResourceEventListeners)
    */
-  setupResourceEventListeners() {
-    // Resource collapse buttons
-    document.querySelectorAll('.resource-collapse-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const resourceId = btn.dataset.resourceId;
-        this.toggleResourceCollapse(resourceId);
-      });
+  setupResourceItemEventListeners() {
+    // Remove any existing listeners first (prevent duplicate listeners)
+    const existingButtons = document.querySelectorAll('.resource-collapse-btn');
+    existingButtons.forEach(btn => {
+      // Clone the button to remove all event listeners
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
     });
 
-    // Resource actions dropdown
-    document.querySelectorAll('.resource-actions-btn').forEach(btn => {
+    // Resource collapse buttons
+    document.querySelectorAll('.resource-collapse-btn').forEach(btn => {
+      // Ensure the button has the required data attribute
+      const resourceId = btn.dataset.resourceId;
+      if (!resourceId) {
+        console.warn('[ResourceManager] Collapse button missing resourceId:', btn);
+        return;
+      }
+      
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const resourceId = btn.dataset.resourceId;
-        const menu = document.querySelector(`.resource-actions-menu[data-resource-id="${resourceId}"]`);
-        if (menu) {
-          menu.classList.toggle('show');
+        e.preventDefault();
+        
+        // Double-check the resource ID at click time
+        const currentResourceId = btn.dataset.resourceId;
+        if (currentResourceId) {
+          this.toggleResourceCollapse(currentResourceId);
+        } else {
+          console.warn('[ResourceManager] Missing resourceId on collapse button click');
         }
       });
     });
 
-    // Resource action items
-    document.querySelectorAll('.resource-actions-item').forEach(item => {
-      item.addEventListener('click', (e) => {
+    // Resource action buttons
+    document.querySelectorAll('.resource-action-btn.edit-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const resourceId = item.dataset.resourceId;
-        
-        if (item.classList.contains('edit-option')) {
-          this.editUnifiedResource(resourceId);
-        } else if (item.classList.contains('remove-option')) {
-          this.removeUnifiedResource(resourceId);
+        const resourceId = btn.dataset.resourceId;
+        if (resourceId) {
+          this.editResource(resourceId);
+        }
+      });
+    });
+
+    document.querySelectorAll('.resource-action-btn.remove-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const resourceId = btn.dataset.resourceId;
+        if (resourceId) {
+          this.removeResource(resourceId);
         }
       });
     });
@@ -569,6 +610,17 @@ export class UnifiedResourceManager extends ModuleBase {
         e.stopPropagation();
         const resourceId = btn.dataset.resourceId;
         this.toggleArweaveHashList(resourceId);
+      });
+    });
+
+    // Add upload buttons ('+' buttons in resource hash headers)
+    document.querySelectorAll('.add-upload-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const resourceId = btn.dataset.resourceId;
+        if (resourceId) {
+          this.openUploadModalForResource(resourceId);
+        }
       });
     });
 
@@ -590,27 +642,27 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Setup event listeners for unified panel
+   * Setup event listeners for resource panel
    */
-  setupUnifiedEventListeners() {
-    const unifiedPanel = document.getElementById('unified-panel');
-    if (!unifiedPanel) {
-      console.warn('[UnifiedResourceManager] Unified panel not found');
+  setupResourceEventListeners() {
+    const resourcePanel = document.getElementById('resource-panel');
+    if (!resourcePanel) {
+      console.warn('[ResourceManager] Resource panel not found');
       return;
     }
 
-    console.log('[UnifiedResourceManager] Setting up unified event listeners');
+    console.log('[ResourceManager] Setting up resource event listeners');
 
     // Add resource button
-    const addBtn = unifiedPanel.querySelector('#add-unified-resource-btn');
+    const addBtn = resourcePanel.querySelector('#add-resource-btn');
     if (addBtn) {
       addBtn.addEventListener('click', async () => {
-        await this.openAddUnifiedResourceModal();
+        await this.openAddResourceModal();
       });
     }
 
     // Search functionality (Meridian-compliant)
-    const searchInput = unifiedPanel.querySelector('#unified-search');
+    const searchInput = resourcePanel.querySelector('#resource-search');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         // Update state
@@ -635,7 +687,7 @@ export class UnifiedResourceManager extends ModuleBase {
     }
 
     // Filter logic toggle (Meridian-compliant)
-    const filterLogicBtn = unifiedPanel.querySelector('#unified-filter-logic-btn');
+    const filterLogicBtn = resourcePanel.querySelector('#resource-filter-logic-btn');
     if (filterLogicBtn) {
       filterLogicBtn.addEventListener('click', () => {
         const newLogic = this.state.filters.filterLogic === 'any' ? 'all' : 'any';
@@ -666,7 +718,7 @@ export class UnifiedResourceManager extends ModuleBase {
     }
 
     // Clear filters
-    const clearFiltersBtn = unifiedPanel.querySelector('#unified-clear-filters-btn');
+    const clearFiltersBtn = resourcePanel.querySelector('#resource-clear-filters-btn');
     if (clearFiltersBtn) {
       clearFiltersBtn.addEventListener('click', () => {
         this.clearAllFilters();
@@ -674,7 +726,7 @@ export class UnifiedResourceManager extends ModuleBase {
     }
 
     // Collapse all button
-    const collapseAllBtn = unifiedPanel.querySelector('#unified-collapse-all-btn');
+    const collapseAllBtn = resourcePanel.querySelector('#resource-collapse-all-btn');
     if (collapseAllBtn) {
       collapseAllBtn.addEventListener('click', () => {
         this.toggleCollapseAll();
@@ -682,30 +734,89 @@ export class UnifiedResourceManager extends ModuleBase {
     }
 
     // Export button
-    const exportBtn = unifiedPanel.querySelector('#unified-export-btn');
+    const exportBtn = resourcePanel.querySelector('#resource-export-btn');
     if (exportBtn) {
       exportBtn.addEventListener('click', () => {
-        this.openUnifiedExportModal();
+        this.openExportModal();
       });
     }
 
-    // Tag filter buttons (event delegation)
-    unifiedPanel.addEventListener('click', (e) => {
+    // Tag filter buttons and dropdown (event delegation)
+    resourcePanel.addEventListener('click', (e) => {
       const tagFilterBtn = e.target.closest('.tag-filter');
-      if (tagFilterBtn) {
+      const tagDropdownBtn = e.target.closest('.tag-dropdown-btn');
+      
+      if (tagFilterBtn && !tagDropdownBtn) {
+        // Single click on tag filter (not dropdown button) - toggle filter
         const tag = tagFilterBtn.dataset.tag;
         this.toggleTagFilter(tag);
+      } else if (tagDropdownBtn) {
+        // Click on dropdown button - toggle dropdown
+        e.preventDefault();
+        e.stopPropagation();
+        const container = tagDropdownBtn.closest('.tag-filter-container');
+        const dropdown = container ? container.querySelector('.tag-dropdown-menu') : null;
+        if (dropdown) {
+          // Toggle the dropdown - close if open, open if closed
+          const isVisible = dropdown.style.display === 'block';
+          this.hideAllTagDropdowns();
+          if (!isVisible) {
+            dropdown.style.display = 'block';
+          }
+        }
+      }
+    });
+
+    // Tag dropdown item clicks (event delegation)
+    resourcePanel.addEventListener('click', (e) => {
+      if (e.target.classList.contains('edit-tag-option')) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Get the unescaped tag value by finding the original tag button
+        const container = e.target.closest('.tag-filter-container');
+        const tagButton = container ? container.querySelector('.tag-filter') : null;
+        if (tagButton) {
+          // Find the original tag from our tag list that matches this button
+          const allTags = this.getAllTags();
+          const escapedTag = tagButton.dataset.tag;
+          const originalTag = allTags.find(tag => this.escapeHtml(tag) === escapedTag);
+          if (originalTag) {
+            this.openEditTagModal(originalTag);
+          }
+        }
+      } else if (e.target.classList.contains('delete-tag-option')) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Get the unescaped tag value by finding the original tag button
+        const container = e.target.closest('.tag-filter-container');
+        const tagButton = container ? container.querySelector('.tag-filter') : null;
+        if (tagButton) {
+          // Find the original tag from our tag list that matches this button
+          const allTags = this.getAllTags();
+          const escapedTag = tagButton.dataset.tag;
+          const originalTag = allTags.find(tag => this.escapeHtml(tag) === escapedTag);
+          if (originalTag) {
+            this.removeTagGlobally(originalTag);
+          }
+        }
+      }
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.tag-filter-container')) {
+        this.hideAllTagDropdowns();
       }
     });
 
     // Resource actions (event delegation)
-    unifiedPanel.addEventListener('click', (e) => {
-      if (e.target.classList.contains('edit-option')) {
-        const resourceId = e.target.dataset.resourceId;
-        this.editUnifiedResource(resourceId);
-      } else if (e.target.classList.contains('remove-option')) {
-        const resourceId = e.target.dataset.resourceId;
-        this.removeUnifiedResource(resourceId);
+    resourcePanel.addEventListener('click', (e) => {
+      if (e.target.closest('.resource-action-btn.edit-btn')) {
+        const resourceId = e.target.closest('.resource-action-btn.edit-btn').dataset.resourceId;
+        this.editResource(resourceId);
+      } else if (e.target.closest('.resource-action-btn.remove-btn')) {
+        const resourceId = e.target.closest('.resource-action-btn.remove-btn').dataset.resourceId;
+        this.removeResource(resourceId);
       } else if (e.target.closest('.resource-collapse-btn')) {
         const resourceId = e.target.closest('.resource-collapse-btn').dataset.resourceId;
         this.toggleResourceCollapse(resourceId);
@@ -713,7 +824,7 @@ export class UnifiedResourceManager extends ModuleBase {
     });
 
     // Arweave hash interactions (event delegation)
-    unifiedPanel.addEventListener('click', (e) => {
+    resourcePanel.addEventListener('click', (e) => {
       // Arweave hash toggle
       if (e.target.closest('.resource-hash-toggle')) {
         const resourceId = e.target.closest('.resource-hash-toggle').dataset.resourceId;
@@ -736,7 +847,7 @@ export class UnifiedResourceManager extends ModuleBase {
     });
 
     // Tag input functionality (event delegation)
-    unifiedPanel.addEventListener('click', (e) => {
+    resourcePanel.addEventListener('click', (e) => {
       const addTagBtn = e.target.closest('.add-tag-btn');
       if (addTagBtn) {
         const resourceId = addTagBtn.dataset.resourceId;
@@ -758,7 +869,7 @@ export class UnifiedResourceManager extends ModuleBase {
     });
 
     // Tag input change events
-    unifiedPanel.addEventListener('input', (e) => {
+    resourcePanel.addEventListener('input', (e) => {
       if (e.target.classList.contains('tag-input')) {
         const addBtn = e.target.parentElement.querySelector('.add-tag-btn');
         if (addBtn) {
@@ -808,20 +919,41 @@ export class UnifiedResourceManager extends ModuleBase {
    * Toggle collapse all functionality (Meridian-compliant)
    */
   toggleCollapseAll() {
-    const newState = this.state.collapse.globalState === 'expanded' ? 'collapsed' : 'expanded';
+    // Get currently visible resources (respecting filters)
+    const visibleResources = this.getFilteredResources();
+    const visibleResourceIds = visibleResources.map(r => r.id);
+    
+    // Determine new state based on current visible resources
+    const visibleCollapsedCount = visibleResourceIds.filter(id => 
+      this.state.collapse.collapsedItems.has(id)
+    ).length;
+    
+    const newState = visibleCollapsedCount === visibleResourceIds.length ? 'expanded' : 'collapsed';
+    
+    // Update collapsed items: preserve state for non-visible resources
+    const newCollapsedItems = new Set(this.state.collapse.collapsedItems);
+    
+    if (newState === 'collapsed') {
+      // Add all visible resources to collapsed set
+      visibleResourceIds.forEach(id => newCollapsedItems.add(id));
+    } else {
+      // Remove all visible resources from collapsed set
+      visibleResourceIds.forEach(id => newCollapsedItems.delete(id));
+    }
     
     // Update state
     this.updateState({
       collapse: {
         globalState: newState,
-        collapsedItems: newState === 'collapsed' 
-          ? new Set(this.state.resources.map(r => r.id))
-          : new Set()
+        collapsedItems: newCollapsedItems
       }
     });
     
     // Optimized UI update - only update collapse-related elements
     this.updateCollapseStateOnly();
+    
+    // Ensure consistency after state change
+    this.ensureCollapseStateConsistency();
     
     // Save collapse state
     this.saveCollapseState();
@@ -837,6 +969,15 @@ export class UnifiedResourceManager extends ModuleBase {
    * Toggle individual resource collapse (Meridian-compliant)
    */
   toggleResourceCollapse(resourceId) {
+    // Verify the resource exists and is currently visible
+    const visibleResources = this.getFilteredResources();
+    const resource = visibleResources.find(r => r.id === resourceId);
+    
+    if (!resource) {
+      console.warn('[ResourceManager] Cannot toggle collapse for non-visible resource:', resourceId);
+      return;
+    }
+    
     const newCollapsedItems = new Set(this.state.collapse.collapsedItems);
     
     if (newCollapsedItems.has(resourceId)) {
@@ -854,6 +995,9 @@ export class UnifiedResourceManager extends ModuleBase {
     
     // Optimized UI update - only update the specific resource
     this.updateResourceCollapseOnly(resourceId);
+    
+    // Update global state consistency after individual change
+    this.ensureCollapseStateConsistency();
     
     // Save collapse state
     this.saveCollapseState();
@@ -879,9 +1023,9 @@ export class UnifiedResourceManager extends ModuleBase {
    * Update only the resource list without affecting the sidebar
    */
   updateResourceListOnly() {
-    const resourceList = document.getElementById('unified-resource-list');
+    const resourceList = document.getElementById('resource-list');
     if (resourceList) {
-      resourceList.innerHTML = this.renderUnifiedResourceList();
+      resourceList.innerHTML = this.renderResourceList();
     }
   }
 
@@ -890,7 +1034,7 @@ export class UnifiedResourceManager extends ModuleBase {
    */
   updateButtonStates() {
     // Update collapse all button
-    const collapseAllBtn = document.getElementById('unified-collapse-all-btn');
+    const collapseAllBtn = document.getElementById('resource-collapse-all-btn');
     if (collapseAllBtn) {
       collapseAllBtn.setAttribute('data-state', this.state.collapse.globalState);
       collapseAllBtn.setAttribute('title', 
@@ -916,7 +1060,7 @@ export class UnifiedResourceManager extends ModuleBase {
    */
   updateCollapseStateOnly() {
     // Update collapse all button
-    const collapseAllBtn = document.getElementById('unified-collapse-all-btn');
+    const collapseAllBtn = document.getElementById('resource-collapse-all-btn');
     if (collapseAllBtn) {
       collapseAllBtn.setAttribute('data-state', this.state.collapse.globalState);
       collapseAllBtn.setAttribute('title', 
@@ -927,8 +1071,16 @@ export class UnifiedResourceManager extends ModuleBase {
     // Update all resource items' collapse state
     document.querySelectorAll('.resource-item').forEach(item => {
       const resourceId = item.dataset.id;
-      const isCollapsed = this.state.collapse.collapsedItems.has(resourceId);
-      item.classList.toggle('collapsed', isCollapsed);
+      if (resourceId) {
+        const isCollapsed = this.state.collapse.collapsedItems.has(resourceId);
+        item.classList.toggle('collapsed', isCollapsed);
+        
+        // Also update the collapse button state for visual consistency
+        const collapseBtn = item.querySelector('.resource-collapse-btn');
+        if (collapseBtn) {
+          collapseBtn.setAttribute('aria-expanded', (!isCollapsed).toString());
+        }
+      }
     });
   }
 
@@ -947,20 +1099,127 @@ export class UnifiedResourceManager extends ModuleBase {
    * Update resource list
    */
   updateResourceList() {
-    const resourceList = document.getElementById('unified-resource-list');
+    const resourceList = document.getElementById('resource-list');
     if (resourceList) {
-      resourceList.innerHTML = this.renderUnifiedResourceList();
+      // Store current collapse state before re-rendering
+      const currentCollapsedItems = new Set(this.state.collapse.collapsedItems);
+      
+      resourceList.innerHTML = this.renderResourceList();
       
       // Re-setup event listeners for the updated DOM
-      this.setupResourceEventListeners();
+      this.setupResourceItemEventListeners();
+      
+      // Ensure collapse state is properly applied after DOM update
+      this.ensureCollapseStateConsistency();
     }
+  }
+
+  /**
+   * Ensure collapse state consistency after DOM updates
+   */
+  ensureCollapseStateConsistency() {
+    // Update all resource items' collapse state to match stored state
+    document.querySelectorAll('.resource-item').forEach(item => {
+      const resourceId = item.dataset.id;
+      const isCollapsed = this.state.collapse.collapsedItems.has(resourceId);
+      
+      // Ensure the CSS class matches the stored state
+      item.classList.toggle('collapsed', isCollapsed);
+      
+      // Also ensure the collapse button icon is correct
+      const collapseBtn = item.querySelector('.resource-collapse-btn');
+      if (collapseBtn) {
+        const svg = collapseBtn.querySelector('svg');
+        if (svg) {
+          svg.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+      }
+    });
+    
+    // Update global collapse all button state
+    const collapseAllBtn = document.getElementById('resource-collapse-all-btn');
+    if (collapseAllBtn) {
+      // Determine current global state based on actual resource states
+      const visibleResources = document.querySelectorAll('.resource-item');
+      const collapsedCount = document.querySelectorAll('.resource-item.collapsed').length;
+      
+      let globalState;
+      if (visibleResources.length === 0) {
+        globalState = 'expanded'; // Default when no resources
+      } else if (collapsedCount === visibleResources.length) {
+        globalState = 'collapsed'; // All collapsed
+      } else {
+        globalState = 'expanded'; // Some or none collapsed
+      }
+      
+      // Update stored global state if it's inconsistent
+      if (this.state.collapse.globalState !== globalState) {
+        this.updateState({
+          collapse: {
+            globalState: globalState
+          }
+        }, false); // Don't emit event for consistency updates
+      }
+      
+      collapseAllBtn.setAttribute('data-state', globalState);
+      collapseAllBtn.setAttribute('title', 
+        globalState === 'expanded' ? 'Collapse All Resources' : 'Expand All Resources'
+      );
+    }
+  }
+
+  /**
+   * Debug helper: Inspect current collapse state (for development/debugging)
+   */
+  debugCollapseState() {
+    const visibleResources = document.querySelectorAll('.resource-item');
+    const collapsedInDOM = document.querySelectorAll('.resource-item.collapsed');
+    const storedCollapsed = Array.from(this.state.collapse.collapsedItems);
+    
+    console.group('[ResourceManager] Collapse State Debug');
+    console.log('Stored global state:', this.state.collapse.globalState);
+    console.log('Visible resources in DOM:', visibleResources.length);
+    console.log('Collapsed in DOM:', collapsedInDOM.length);
+    console.log('Stored collapsed items:', storedCollapsed);
+    
+    // Check for inconsistencies
+    const inconsistencies = [];
+    visibleResources.forEach(item => {
+      const resourceId = item.dataset.id;
+      const hasCollapsedClass = item.classList.contains('collapsed');
+      const isStoredCollapsed = this.state.collapse.collapsedItems.has(resourceId);
+      
+      if (hasCollapsedClass !== isStoredCollapsed) {
+        inconsistencies.push({
+          resourceId,
+          domState: hasCollapsedClass ? 'collapsed' : 'expanded',
+          storedState: isStoredCollapsed ? 'collapsed' : 'expanded'
+        });
+      }
+    });
+    
+    if (inconsistencies.length > 0) {
+      console.warn('State inconsistencies found:', inconsistencies);
+    } else {
+      console.log('✓ All states are consistent');
+    }
+    
+    console.groupEnd();
+    
+    return {
+      globalState: this.state.collapse.globalState,
+      visibleCount: visibleResources.length,
+      collapsedCount: collapsedInDOM.length,
+      storedCollapsed: storedCollapsed,
+      inconsistencies: inconsistencies
+    };
   }
 
   /**
    * Update tag filters
    */
   updateTagFilters() {
-    const container = document.getElementById('unified-tag-filter-list');
+    const container = document.getElementById('resource-tag-filter-list');
     if (container) {
       const newHtml = this.renderTagFilters();
       container.innerHTML = newHtml;
@@ -975,7 +1234,7 @@ export class UnifiedResourceManager extends ModuleBase {
     const visibleCount = filteredResources.length;
     const totalCount = this.state.resources.length;
     
-    const countElement = document.getElementById('unified-count-text');
+    const countElement = document.getElementById('resource-count-text');
     if (countElement) {
       // Calculate the number of digits needed for zero-padding
       const totalDigits = totalCount.toString().length;
@@ -1040,8 +1299,8 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Apply unified filters (Meridian-compliant)
-   * This method now only triggers UI updates - filtering is done in renderUnifiedResourceList
+   * Apply resource filters (Meridian-compliant)
+   * This method now only triggers UI updates - filtering is done in renderResourceList
    */
   applyFilters() {
     // Update the resource list to reflect current filters
@@ -1049,19 +1308,26 @@ export class UnifiedResourceManager extends ModuleBase {
     
     // Update counts
     this.updateCounts();
+    
+    // Ensure collapse state remains consistent after filtering
+    this.ensureCollapseStateConsistency();
+    
+    // Debug: Log collapse state for troubleshooting (can be removed in production)
+    // Note: Removed process.env.NODE_ENV check as it's not available in browser context
+    // this.debugCollapseState();
   }
 
   /**
-   * Apply unified filters (legacy method for backward compatibility)
+   * Apply resource filters (legacy method for backward compatibility)
    */
-  applyUnifiedFilters() {
+  applyResourceFilters() {
     this.applyFilters();
   }
 
   /**
-   * Update unified tag filter buttons (legacy method - now handled by updateButtonStates)
+   * Update resource tag filter buttons (legacy method - now handled by updateButtonStates)
    */
-  updateUnifiedTagFilterButtons() {
+  updateResourceTagFilterButtons() {
     this.updateButtonStates();
   }
 
@@ -1069,16 +1335,16 @@ export class UnifiedResourceManager extends ModuleBase {
    * Update tag filter list (re-render tag filters)
    */
   updateTagFilterList() {
-    const container = document.getElementById('unified-tag-filter-list');
+    const container = document.getElementById('resource-tag-filter-list');
     if (container) {
       container.innerHTML = this.renderTagFilters();
     }
   }
 
   /**
-   * Update unified count (legacy method for backward compatibility)
+   * Update resource count (legacy method for backward compatibility)
    */
-  updateUnifiedCount() {
+  updateResourceCount() {
     this.updateCounts();
   }
 
@@ -1110,10 +1376,10 @@ export class UnifiedResourceManager extends ModuleBase {
     
     // Clear filter state from localStorage
     try {
-      localStorage.removeItem('unifiedFilterState');
-      console.log('[UnifiedResourceManager] Cleared filter state from localStorage');
+      localStorage.removeItem('resourceFilterState');
+              console.log('[ResourceManager] Cleared filter state from localStorage');
     } catch (error) {
-      console.warn('[UnifiedResourceManager] Failed to clear filter state from localStorage:', error);
+              console.warn('[ResourceManager] Failed to clear filter state from localStorage:', error);
     }
     
     // Update UI to reflect cleared filters
@@ -1134,7 +1400,7 @@ export class UnifiedResourceManager extends ModuleBase {
       const modalManager = this.getApp().getModule('ModalManager');
       
       // Add tag via backend API
-      const updatedResource = await window.electronAPI.unified.addTagToResource(resourceId, tagValue);
+      const updatedResource = await window.electronAPI.resource.addTagToResource(resourceId, tagValue);
       
       // Update local state
       const resourceIndex = this.state.resources.findIndex(r => r.id === resourceId);
@@ -1160,7 +1426,7 @@ export class UnifiedResourceManager extends ModuleBase {
       this.emit('tagAdded', { resourceId, tagValue });
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Error adding tag:', error);
+              console.error('[ResourceManager] Error adding tag:', error);
       this.emit('error', { operation: 'addTag', error: error.message });
       this.showError('Failed to add tag');
     }
@@ -1175,7 +1441,7 @@ export class UnifiedResourceManager extends ModuleBase {
       const modalManager = this.getApp().getModule('ModalManager');
       
       // Remove tag via backend API
-      const updatedResource = await window.electronAPI.unified.removeTagFromResource(resourceId, tag);
+      const updatedResource = await window.electronAPI.resource.removeTagFromResource(resourceId, tag);
       
       // Update local state
       const resourceIndex = this.state.resources.findIndex(r => r.id === resourceId);
@@ -1201,9 +1467,242 @@ export class UnifiedResourceManager extends ModuleBase {
       this.emit('tagRemoved', { resourceId, tag });
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Error removing tag:', error);
+              console.error('[ResourceManager] Error removing tag:', error);
       this.emit('error', { operation: 'removeTag', error: error.message });
       this.showError('Failed to remove tag');
+    }
+  }
+
+    /**
+   * Show tag dropdown menu by element
+   */
+  showTagDropdownElement(dropdownElement) {
+    // Hide all other dropdowns first
+    this.hideAllTagDropdowns();
+    
+    // Show the specific dropdown
+    if (dropdownElement) {
+      dropdownElement.style.display = 'block';
+    }
+  }
+
+  /**
+   * Show tag dropdown menu (legacy method for backward compatibility)
+   */
+  showTagDropdown(tag) {
+    // Hide all other dropdowns first
+    this.hideAllTagDropdowns();
+    
+    // The tag parameter is already escaped (from dataset.tag), so use it directly
+    const dropdown = document.querySelector(`.tag-dropdown-menu[data-tag="${tag}"]`);
+    
+    if (dropdown) {
+      dropdown.style.display = 'block';
+    }
+  }
+
+  /**
+   * Hide all tag dropdown menus
+   */
+  hideAllTagDropdowns() {
+    const dropdowns = document.querySelectorAll('.tag-dropdown-menu');
+    dropdowns.forEach(dropdown => {
+      dropdown.style.display = 'none';
+    });
+  }
+
+
+
+  /**
+   * Open edit tag modal
+   */
+  async openEditTagModal(oldTag) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Edit Tag</h3>
+          <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="form-group">
+            <label for="edit-tag-input">Tag Name:</label>
+            <input 
+              type="text" 
+              id="edit-tag-input" 
+              value="${this.escapeHtml(oldTag)}" 
+              placeholder="Enter tag name"
+              maxlength="50"
+            >
+          </div>
+          <div class="form-actions">
+            <button class="secondary-btn" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+            <button class="primary-btn" id="save-tag-btn">Save</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Focus on input and select all text
+    const input = modal.querySelector('#edit-tag-input');
+    input.focus();
+    input.select();
+
+    // Handle save
+    const saveBtn = modal.querySelector('#save-tag-btn');
+    const handleSave = async () => {
+      const newTag = input.value.trim();
+      if (!newTag) {
+        this.showError('Tag name cannot be empty');
+        return;
+      }
+      
+      if (newTag === oldTag) {
+        modal.remove();
+        return;
+      }
+
+      // Check if new tag already exists
+      const existingTags = this.getAllTags();
+      if (existingTags.includes(newTag)) {
+        this.showError('A tag with this name already exists');
+        return;
+      }
+
+      try {
+        await this.renameTagGlobally(oldTag, newTag);
+        modal.remove();
+        this.showSuccess(`Tag renamed from "${oldTag}" to "${newTag}"`);
+      } catch (error) {
+        this.showError(`Failed to rename tag: ${error.message}`);
+      }
+    };
+
+    saveBtn.addEventListener('click', handleSave);
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleSave();
+      }
+    });
+  }
+
+  /**
+   * Rename a tag globally across all resources
+   */
+  async renameTagGlobally(oldTag, newTag) {
+    try {
+      console.log(`[ResourceManager] Renaming tag "${oldTag}" to "${newTag}" globally`);
+      
+      // Update all resources that have the old tag
+      const updatedResources = [];
+      for (const resource of this.state.resources) {
+        const tags = resource.properties["meridian:tags"] || [];
+        if (tags.includes(oldTag)) {
+          const updatedTags = tags.map(tag => tag === oldTag ? newTag : tag);
+          const updatedResource = {
+            ...resource,
+            properties: {
+              ...resource.properties,
+              "meridian:tags": updatedTags
+            }
+          };
+          
+          // Save to backend
+          await window.electronAPI.resource.updateResource(resource.id, updatedResource);
+          updatedResources.push(updatedResource);
+        }
+      }
+
+      // Update active filters if the old tag was active
+      if (this.state.filters.activeTags.has(oldTag)) {
+        const newActiveTags = new Set(this.state.filters.activeTags);
+        newActiveTags.delete(oldTag);
+        newActiveTags.add(newTag);
+        this.updateState({
+          filters: {
+            activeTags: newActiveTags
+          }
+        });
+        this.saveFilterState();
+      }
+
+      // Reload resources to get updated data
+      await this.loadResources();
+      
+      // Update UI
+      this.updateUI();
+      
+      console.log(`[ResourceManager] Successfully renamed tag "${oldTag}" to "${newTag}" on ${updatedResources.length} resources`);
+      
+    } catch (error) {
+      console.error('Failed to rename tag globally:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove a tag globally from all resources
+   */
+  async removeTagGlobally(tag) {
+    // Confirm deletion
+    const resourceCount = this.getTagCount(tag);
+    const confirmed = confirm(`Are you sure you want to remove the tag "${tag}" from all ${resourceCount} resources? This action cannot be undone.`);
+    
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      console.log(`[ResourceManager] Removing tag "${tag}" globally`);
+      
+      // Remove tag from all resources that have it
+      const updatedResources = [];
+      for (const resource of this.state.resources) {
+        const tags = resource.properties["meridian:tags"] || [];
+        if (tags.includes(tag)) {
+          const updatedTags = tags.filter(t => t !== tag);
+          const updatedResource = {
+            ...resource,
+            properties: {
+              ...resource.properties,
+              "meridian:tags": updatedTags
+            }
+          };
+          
+          // Save to backend
+          await window.electronAPI.resource.updateResource(resource.id, updatedResource);
+          updatedResources.push(updatedResource);
+        }
+      }
+
+      // Remove from active filters if it was active
+      if (this.state.filters.activeTags.has(tag)) {
+        const newActiveTags = new Set(this.state.filters.activeTags);
+        newActiveTags.delete(tag);
+        this.updateState({
+          filters: {
+            activeTags: newActiveTags
+          }
+        });
+        this.saveFilterState();
+      }
+
+      // Reload resources to get updated data
+      await this.loadResources();
+      
+      // Update UI
+      this.updateUI();
+      
+      this.showSuccess(`Removed tag "${tag}" from ${updatedResources.length} resources`);
+      
+      console.log(`[ResourceManager] Successfully removed tag "${tag}" from ${updatedResources.length} resources`);
+      
+    } catch (error) {
+      console.error('Failed to remove tag globally:', error);
+      this.showError(`Failed to remove tag: ${error.message}`);
     }
   }
 
@@ -1212,7 +1711,7 @@ export class UnifiedResourceManager extends ModuleBase {
    */
   initializeCollapseState() {
     try {
-      const saved = localStorage.getItem('unifiedCollapseState');
+      const saved = localStorage.getItem('resourceCollapseState');
       if (saved) {
         const parsed = JSON.parse(saved);
         this.updateState({
@@ -1223,7 +1722,7 @@ export class UnifiedResourceManager extends ModuleBase {
         }, false); // Don't emit event during initialization
       }
     } catch (error) {
-      console.warn('[UnifiedResourceManager] Failed to load collapse state:', error);
+      console.warn('[ResourceManager] Failed to load collapse state:', error);
     }
   }
 
@@ -1236,9 +1735,9 @@ export class UnifiedResourceManager extends ModuleBase {
         globalState: this.state.collapse.globalState,
         collapsedItems: Array.from(this.state.collapse.collapsedItems)
       };
-      localStorage.setItem('unifiedCollapseState', JSON.stringify(state));
+      localStorage.setItem('resourceCollapseState', JSON.stringify(state));
     } catch (error) {
-      console.warn('[UnifiedResourceManager] Failed to save collapse state:', error);
+              console.warn('[ResourceManager] Failed to save collapse state:', error);
     }
   }
 
@@ -1247,7 +1746,7 @@ export class UnifiedResourceManager extends ModuleBase {
    */
   loadFilterState() {
     try {
-      const saved = localStorage.getItem('unifiedFilterState');
+      const saved = localStorage.getItem('resourceFilterState');
       if (saved) {
         const parsed = JSON.parse(saved);
         this.updateState({
@@ -1257,10 +1756,10 @@ export class UnifiedResourceManager extends ModuleBase {
             filterLogic: parsed.filterLogic || 'any'
           }
         }, false); // Don't emit event during initialization
-        console.log('[UnifiedResourceManager] Loaded filter state:', parsed);
+        console.log('[ResourceManager] Loaded filter state:', parsed);
       }
     } catch (error) {
-      console.warn('[UnifiedResourceManager] Failed to load filter state:', error);
+              console.warn('[ResourceManager] Failed to load filter state:', error);
     }
   }
 
@@ -1274,25 +1773,25 @@ export class UnifiedResourceManager extends ModuleBase {
         activeTags: Array.from(this.state.filters.activeTags),
         filterLogic: this.state.filters.filterLogic
       };
-      localStorage.setItem('unifiedFilterState', JSON.stringify(filterState));
-      console.log('[UnifiedResourceManager] Saved filter state:', filterState);
+      localStorage.setItem('resourceFilterState', JSON.stringify(filterState));
+              console.log('[ResourceManager] Saved filter state:', filterState);
     } catch (error) {
-      console.warn('[UnifiedResourceManager] Failed to save filter state:', error);
+              console.warn('[ResourceManager] Failed to save filter state:', error);
     }
   }
 
   /**
-   * Open modal for adding unified resource
+   * Open modal for adding resource
    */
-  async openAddUnifiedResourceModal() {
-    console.log('[UnifiedResourceManager] ===== OPENING ADD UNIFIED RESOURCE MODAL =====');
+  async openAddResourceModal() {
+    console.log('[ResourceManager] ===== OPENING ADD RESOURCE MODAL =====');
     this.editingResourceId = null;
     this.modalTags = [];
     
     // Create modal HTML content (without modal-overlay wrapper)
     const modalContent = `
       <div class="modal-header">
-        <h3>Add Unified Resource</h3>
+        <h3>Add Resource</h3>
         <button class="modal-close">&times;</button>
       </div>
       
@@ -1328,7 +1827,7 @@ export class UnifiedResourceManager extends ModuleBase {
           <!-- Phase 1: File Selection -->
           <div class="modal-tab-content" id="internal-selection-phase">
             <h4>Select Local Files</h4>
-            <p>Choose files from your local system to add to the unified resource system.</p>
+            <p>Choose files from your local system to add to the resource system.</p>
             
             <div class="file-selection-area">
               <button type="button" id="choose-files-btn" class="primary-btn">Choose Files</button>
@@ -1609,12 +2108,12 @@ export class UnifiedResourceManager extends ModuleBase {
     // Create the modal using ModalManager
     const modalManager = this.getApp().getModalManager();
     if (!modalManager) {
-      console.error('[UnifiedResourceManager] ModalManager not available');
+      console.error('[ResourceManager] ModalManager not available');
       return;
     }
     
     // Create dynamic modal
-    const modal = modalManager.createDynamicModal('unified-resource-modal', modalContent, {
+    const modal = modalManager.createDynamicModal('resource-modal', modalContent, {
       size: 'large'
     });
     
@@ -1625,20 +2124,20 @@ export class UnifiedResourceManager extends ModuleBase {
     this.setupModalEventListeners();
     
     // Open the modal
-    await modalManager.openModal('unified-resource-modal');
+    await modalManager.openModal('resource-modal');
   }
 
   /**
    * Setup modal event listeners
    */
   setupModalEventListeners() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) {
-      console.error('[UnifiedResourceManager] Modal not found!');
+      console.error('[ResourceManager] Modal not found!');
       return;
     }
 
-    console.log('[UnifiedResourceManager] Setting up modal event listeners...');
+    console.log('[ResourceManager] Setting up modal event listeners...');
 
     // Modal state
     this.modalState = {
@@ -1735,7 +2234,7 @@ export class UnifiedResourceManager extends ModuleBase {
       closeBtn.addEventListener('click', () => {
         const modalManager = this.getApp().getModalManager();
         if (modalManager) {
-          modalManager.closeModal('unified-resource-modal');
+          modalManager.closeModal('resource-modal');
         }
       });
     }
@@ -1746,7 +2245,7 @@ export class UnifiedResourceManager extends ModuleBase {
     
     if (arweaveYesRadio) {
       arweaveYesRadio.addEventListener('change', (e) => {
-        console.log('[UnifiedResourceManager] Arweave upload selected: YES');
+        console.log('[ResourceManager] Arweave upload selected: YES');
         this.modalState.internal.arweaveSettings.enabled = true;
         this.updateArweaveUploadUI();
       });
@@ -1754,7 +2253,7 @@ export class UnifiedResourceManager extends ModuleBase {
     
     if (arweaveNoRadio) {
       arweaveNoRadio.addEventListener('change', (e) => {
-        console.log('[UnifiedResourceManager] Arweave upload selected: NO');
+        console.log('[ResourceManager] Arweave upload selected: NO');
         this.modalState.internal.arweaveSettings.enabled = false;
         this.updateArweaveUploadUI();
       });
@@ -1783,14 +2282,14 @@ export class UnifiedResourceManager extends ModuleBase {
       });
     }
 
-    console.log('[UnifiedResourceManager] Modal event listeners set up successfully');
+    console.log('[ResourceManager] Modal event listeners set up successfully');
   }
 
   /**
    * Switch between modal tabs
    */
   switchModalTab(tab) {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     this.modalState.activeTab = tab;
@@ -1821,10 +2320,10 @@ export class UnifiedResourceManager extends ModuleBase {
    * Show internal tab phase
    */
   showInternalPhase(phase) {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
-    console.log('[UnifiedResourceManager] showInternalPhase called with phase:', phase);
+    console.log('[ResourceManager] showInternalPhase called with phase:', phase);
 
     // Hide all phases
     modal.querySelectorAll('#internal-tab .modal-tab-content').forEach(content => {
@@ -1846,23 +2345,23 @@ export class UnifiedResourceManager extends ModuleBase {
     
     // Special handling for different phases
     if (phase === 'metadata') {
-      console.log('[UnifiedResourceManager] Showing metadata phase, setting up metadata capture');
+      console.log('[ResourceManager] Showing metadata phase, setting up metadata capture');
       this.setupMetadataCapture();
     } else if (phase === 'arweave') {
-      console.log('[UnifiedResourceManager] Showing Arweave phase, calling renderArweaveUploadPhase');
+      console.log('[ResourceManager] Showing Arweave phase, calling renderArweaveUploadPhase');
       this.renderArweaveUploadPhase();
       
       // Check if the enable checkbox is visible
       setTimeout(() => {
         const enableCheckbox = modal.querySelector('#enable-arweave-upload');
-        console.log('[UnifiedResourceManager] Arweave phase - enable checkbox found:', enableCheckbox);
+        console.log('[ResourceManager] Arweave phase - enable checkbox found:', enableCheckbox);
         if (enableCheckbox) {
-          console.log('[UnifiedResourceManager] Enable checkbox visible:', enableCheckbox.offsetParent !== null);
-          console.log('[UnifiedResourceManager] Enable checkbox checked:', enableCheckbox.checked);
+                      console.log('[ResourceManager] Enable checkbox visible:', enableCheckbox.offsetParent !== null);
+            console.log('[ResourceManager] Enable checkbox checked:', enableCheckbox.checked);
         }
       }, 100);
     } else if (phase === 'review') {
-      console.log('[UnifiedResourceManager] Showing review phase, generating previews and setting up tag management');
+      console.log('[ResourceManager] Showing review phase, generating previews and setting up tag management');
       this.generateInternalResourcePreviews();
       this.renderBulkTags('internal');
       this.setupBulkTagEventListeners();
@@ -1876,7 +2375,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Show external tab phase
    */
   showExternalPhase(phase) {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     // Hide all phases
@@ -1911,7 +2410,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Update modal navigation buttons
    */
   updateModalButtons() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const nextBtn = modal.querySelector('#modal-next-btn');
@@ -1955,21 +2454,21 @@ export class UnifiedResourceManager extends ModuleBase {
    * Next modal phase
    */
   nextModalPhase() {
-    console.log('[UnifiedResourceManager] nextModalPhase called');
-    console.log('[UnifiedResourceManager] Current modal state:', this.modalState);
+    console.log('[ResourceManager] nextModalPhase called');
+    console.log('[ResourceManager] Current modal state:', this.modalState);
     
     if (this.modalState.activeTab === 'internal') {
       const currentPhase = this.modalState.internal.phase;
-      console.log('[UnifiedResourceManager] Current internal phase:', currentPhase);
+      console.log('[ResourceManager] Current internal phase:', currentPhase);
       
       if (currentPhase === 'selection') {
-        console.log('[UnifiedResourceManager] Moving from selection to metadata');
+        console.log('[ResourceManager] Moving from selection to metadata');
         this.showInternalPhase('metadata');
       } else if (currentPhase === 'metadata') {
-        console.log('[UnifiedResourceManager] Moving from metadata to arweave');
+        console.log('[ResourceManager] Moving from metadata to arweave');
         this.showInternalPhase('arweave');
       } else if (currentPhase === 'arweave') {
-        console.log('[UnifiedResourceManager] Moving from arweave to review - executing uploads first');
+        console.log('[ResourceManager] Moving from arweave to review - executing uploads first');
         this.executeArweaveUploadsAndContinue();
       }
     } else {
@@ -2017,16 +2516,16 @@ export class UnifiedResourceManager extends ModuleBase {
       
       input.addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
-        console.log('[UnifiedResourceManager] Files selected:', files);
+        console.log('[ResourceManager] Files selected:', files);
         this.modalState.internal.selectedFiles = files;
-        console.log('[UnifiedResourceManager] Files stored in modal state:', this.modalState.internal.selectedFiles);
+                  console.log('[ResourceManager] Files stored in modal state:', this.modalState.internal.selectedFiles);
         this.updateFileSelectionDisplay();
         this.updateModalButtons();
       });
       
       input.click();
     } catch (error) {
-      console.error('[UnifiedResourceManager] Error choosing files:', error);
+      console.error('[ResourceManager] Error choosing files:', error);
       this.showError('Failed to choose files');
     }
   }
@@ -2035,7 +2534,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Update file selection display
    */
   updateFileSelectionDisplay() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const filesList = modal.querySelector('#selected-files-list');
@@ -2069,7 +2568,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Process URLs for external resources
    */
   async processUrls() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const urlsText = modal.querySelector('#external-urls').value;
@@ -2099,8 +2598,8 @@ export class UnifiedResourceManager extends ModuleBase {
       this.addProcessingLog(`Processing: ${url}`);
 
       try {
-        // Extract metadata using the unified API
-        const metadata = await window.electronAPI.unified.extractMetadata(url);
+        // Extract metadata using the resource API
+        const metadata = await window.electronAPI.resource.extractMetadata(url);
         
         // Add result with extracted metadata
         this.modalState.external.processingResults.push({
@@ -2133,7 +2632,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Add processing log entry
    */
   addProcessingLog(message) {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const log = modal.querySelector('#processing-log');
@@ -2159,14 +2658,14 @@ export class UnifiedResourceManager extends ModuleBase {
         await this.addExternalResources();
       }
 
-      const modal = document.getElementById('unified-resource-modal');
+      const modal = document.getElementById('resource-modal');
       if (modal) {
         modal.remove();
       }
       
       this.showSuccess('Resources added successfully');
     } catch (error) {
-      console.error('[UnifiedResourceManager] Error adding resources:', error);
+      console.error('[ResourceManager] Error adding resources:', error);
       this.showError('Failed to add resources');
     }
   }
@@ -2180,7 +2679,7 @@ export class UnifiedResourceManager extends ModuleBase {
     const arweaveSettings = this.modalState.internal.arweaveSettings;
 
     // Uploads are now executed during the modal flow, so we just use the results
-    console.log('[UnifiedResourceManager] Adding internal resources with upload results:', arweaveSettings.uploadResults);
+    console.log('[ResourceManager] Adding internal resources with upload results:', arweaveSettings.uploadResults);
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -2243,7 +2742,7 @@ export class UnifiedResourceManager extends ModuleBase {
         },
       };
 
-      await this.addUnifiedResource(resource);
+      await this.addResource(resource);
     }
   }
 
@@ -2295,7 +2794,7 @@ export class UnifiedResourceManager extends ModuleBase {
         },
       };
 
-      await this.addUnifiedResource(resource);
+      await this.addResource(resource);
     }
   }
 
@@ -2357,10 +2856,10 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Handle adding unified resource
+   * Handle adding resource
    */
-  async handleAddUnifiedResource() {
-    const modal = document.getElementById('unified-resource-modal');
+  async handleAddResource() {
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const type = modal.querySelector('#resource-type').value;
@@ -2424,7 +2923,7 @@ export class UnifiedResourceManager extends ModuleBase {
       },
     };
 
-    await this.addUnifiedResource(resource);
+    await this.addResource(resource);
     
     // Close modal
     modal.remove();
@@ -2481,10 +2980,10 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Edit unified resource - opens dynamic modal with full editing capabilities
+   * Edit resource - opens dynamic modal with full editing capabilities
    */
-  async editUnifiedResource(resourceId) {
-    console.log(`[UnifiedResourceManager] Opening edit modal for resource: ${resourceId}`);
+  async editResource(resourceId) {
+    console.log(`[ResourceManager] Opening edit modal for resource: ${resourceId}`);
     
     try {
       // Find the resource in our state
@@ -2504,7 +3003,7 @@ export class UnifiedResourceManager extends ModuleBase {
           alternativeLocations = await window.api.database.getAlternativeLocations(resourceId);
         }
       } catch (error) {
-        console.log('[UnifiedResourceManager] Database not available, using basic editing mode');
+        console.log('[ResourceManager] Database not available, using basic editing mode');
       }
 
       this.editingResourceId = resourceId;
@@ -2512,16 +3011,19 @@ export class UnifiedResourceManager extends ModuleBase {
       // Initialize modal tags with current resource tags
       this.modalTags = [...(resource.properties['meridian:tags'] || [])];
       
+      console.log('[ResourceManager] Debug - About to generate modal content');
       const modalContent = this.generateEditModalContent(resource, customProperties, alternativeLocations);
+      console.log('[ResourceManager] Debug - Modal content generated, length:', modalContent.length);
 
       // Get ModalManager using the correct pattern
       const modalManager = this.getApp().getModalManager();
       if (!modalManager) {
-        console.error('[UnifiedResourceManager] ModalManager not available');
+        console.error('[ResourceManager] ModalManager not available');
         this.showError('Modal system not available');
         return;
       }
 
+      console.log('[ResourceManager] Debug - About to create dynamic modal');
       // Create dynamic modal
       const modal = modalManager.createDynamicModal(
         'edit-resource-dynamic',
@@ -2531,6 +3033,7 @@ export class UnifiedResourceManager extends ModuleBase {
           className: 'edit-resource-modal large-modal'
         }
       );
+      console.log('[ResourceManager] Debug - Dynamic modal created:', modal);
 
       // Setup modal event listeners after creation
       this.setupEditModalEventListeners();
@@ -2538,10 +3041,10 @@ export class UnifiedResourceManager extends ModuleBase {
       // Open the modal
       await modalManager.openModal('edit-resource-dynamic');
 
-      console.log(`[UnifiedResourceManager] Edit modal opened for resource: ${resourceId}`);
+      console.log(`[ResourceManager] Edit modal opened for resource: ${resourceId}`);
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Failed to open edit modal:', error);
+      console.error('[ResourceManager] Failed to open edit modal:', error);
       this.showError('Failed to open edit modal: ' + error.message);
     }
   }
@@ -2563,7 +3066,7 @@ export class UnifiedResourceManager extends ModuleBase {
 
       <div class="modal-content">
         ${this.generateBasicInfoSection(resource)}
-        ${this.generateUnifiedLocationSection(resource)}
+        ${this.generateLocationSection(resource, customProperties, alternativeLocations)}
         ${this.generateCustomPropertiesSection(customProperties)}
         ${this.generateTagsSection(tags)}
       </div>
@@ -2583,6 +3086,10 @@ export class UnifiedResourceManager extends ModuleBase {
    * Generate basic resource information section
    */
   generateBasicInfoSection(resource) {
+    console.log('[ResourceManager] Debug - Generating basic info section for resource:', resource);
+    console.log('[ResourceManager] Debug - Resource title property:', resource.properties['dc:title']);
+    console.log('[ResourceManager] Debug - Escaped title value:', this.escapeHtml(resource.properties['dc:title'] || ''));
+    
     return `
       <div class="form-section">
         <h4>Basic Information</h4>
@@ -2624,7 +3131,7 @@ export class UnifiedResourceManager extends ModuleBase {
   /**
    * Generate unified location section with hierarchical organization
    */
-  generateUnifiedLocationSection(resource, customProperties, alternativeLocations) {
+  generateLocationSection(resource, customProperties, alternativeLocations) {
     const currentValue = resource.locations.primary.value || '';
     
     return `
@@ -2835,7 +3342,7 @@ export class UnifiedResourceManager extends ModuleBase {
           <span class="arweave-upload-timestamp">${this.formatDate(upload.timestamp)}</span>
         </div>
         <div class="arweave-upload-actions">
-          <button type="button" class="secondary-btn" onclick="unifiedResourceManager.copyToClipboard('${this.escapeHtml(upload.link)}')">
+          <button type="button" class="secondary-btn" onclick="resourceManager.copyToClipboard('${this.escapeHtml(upload.link)}')">
             Copy Link
           </button>
         </div>
@@ -2977,11 +3484,11 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Remove unified resource
+   * Remove resource
    */
-  async removeUnifiedResource(resourceId) {
+  async removeResource(resourceId) {
     if (confirm('Are you sure you want to remove this resource?')) {
-      await this.removeUnifiedResourceById(resourceId);
+      await this.removeResourceById(resourceId);
       this.showSuccess('Resource removed successfully');
     }
   }
@@ -3044,7 +3551,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Get module by name
    */
   getModule(name) {
-    return this.app.modules[name];
+    return this.app.getModule(name);
   }
 
   /**
@@ -3055,25 +3562,25 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Load unified resources from backend (Meridian-compliant)
+   * Load resources from backend (Meridian-compliant)
    */
-  async loadUnifiedResources() {
+  async loadResources() {
     try {
-      console.log('[UnifiedResourceManager] Loading unified resources from backend...');
+      console.log('[ResourceManager] Loading resources from backend...');
       
       // Check if workspace is selected
       if (!this.getWorkspacePath()) {
-        console.log('[UnifiedResourceManager] No workspace selected, showing no workspace state');
-        this.renderUnifiedNoWorkspace();
+        console.log('[ResourceManager] No workspace selected, showing no workspace state');
+        this.renderNoWorkspace();
         return;
       }
 
-      // Load unified data from backend - this will create resources.json if it doesn't exist
-      const unifiedData = await window.electronAPI.unified.loadData();
+      // Load resource data from backend - this will create resources.json if it doesn't exist
+      const resourceData = await window.electronAPI.resource.loadData();
       
       // Update state
       this.updateState({
-        resources: unifiedData.resources || []
+        resources: resourceData.resources || []
       });
       
       // Update UI
@@ -3082,7 +3589,7 @@ export class UnifiedResourceManager extends ModuleBase {
       // Ensure collapse state is properly applied after UI update
       this.updateCollapseStateOnly();
       
-      console.log(`[UnifiedResourceManager] Loaded ${this.state.resources.length} resources from backend`);
+      console.log(`[ResourceManager] Loaded ${this.state.resources.length} resources from backend`);
       
       // Emit resources loaded event
       this.emit('resourcesLoaded', {
@@ -3090,33 +3597,33 @@ export class UnifiedResourceManager extends ModuleBase {
       });
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Error loading resources:', error);
+      console.error('[ResourceManager] Error loading resources:', error);
       this.updateState({
         resources: []
       });
       this.emit('error', { operation: 'loadResources', error: error.message });
-      this.showError('Failed to load unified resources');
+      this.showError('Failed to load resources');
     }
   }
 
   /**
-   * Render no workspace state for unified resources
+   * Render no workspace state for resources
    */
-  renderUnifiedNoWorkspace() {
-    const container = document.getElementById('unified-panel');
+  renderNoWorkspace() {
+    const container = document.getElementById('resource-panel');
     if (!container) return;
 
     container.innerHTML = `
       <div class="no-workspace-state">
         <div class="no-workspace-icon">📁</div>
         <h3>No Workspace Selected</h3>
-        <p>Please select a workspace directory to view unified resources.</p>
-        <button id="unified-workspace-btn" class="primary-btn">Select Workspace</button>
+        <p>Please select a workspace directory to view resources.</p>
+        <button id="resource-workspace-btn" class="primary-btn">Select Workspace</button>
       </div>
     `;
 
     // Add event listener for workspace selection
-    const workspaceBtn = document.getElementById('unified-workspace-btn');
+    const workspaceBtn = document.getElementById('resource-workspace-btn');
     if (workspaceBtn) {
       workspaceBtn.addEventListener('click', async () => {
         await this.getApp().selectWorkspace();
@@ -3125,32 +3632,32 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Save unified resources to backend
+   * Save resources to backend
    */
-  async saveUnifiedResources() {
+  async saveResources() {
     try {
-      console.log('[UnifiedResourceManager] Saving unified resources to backend...');
+      console.log('[ResourceManager] Saving resources to backend...');
       
       // Check if workspace is selected
       if (!this.getWorkspacePath()) {
-        console.error('[UnifiedResourceManager] No workspace selected, cannot save');
+        console.error('[ResourceManager] No workspace selected, cannot save');
         return;
       }
 
-      // Prepare unified data structure
-      const unifiedData = {
-        resources: this.unifiedResources,
+      // Prepare resource data structure
+      const resourceData = {
+        resources: this.resources,
         tags: this.calculateTagCounts(),
         lastModified: new Date().toISOString(),
         version: '1.0'
       };
 
       // Save to backend
-      await window.electronAPI.unified.saveData(unifiedData);
-      console.log(`[UnifiedResourceManager] Saved ${this.unifiedResources.length} resources to backend`);
+      await window.electronAPI.resource.saveData(resourceData);
+      console.log(`[ResourceManager] Saved ${this.resources.length} resources to backend`);
     } catch (error) {
-      console.error('[UnifiedResourceManager] Error saving resources:', error);
-      this.showError('Failed to save unified resources');
+      console.error('[ResourceManager] Error saving resources:', error);
+      this.showError('Failed to save resources');
     }
   }
 
@@ -3169,14 +3676,14 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Add resource to unified list and save (Meridian-compliant)
+   * Add resource to list and save (Meridian-compliant)
    */
-  async addUnifiedResource(resource) {
+  async addResource(resource) {
     try {
-      console.log('[UnifiedResourceManager] Adding unified resource:', resource);
+      console.log('[ResourceManager] Adding resource:', resource);
       
       // Add resource via backend API
-      const addedResource = await window.electronAPI.unified.addResource(resource);
+      const addedResource = await window.electronAPI.resource.addResource(resource);
       
       // Update state
       this.updateState({
@@ -3186,27 +3693,27 @@ export class UnifiedResourceManager extends ModuleBase {
       // Update UI
       this.updateUI();
       
-      console.log('[UnifiedResourceManager] Resource added successfully');
+      console.log('[ResourceManager] Resource added successfully');
       
       // Emit resource added event
       this.emit('resourceAdded', { resource: addedResource });
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Error adding resource:', error);
+      console.error('[ResourceManager] Error adding resource:', error);
       this.emit('error', { operation: 'addResource', error: error.message });
       this.showError('Failed to add resource');
     }
   }
 
   /**
-   * Remove resource from unified list and save (Meridian-compliant)
+   * Remove resource from list and save (Meridian-compliant)
    */
-  async removeUnifiedResourceById(resourceId) {
+  async removeResourceById(resourceId) {
     try {
-      console.log('[UnifiedResourceManager] Removing unified resource:', resourceId);
+      console.log('[ResourceManager] Removing resource:', resourceId);
       
       // Remove resource via backend API
-      await window.electronAPI.unified.removeResource(resourceId);
+      await window.electronAPI.resource.removeResource(resourceId);
       
       // Update state
       this.updateState({
@@ -3216,33 +3723,33 @@ export class UnifiedResourceManager extends ModuleBase {
       // Update UI
       this.updateUI();
       
-      console.log('[UnifiedResourceManager] Resource removed successfully');
+      console.log('[ResourceManager] Resource removed successfully');
       
       // Emit resource removed event
       this.emit('resourceRemoved', { resourceId });
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Error removing resource:', error);
+      console.error('[ResourceManager] Error removing resource:', error);
       this.emit('error', { operation: 'removeResource', error: error.message });
       this.showError('Failed to remove resource');
     }
   }
 
   /**
-   * Open unified export modal
+   * Open export modal
    */
-  async openUnifiedExportModal() {
-    console.log('[UnifiedResourceManager] Opening unified export modal');
+  async openExportModal() {
+    console.log('[ResourceManager] Opening export modal');
     
     // Get filtered resources for export
     const filteredResources = this.getFilteredResources();
     
     // Update modal content
-    const resourceCountEl = document.getElementById('unified-export-resource-count');
-    const filterInfoEl = document.getElementById('unified-export-filter-info');
+    const resourceCountEl = document.getElementById('export-resource-count');
+    const filterInfoEl = document.getElementById('export-filter-info');
     
     if (resourceCountEl) {
-      resourceCountEl.textContent = `Ready to export ${filteredResources.length} unified resources`;
+      resourceCountEl.textContent = `Ready to export ${filteredResources.length} resources`;
     }
     
     if (filterInfoEl) {
@@ -3254,18 +3761,18 @@ export class UnifiedResourceManager extends ModuleBase {
     // Use ModalManager to show the modal
     const modalManager = this.getApp().getModalManager();
     if (modalManager) {
-      await modalManager.openModal('unified-export-modal');
-      this.setupUnifiedExportModalListeners();
+      await modalManager.openModal('export-modal');
+      this.setupExportModalListeners();
     } else {
-      console.error('[UnifiedResourceManager] ModalManager not available');
+      console.error('[ResourceManager] ModalManager not available');
     }
   }
 
   /**
-   * Setup unified export modal event listeners
+   * Setup export modal event listeners
    */
-  setupUnifiedExportModalListeners() {
-    const modal = document.getElementById('unified-export-modal');
+  setupExportModalListeners() {
+    const modal = document.getElementById('export-modal');
     if (!modal) return;
 
     // Export option buttons
@@ -3273,7 +3780,7 @@ export class UnifiedResourceManager extends ModuleBase {
     exportOptions.forEach(btn => {
       btn.onclick = async () => {
         const format = btn.dataset.format;
-        await this.handleUnifiedExport(format);
+        await this.handleExport(format);
       };
     });
   }
@@ -3297,11 +3804,11 @@ export class UnifiedResourceManager extends ModuleBase {
   }
 
   /**
-   * Handle unified export
+   * Handle export
    */
-  async handleUnifiedExport(format) {
+  async handleExport(format) {
     try {
-      console.log('[UnifiedResourceManager] Handling unified export:', format);
+      console.log('[ResourceManager] Handling export:', format);
       
       const filteredResources = this.getFilteredResources();
       
@@ -3313,7 +3820,7 @@ export class UnifiedResourceManager extends ModuleBase {
       // Close modal using ModalManager
       const modalManager = this.getApp().getModalManager();
       if (modalManager) {
-        modalManager.closeModal('unified-export-modal');
+        modalManager.closeModal('export-modal');
       }
 
       // Generate export data based on format
@@ -3329,19 +3836,19 @@ export class UnifiedResourceManager extends ModuleBase {
           
         case 'json':
           exportData = this.generateJsonExport(filteredResources);
-          filename = `unified-resources-${new Date().toISOString().split('T')[0]}.json`;
+          filename = `resources-${new Date().toISOString().split('T')[0]}.json`;
           mimeType = 'application/json';
           break;
           
-        case 'txt':
+        case 'text':
           exportData = this.generateTextExport(filteredResources);
-          filename = `unified-resources-${new Date().toISOString().split('T')[0]}.txt`;
+          filename = `resources-${new Date().toISOString().split('T')[0]}.txt`;
           mimeType = 'text/plain';
           break;
           
-        case 'html':
+        case 'bookmarks':
           exportData = this.generateHtmlExport(filteredResources);
-          filename = `unified-resources-${new Date().toISOString().split('T')[0]}.html`;
+          filename = `resources-${new Date().toISOString().split('T')[0]}.html`;
           mimeType = 'text/html';
           break;
           
@@ -3356,7 +3863,7 @@ export class UnifiedResourceManager extends ModuleBase {
       this.showSuccess(`Exported ${filteredResources.length} resources as ${format.toUpperCase()}`);
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Export error:', error);
+      console.error('[ResourceManager] Export error:', error);
       this.showError('Export failed');
     }
   }
@@ -3366,12 +3873,12 @@ export class UnifiedResourceManager extends ModuleBase {
    */
   async exportToDatabase() {
     try {
-      console.log('[UnifiedResourceManager] Exporting to database');
+      console.log('[ResourceManager] Exporting to database');
       
       const filteredResources = this.getFilteredResources();
       
       // Call backend to export database
-      const result = await window.electronAPI.unified.exportToDatabase({
+      const result = await window.electronAPI.resource.exportToDatabase({
         resources: filteredResources,
         filters: {
           searchTerm: this.currentSearchTerm,
@@ -3387,7 +3894,7 @@ export class UnifiedResourceManager extends ModuleBase {
       }
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Database export error:', error);
+              console.error('[ResourceManager] Database export error:', error);
       this.showError('Database export failed');
     }
   }
@@ -3572,13 +4079,13 @@ export class UnifiedResourceManager extends ModuleBase {
    * Update Arweave upload UI
    */
   updateArweaveUploadUI() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const uploadConfig = modal.querySelector('#arweave-upload-config');
     
     if (this.modalState.internal.arweaveSettings.enabled) {
-      console.log('[UnifiedResourceManager] Showing Arweave upload configuration');
+      console.log('[ResourceManager] Showing Arweave upload configuration');
       uploadConfig.style.display = 'block';
       this.renderArweaveUploadPhase();
       
@@ -3592,15 +4099,15 @@ export class UnifiedResourceManager extends ModuleBase {
       // Update checkboxes to reflect the auto-selection - use a longer delay to ensure DOM is ready
       setTimeout(() => {
         const checkboxes = modal.querySelectorAll('.file-upload-checkbox');
-        console.log('[UnifiedResourceManager] Found', checkboxes.length, 'checkboxes to update');
+        console.log('[ResourceManager] Found', checkboxes.length, 'checkboxes to update');
         checkboxes.forEach((checkbox, index) => {
           checkbox.checked = true;
-          console.log('[UnifiedResourceManager] Set checkbox', index, 'to checked');
+                      console.log('[ResourceManager] Set checkbox', index, 'to checked');
         });
         this.updateArweaveUploadSummary();
       }, 200);
     } else {
-      console.log('[UnifiedResourceManager] Hiding Arweave upload configuration');
+      console.log('[ResourceManager] Hiding Arweave upload configuration');
       uploadConfig.style.display = 'none';
       
       // Clear selected files when upload is disabled
@@ -3612,23 +4119,23 @@ export class UnifiedResourceManager extends ModuleBase {
    * Render Arweave upload phase
    */
   renderArweaveUploadPhase() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const files = this.modalState.internal.selectedFiles;
     const fileUploadList = modal.querySelector('#file-upload-list');
     
-    console.log('[UnifiedResourceManager] renderArweaveUploadPhase called');
-    console.log('[UnifiedResourceManager] Files in modal state:', files);
-    console.log('[UnifiedResourceManager] Modal state:', this.modalState.internal);
+    console.log('[ResourceManager] renderArweaveUploadPhase called');
+          console.log('[ResourceManager] Files in modal state:', files);
+      console.log('[ResourceManager] Modal state:', this.modalState.internal);
     
     if (files.length === 0) {
-      console.log('[UnifiedResourceManager] No files found, showing empty message');
+      console.log('[ResourceManager] No files found, showing empty message');
       fileUploadList.innerHTML = '<p>No files selected for upload</p>';
       return;
     }
 
-    console.log('[UnifiedResourceManager] Rendering', files.length, 'files for upload');
+          console.log('[ResourceManager] Rendering', files.length, 'files for upload');
 
     // Generate file upload controls with Select All/Deselect All buttons
     fileUploadList.innerHTML = `
@@ -3728,7 +4235,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Update Arweave upload summary
    */
   updateArweaveUploadSummary() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const selectedFiles = this.modalState.internal.arweaveSettings.selectedFiles;
@@ -3766,7 +4273,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Execute Arweave uploads with tags
    */
   async executeArweaveUploads() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const selectedFiles = this.modalState.internal.arweaveSettings.selectedFiles;
@@ -3862,24 +4369,24 @@ export class UnifiedResourceManager extends ModuleBase {
    * Execute Arweave uploads during modal flow and continue to review
    */
   async executeArweaveUploadsAndContinue() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const arweaveSettings = this.modalState.internal.arweaveSettings;
     
-    console.log('[UnifiedResourceManager] executeArweaveUploadsAndContinue called');
-    console.log('[UnifiedResourceManager] Upload enabled:', arweaveSettings.enabled);
-    console.log('[UnifiedResourceManager] Selected files count:', arweaveSettings.selectedFiles.size);
-    console.log('[UnifiedResourceManager] Selected files:', Array.from(arweaveSettings.selectedFiles));
+    console.log('[ResourceManager] executeArweaveUploadsAndContinue called');
+          console.log('[ResourceManager] Upload enabled:', arweaveSettings.enabled);
+      console.log('[ResourceManager] Selected files count:', arweaveSettings.selectedFiles.size);
+      console.log('[ResourceManager] Selected files:', Array.from(arweaveSettings.selectedFiles));
     
     // Check if upload is enabled and files are selected
     if (!arweaveSettings.enabled || arweaveSettings.selectedFiles.size === 0) {
-      console.log('[UnifiedResourceManager] No uploads to execute, proceeding to review');
+      console.log('[ResourceManager] No uploads to execute, proceeding to review');
       this.showInternalPhase('review');
       return;
     }
 
-    console.log('[UnifiedResourceManager] Executing Arweave uploads during modal flow');
+    console.log('[ResourceManager] Executing Arweave uploads during modal flow');
 
     // Disable the Next button during upload
     const nextBtn = modal.querySelector('#modal-next-btn');
@@ -3922,7 +4429,7 @@ export class UnifiedResourceManager extends ModuleBase {
       this.showInternalPhase('review');
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Error during upload execution:', error);
+              console.error('[ResourceManager] Error during upload execution:', error);
       
       // Show error message
       const progressText = modal.querySelector('#upload-progress-text');
@@ -3945,7 +4452,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Render review phase with upload results and resource summary
    */
   renderReviewPhase() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const files = this.modalState.internal.selectedFiles;
@@ -4078,7 +4585,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Render internal resource previews
    */
   renderInternalResourcePreviews() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const previewsContainer = modal.querySelector('#internal-resource-previews');
@@ -4098,19 +4605,22 @@ export class UnifiedResourceManager extends ModuleBase {
               <span class="file-status-indicator physical"></span>
               ${this.escapeHtml(preview.path)}
             </div>
-            ${preview.description ? `
-              <p class="resource-description">${this.escapeHtml(preview.description)}</p>
-            ` : ''}
-            <div class="resource-metadata">
-              <span class="resource-metadata-item">
-                <span class="resource-metadata-label">Type:</span>
-                <span class="resource-metadata-value">${preview.type}</span>
-              </span>
-              <span class="resource-metadata-item">
-                <span class="resource-metadata-label">Size:</span>
-                <span class="resource-metadata-value">${this.formatFileSize(preview.size)}</span>
-              </span>
-            </div>
+          </div>
+        </div>
+        
+        <div class="resource-body">
+          ${preview.description ? `
+            <div class="resource-description">${this.escapeHtml(preview.description)}</div>
+          ` : ''}
+          <div class="resource-metadata">
+            <span class="resource-metadata-item">
+              <span class="resource-metadata-label">Type:</span>
+              <span class="resource-metadata-value">${preview.type}</span>
+            </span>
+            <span class="resource-metadata-item">
+              <span class="resource-metadata-label">Size:</span>
+              <span class="resource-metadata-value">${this.formatFileSize(preview.size)}</span>
+            </span>
           </div>
         </div>
         
@@ -4169,7 +4679,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Render external resource previews
    */
   renderExternalResourcePreviews() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const previewsContainer = modal.querySelector('#external-resource-previews');
@@ -4189,15 +4699,18 @@ export class UnifiedResourceManager extends ModuleBase {
               <span class="file-status-indicator external"></span>
               ${this.escapeHtml(preview.url)}
             </div>
-            ${preview.description ? `
-              <p class="resource-description">${this.escapeHtml(preview.description)}</p>
-            ` : ''}
-            <div class="resource-metadata">
-              <span class="resource-metadata-item">
-                <span class="resource-metadata-label">Type:</span>
-                <span class="resource-metadata-value">${preview.type}</span>
-              </span>
-            </div>
+          </div>
+        </div>
+        
+        <div class="resource-body">
+          ${preview.description ? `
+            <div class="resource-description">${this.escapeHtml(preview.description)}</div>
+          ` : ''}
+          <div class="resource-metadata">
+            <span class="resource-metadata-item">
+              <span class="resource-metadata-label">Type:</span>
+              <span class="resource-metadata-value">${preview.type}</span>
+            </span>
           </div>
         </div>
         
@@ -4230,7 +4743,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Setup bulk tag event listeners
    */
   setupBulkTagEventListeners() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     // Internal bulk tag management
@@ -4372,7 +4885,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Render bulk tags
    */
   renderBulkTags(tabType) {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const bulkTagsList = modal.querySelector(`#${tabType === 'internal' ? '' : 'external-'}bulk-tags-list`);
@@ -4414,7 +4927,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Setup individual tag event listeners for preview resources
    */
   setupIndividualTagEventListeners() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     // Setup tag inputs for individual resources
@@ -4572,7 +5085,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Setup metadata capture for the metadata phase
    */
   setupMetadataCapture() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     // Get metadata inputs
@@ -4616,7 +5129,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Select all files for Arweave upload
    */
   selectAllFilesForUpload() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     const files = this.modalState.internal.selectedFiles;
@@ -4638,7 +5151,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Deselect all files for Arweave upload
    */
   deselectAllFilesForUpload() {
-    const modal = document.getElementById('unified-resource-modal');
+    const modal = document.getElementById('resource-modal');
     if (!modal) return;
 
     this.modalState.internal.arweaveSettings.selectedFiles.clear();
@@ -4884,7 +5397,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Handle edit modal close
    */
   handleEditModalClose(resourceId) {
-    console.log(`[UnifiedResourceManager] Edit modal closed for resource: ${resourceId}`);
+    console.log(`[ResourceManager] Edit modal closed for resource: ${resourceId}`);
     this.editingResourceId = null;
     
     // Clean up any event listeners or temporary state
@@ -4914,7 +5427,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Handle edit form submission
    */
   async handleEditSubmit() {
-    console.log('[UnifiedResourceManager] Handling edit form submission');
+    console.log('[ResourceManager] Handling edit form submission');
     
     try {
       if (!this.editingResourceId) {
@@ -4942,10 +5455,10 @@ export class UnifiedResourceManager extends ModuleBase {
       this.showSuccess('Resource updated successfully');
       
       // Refresh the resource list
-      await this.loadUnifiedResources();
+      await this.loadResources();
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Failed to submit edit form:', error);
+              console.error('[ResourceManager] Failed to submit edit form:', error);
       this.showError('Failed to save changes: ' + error.message);
     }
   }
@@ -4954,8 +5467,16 @@ export class UnifiedResourceManager extends ModuleBase {
    * Collect edit form data
    */
   collectEditFormData() {
+    // Debug: Check if the title input exists and has a value
+    const titleInput = document.getElementById('edit-resource-title');
+    const titleValue = titleInput?.value?.trim() || '';
+    
+    console.log('[ResourceManager] Debug - Title input element:', titleInput);
+    console.log('[ResourceManager] Debug - Title input value:', titleValue);
+    console.log('[ResourceManager] Debug - Title input value length:', titleValue.length);
+    
     const formData = {
-      title: document.getElementById('edit-resource-title')?.value?.trim() || '',
+      title: titleValue,
       type: document.getElementById('edit-resource-type')?.value || 'document',
       description: document.getElementById('edit-resource-description')?.value?.trim() || '',
       customProperties: {},
@@ -5000,6 +5521,11 @@ export class UnifiedResourceManager extends ModuleBase {
    * Validate edit form data
    */
   validateEditFormData(formData) {
+    console.log('[ResourceManager] Debug - Validating form data:', formData);
+    console.log('[ResourceManager] Debug - Title value:', formData.title);
+    console.log('[ResourceManager] Debug - Title type:', typeof formData.title);
+    console.log('[ResourceManager] Debug - Title truthy check:', !!formData.title);
+    
     if (!formData.title) {
       return { isValid: false, message: 'Title is required' };
     }
@@ -5066,6 +5592,11 @@ export class UnifiedResourceManager extends ModuleBase {
 
     // Update timestamps
     const now = new Date().toISOString();
+    
+    // Ensure metadata object exists
+    if (!resource.metadata) {
+      resource.metadata = {};
+    }
     resource.metadata['meridian:modified'] = now;
 
     // Update in database if available
@@ -5114,7 +5645,7 @@ export class UnifiedResourceManager extends ModuleBase {
         }
 
       } catch (error) {
-        console.error('[UnifiedResourceManager] Database update failed:', error);
+        console.error('[ResourceManager] Database update failed:', error);
         // Continue with in-memory update even if database fails
       }
     }
@@ -5126,7 +5657,7 @@ export class UnifiedResourceManager extends ModuleBase {
 
     // Save to JSON if no database
     if (!window.api || !window.api.database) {
-      await this.saveUnifiedResources();
+      await this.saveResources();
     }
   }
 
@@ -5134,30 +5665,23 @@ export class UnifiedResourceManager extends ModuleBase {
    * Browse for file (internal resources)
    */
   async browseForFile() {
-    console.log('[UnifiedResourceManager] Opening file browser');
+    console.log('[ResourceManager] Opening file browser');
     
     try {
-      if (!window.api || !window.api.openFileDialog) {
+      if (!window.electronAPI || !window.electronAPI.selectFile) {
         this.showError('File browser not available');
         return;
       }
 
-      const result = await window.api.openFileDialog({
-        title: 'Select Resource File',
-        buttonLabel: 'Select',
-        filters: [
-          { name: 'All Files', extensions: ['*'] },
-          { name: 'Documents', extensions: ['txt', 'md', 'pdf', 'doc', 'docx'] },
-          { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'svg'] },
-          { name: 'Videos', extensions: ['mp4', 'avi', 'mov', 'mkv'] },
-          { name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'flac'] }
-        ],
-        properties: ['openFile']
-      });
+      const selectedPath = await window.electronAPI.selectFile([
+        { name: 'All Files', extensions: ['*'] },
+        { name: 'Documents', extensions: ['txt', 'md', 'pdf', 'doc', 'docx'] },
+        { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'svg'] },
+        { name: 'Videos', extensions: ['mp4', 'avi', 'mov', 'mkv'] },
+        { name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'flac'] }
+      ]);
 
-      if (result && result.filePaths && result.filePaths.length > 0) {
-        const selectedPath = result.filePaths[0];
-        
+      if (selectedPath) {
         // Update file path input
         const filePathInput = document.getElementById('edit-file-path');
         if (filePathInput) {
@@ -5169,7 +5693,7 @@ export class UnifiedResourceManager extends ModuleBase {
       }
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] File browser failed:', error);
+              console.error('[ResourceManager] File browser failed:', error);
       this.showError('Failed to open file browser: ' + error.message);
     }
   }
@@ -5195,7 +5719,7 @@ export class UnifiedResourceManager extends ModuleBase {
         </div>
       `;
     } catch (error) {
-      console.error('[UnifiedResourceManager] Failed to check file status:', error);
+              console.error('[ResourceManager] Failed to check file status:', error);
     }
   }
 
@@ -5203,7 +5727,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Add custom property
    */
   async addCustomProperty() {
-    console.log('[UnifiedResourceManager] Adding custom property');
+    console.log('[ResourceManager] Adding custom property');
     
     const template = document.getElementById('new-property-template');
     if (!template) return;
@@ -5253,7 +5777,7 @@ export class UnifiedResourceManager extends ModuleBase {
     }
     this.setupPropertyValueAutocomplete(newValueInput);
 
-    console.log(`[UnifiedResourceManager] Added custom property: ${key} = ${value}`);
+    console.log(`[ResourceManager] Added custom property: ${key} = ${value}`);
   }
 
   /**
@@ -5265,7 +5789,7 @@ export class UnifiedResourceManager extends ModuleBase {
     const keyInput = propertyItem.querySelector('.property-key-input');
     const key = keyInput?.value?.trim();
     
-    console.log(`[UnifiedResourceManager] Removing custom property: ${key}`);
+    console.log(`[ResourceManager] Removing custom property: ${key}`);
     propertyItem.remove();
   }
 
@@ -5291,7 +5815,7 @@ export class UnifiedResourceManager extends ModuleBase {
       this.tagAutocompletes.push(autocomplete);
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Failed to setup property key autocomplete:', error);
+              console.error('[ResourceManager] Failed to setup property key autocomplete:', error);
     }
   }
 
@@ -5322,7 +5846,7 @@ export class UnifiedResourceManager extends ModuleBase {
       this.tagAutocompletes.push(autocomplete);
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Failed to setup property value autocomplete:', error);
+              console.error('[ResourceManager] Failed to setup property value autocomplete:', error);
     }
   }
 
@@ -5404,7 +5928,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Add alternative URL location (legacy method - kept for compatibility)
    */
   async addAlternativeUrl() {
-    console.log('[UnifiedResourceManager] Adding alternative URL');
+    console.log('[ResourceManager] Adding alternative URL');
     
     const urlInput = document.getElementById('new-alternative-url');
     if (!urlInput) return;
@@ -5456,14 +5980,14 @@ export class UnifiedResourceManager extends ModuleBase {
     // Check URL accessibility
     this.checkUrlAccessibility(url, newIndex);
 
-    console.log(`[UnifiedResourceManager] Added alternative URL: ${url}`);
+    console.log(`[ResourceManager] Added alternative URL: ${url}`);
   }
 
   /**
    * Add external Arweave hash location
    */
   async addExternalArweaveHash() {
-    console.log('[UnifiedResourceManager] Adding external Arweave hash');
+    console.log('[ResourceManager] Adding external Arweave hash');
     
     const hashInput = document.getElementById('new-arweave-hash');
     if (!hashInput) return;
@@ -5514,7 +6038,7 @@ export class UnifiedResourceManager extends ModuleBase {
     // Check Arweave accessibility
     this.checkUrlAccessibility(arweaveUrl, newIndex);
 
-    console.log(`[UnifiedResourceManager] Added external Arweave hash: ${hash}`);
+    console.log(`[ResourceManager] Added external Arweave hash: ${hash}`);
   }
 
   /**
@@ -5524,7 +6048,7 @@ export class UnifiedResourceManager extends ModuleBase {
     if (!locationItem) return;
 
     const locationValue = locationItem.querySelector('.location-value')?.textContent?.trim();
-    console.log(`[UnifiedResourceManager] Removing alternative location: ${locationValue}`);
+    console.log(`[ResourceManager] Removing alternative location: ${locationValue}`);
     
     locationItem.remove();
   }
@@ -5560,7 +6084,7 @@ export class UnifiedResourceManager extends ModuleBase {
       });
 
     } catch (error) {
-      console.warn(`[UnifiedResourceManager] URL check failed for ${url}:`, error);
+              console.warn(`[ResourceManager] URL check failed for ${url}:`, error);
       
       const statusElement = document.querySelector(`[data-index="${index}"] .location-status`);
       if (statusElement) {
@@ -5579,7 +6103,7 @@ export class UnifiedResourceManager extends ModuleBase {
    * Add tag to edit form
    */
   async addEditTag() {
-    console.log('[UnifiedResourceManager] Adding tag to edit form');
+    console.log('[ResourceManager] Adding tag to edit form');
     
     const tagInput = document.getElementById('edit-resource-tag-input');
     if (!tagInput) return;
@@ -5610,7 +6134,7 @@ export class UnifiedResourceManager extends ModuleBase {
     // Clear input
     tagInput.value = '';
 
-    console.log(`[UnifiedResourceManager] Added tag: ${tagValue}`);
+    console.log(`[ResourceManager] Added tag: ${tagValue}`);
   }
 
   /**
@@ -5619,7 +6143,7 @@ export class UnifiedResourceManager extends ModuleBase {
   removeEditTag(tagValue) {
     if (!tagValue) return;
 
-    console.log(`[UnifiedResourceManager] Removing tag: ${tagValue}`);
+    console.log(`[ResourceManager] Removing tag: ${tagValue}`);
     
     // Remove from modal tags array
     const index = this.modalTags.indexOf(tagValue);
@@ -5675,7 +6199,37 @@ export class UnifiedResourceManager extends ModuleBase {
       this.tagAutocompletes.push(autocomplete);
       
     } catch (error) {
-      console.error('[UnifiedResourceManager] Failed to setup tag autocomplete:', error);
+              console.error('[ResourceManager] Failed to setup tag autocomplete:', error);
+    }
+  }
+
+  /**
+   * Open the Arweave upload modal for a specific resource
+   */
+  async openUploadModalForResource(resourceId) {
+    console.log(`[ResourceManager] Opening upload modal for resource: ${resourceId}`);
+    
+    try {
+      // Get the resource data
+      const resource = this.state.resources.find(r => r.id === resourceId);
+      if (!resource) {
+        this.showError('Resource not found');
+        return;
+      }
+
+      // Get the UploadManager instance
+      const uploadManager = this.getModule('uploadManager');
+      if (!uploadManager) {
+        this.showError('Upload manager not available');
+        return;
+      }
+
+      // Open the upload modal with resource context
+      await uploadManager.openModalForResource(resource);
+      
+    } catch (error) {
+      console.error('[ResourceManager] Error opening upload modal:', error);
+      this.showError('Failed to open upload modal');
     }
   }
 } 

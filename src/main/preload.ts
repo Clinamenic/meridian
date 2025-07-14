@@ -38,20 +38,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateFileMetadata: (uuid: string, updates: any) => ipcRenderer.invoke('archive:update-file-metadata', uuid, updates),
   },
 
-  // Unified APIs
-  unified: {
-    loadData: () => ipcRenderer.invoke('unified:load-data'),
-    saveData: (data: any) => ipcRenderer.invoke('unified:save-data', data),
-    addResource: (resource: any) => ipcRenderer.invoke('unified:add-resource', resource),
-    updateResource: (id: string, updates: any) => ipcRenderer.invoke('unified:update-resource', id, updates),
-    removeResource: (id: string) => ipcRenderer.invoke('unified:remove-resource', id),
-    addTagToResource: (resourceId: string, tag: string) => ipcRenderer.invoke('unified:add-tag-to-resource', resourceId, tag),
-    removeTagFromResource: (resourceId: string, tag: string) => ipcRenderer.invoke('unified:remove-tag-from-resource', resourceId, tag),
+  // Resource APIs (was Unified APIs)
+  resource: {
+    loadData: () => ipcRenderer.invoke('resource:load-data'),
+    saveData: (data: any) => ipcRenderer.invoke('resource:save-data', data),
+    addResource: (resource: any) => ipcRenderer.invoke('resource:add-resource', resource),
+    updateResource: (id: string, updates: any) => ipcRenderer.invoke('resource:update-resource', id, updates),
+    removeResource: (id: string) => ipcRenderer.invoke('resource:remove-resource', id),
+    addTagToResource: (resourceId: string, tag: string) => ipcRenderer.invoke('resource:add-tag-to-resource', resourceId, tag),
+    removeTagFromResource: (resourceId: string, tag: string) => ipcRenderer.invoke('resource:remove-tag-from-resource', resourceId, tag),
+    extractMetadata: (url: string) => ipcRenderer.invoke('resource:extract-metadata', url),
     // Database-specific APIs
-    exportToJSON: () => ipcRenderer.invoke('unified:export-to-json'),
-    exportToDatabase: (exportData: any) => ipcRenderer.invoke('unified:export-to-database', exportData),
-    getStats: () => ipcRenderer.invoke('unified:get-stats'),
-    searchResources: (criteria: any) => ipcRenderer.invoke('unified:search-resources', criteria),
+    exportToJSON: () => ipcRenderer.invoke('resource:export-to-json'),
+    exportToDatabase: (exportData: any) => ipcRenderer.invoke('resource:export-to-database', exportData),
+    getStats: () => ipcRenderer.invoke('resource:get-stats'),
+    searchResources: (criteria: any) => ipcRenderer.invoke('resource:search-resources', criteria),
+    addArweaveUploadToResource: (resourceId: string, uploadRecord: any) => 
+      ipcRenderer.invoke('resource:add-arweave-upload-to-resource', resourceId, uploadRecord),
   },
 
   // Deploy APIs
@@ -226,7 +229,7 @@ export interface ElectronAPI {
     updateFileMetadata: (uuid: string, updates: any) => Promise<void>;
   };
 
-  unified: {
+  resource: {
     loadData: () => Promise<any>;
     saveData: (data: any) => Promise<void>;
     addResource: (resource: any) => Promise<any>;
@@ -234,11 +237,12 @@ export interface ElectronAPI {
     removeResource: (id: string) => Promise<void>;
     addTagToResource: (resourceId: string, tag: string) => Promise<any>;
     removeTagFromResource: (resourceId: string, tag: string) => Promise<any>;
-    // Database-specific APIs
+    extractMetadata: (url: string) => Promise<any>;
     exportToJSON: () => Promise<any>;
     exportToDatabase: (exportData: any) => Promise<{ success: boolean; filePath?: string; error?: string }>;
     getStats: () => Promise<any>;
     searchResources: (criteria: any) => Promise<any>;
+    addArweaveUploadToResource: (resourceId: string, uploadRecord: any) => Promise<{ success: boolean; error?: string }>;
   };
 
   deploy: {

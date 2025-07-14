@@ -31,7 +31,7 @@ export class UnifiedDatabaseManager {
     }
 
     return new Promise((resolve, reject) => {
-      this.db = new sqlite3.Database(this.dbPath!, (err: Error | null) => {
+      this.db = new sqlite3.Database(this.dbPath!, async (err: Error | null) => {
         if (err) {
           console.error('[UnifiedDatabaseManager] Failed to open database:', err);
           reject(err);
@@ -39,11 +39,53 @@ export class UnifiedDatabaseManager {
         }
 
         console.log('[UnifiedDatabaseManager] Database opened successfully');
+        try {
+          await this.migrateCreatedToIndexed();
+        } catch (migrationErr) {
+          console.error('[UnifiedDatabaseManager] Migration error:', migrationErr);
+          // Continue anyway, but log the error
+        }
         this.createTables()
           .then(() => resolve())
           .catch(reject);
       });
     });
+  }
+
+  /**
+   * Migration: Rename created_at/created_at_timestamp to indexed_at/indexed_at_timestamp if present
+   */
+  private async migrateCreatedToIndexed(): Promise<void> {
+    if (!this.db) return;
+    // Check if the columns exist
+    const getPragma = (table: string) => new Promise<any[]>((resolve, reject) => {
+      this.db!.all(`PRAGMA table_info(${table})`, (err, rows) => {
+        if (err) reject(err); else resolve(rows);
+      });
+    });
+    const run = (sql: string) => new Promise<void>((resolve, reject) => {
+      this.db!.run(sql, (err) => { if (err) reject(err); else resolve(); });
+    });
+    const columns = await getPragma('resources');
+    const hasCreatedAt = columns.some(col => col.name === 'created_at');
+    const hasCreatedAtTs = columns.some(col => col.name === 'created_at_timestamp');
+    let migrated = false;
+    if (hasCreatedAt) {
+      await run('ALTER TABLE resources RENAME COLUMN created_at TO indexed_at');
+      migrated = true;
+      console.log('[UnifiedDatabaseManager] Migrated column created_at → indexed_at');
+    }
+    if (hasCreatedAtTs) {
+      await run('ALTER TABLE resources RENAME COLUMN created_at_timestamp TO indexed_at_timestamp');
+      migrated = true;
+      console.log('[UnifiedDatabaseManager] Migrated column created_at_timestamp → indexed_at_timestamp');
+    }
+    if (migrated) {
+      // Drop old index if it exists and create new one
+      await run('DROP INDEX IF EXISTS idx_resources_created_at');
+      await run('CREATE INDEX IF NOT EXISTS idx_resources_indexed_at ON resources (indexed_at_timestamp)');
+      console.log('[UnifiedDatabaseManager] Updated index for indexed_at_timestamp');
+    }
   }
 
   /**
@@ -71,10 +113,10 @@ export class UnifiedDatabaseManager {
           state_accessible BOOLEAN DEFAULT 1,
           state_last_verified TEXT,
           state_verification_status TEXT DEFAULT 'verified',
-          created_at TEXT NOT NULL,
+          indexed_at TEXT NOT NULL,
           modified_at TEXT NOT NULL,
           last_accessed TEXT NOT NULL,
-          created_at_timestamp INTEGER NOT NULL,
+          indexed_at_timestamp INTEGER NOT NULL,
           modified_at_timestamp INTEGER NOT NULL,
           last_accessed_timestamp INTEGER NOT NULL,
           arweave_hashes TEXT
@@ -151,7 +193,7 @@ export class UnifiedDatabaseManager {
         CREATE INDEX IF NOT EXISTS idx_resources_title ON resources (title);
         CREATE INDEX IF NOT EXISTS idx_resources_type ON resources (resource_type);
         CREATE INDEX IF NOT EXISTS idx_resources_state_type ON resources (state_type);
-        CREATE INDEX IF NOT EXISTS idx_resources_created_at ON resources (created_at_timestamp);
+        CREATE INDEX IF NOT EXISTS idx_resources_indexed_at ON resources (indexed_at_timestamp);
         CREATE INDEX IF NOT EXISTS idx_resources_modified_at ON resources (modified_at_timestamp);
         CREATE INDEX IF NOT EXISTS idx_resource_tags_resource_id ON resource_tags (resource_id);
         CREATE INDEX IF NOT EXISTS idx_resource_tags_tag ON resource_tags (tag);
@@ -263,8 +305,8 @@ export class UnifiedDatabaseManager {
             id, uri, content_hash, title, description, resource_type,
             location_type, location_value, location_accessible, location_last_verified,
             state_type, state_accessible, state_last_verified, state_verification_status,
-            created_at, modified_at, last_accessed,
-            created_at_timestamp, modified_at_timestamp, last_accessed_timestamp,
+            indexed_at, modified_at, last_accessed,
+            indexed_at_timestamp, modified_at_timestamp, last_accessed_timestamp,
             arweave_hashes
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
             ?)
@@ -341,7 +383,7 @@ export class UnifiedDatabaseManager {
         FROM resources r
         LEFT JOIN resource_tags rt ON r.id = rt.resource_id
         GROUP BY r.id
-        ORDER BY r.created_at_timestamp DESC
+        ORDER BY r.indexed_at_timestamp DESC
       `;
 
       this.db!.all(query, [], (err: Error | null, rows: any[]) => {
@@ -388,7 +430,7 @@ export class UnifiedDatabaseManager {
               verificationStatus: row.state_verification_status
             },
             timestamps: {
-              created: row.created_at,
+              created: row.indexed_at,
               modified: row.modified_at,
               lastAccessed: row.last_accessed
             }
@@ -468,7 +510,7 @@ export class UnifiedDatabaseManager {
             verificationStatus: row.state_verification_status
           },
           timestamps: {
-            created: row.created_at,
+            created: row.indexed_at,
             modified: row.modified_at,
             lastAccessed: row.last_accessed
           }
@@ -764,7 +806,7 @@ export class UnifiedDatabaseManager {
       query += conditions.join(' AND ');
     }
 
-    query += ' GROUP BY r.id ORDER BY r.created_at_timestamp DESC';
+    query += ' GROUP BY r.id ORDER BY r.indexed_at_timestamp DESC';
 
     if (criteria.limit) {
       query += ' LIMIT ?';
@@ -811,7 +853,7 @@ export class UnifiedDatabaseManager {
             verificationStatus: row.state_verification_status
           },
           timestamps: {
-            created: row.created_at,
+            created: row.indexed_at,
             modified: row.modified_at,
             lastAccessed: row.last_accessed
           }
@@ -918,10 +960,10 @@ export class UnifiedDatabaseManager {
           state_accessible BOOLEAN DEFAULT 1,
           state_last_verified TEXT,
           state_verification_status TEXT DEFAULT 'verified',
-          created_at TEXT NOT NULL,
+          indexed_at TEXT NOT NULL,
           modified_at TEXT NOT NULL,
           last_accessed TEXT NOT NULL,
-          created_at_timestamp INTEGER NOT NULL,
+          indexed_at_timestamp INTEGER NOT NULL,
           modified_at_timestamp INTEGER NOT NULL,
           last_accessed_timestamp INTEGER NOT NULL,
           arweave_hashes TEXT
@@ -968,10 +1010,9 @@ export class UnifiedDatabaseManager {
           id, uri, content_hash, title, description, resource_type,
           location_type, location_value, location_accessible, location_last_verified,
           state_type, state_accessible, state_last_verified, state_verification_status,
-          created_at, modified_at, last_accessed,
-          created_at_timestamp, modified_at_timestamp, last_accessed_timestamp,
+          indexed_at, modified_at, last_accessed,
+          indexed_at_timestamp, modified_at_timestamp, last_accessed_timestamp,
           arweave_hashes
-          created_at_timestamp, modified_at_timestamp, last_accessed_timestamp
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
@@ -1060,8 +1101,8 @@ export class UnifiedDatabaseManager {
               id, uri, content_hash, title, description, resource_type,
               location_type, location_value, location_accessible, location_last_verified,
               state_type, state_accessible, state_last_verified, state_verification_status,
-              created_at, modified_at, last_accessed,
-              created_at_timestamp, modified_at_timestamp, last_accessed_timestamp
+              indexed_at, modified_at, last_accessed,
+              indexed_at_timestamp, modified_at_timestamp, last_accessed_timestamp
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
 
@@ -1509,6 +1550,68 @@ export class UnifiedDatabaseManager {
         }
       );
     });
+  }
+
+  /**
+   * Add Arweave upload to a resource
+   */
+  async addArweaveUploadToResource(resourceId: string, uploadRecord: {
+    hash: string;
+    timestamp: string;
+    link: string;
+    tags: string[];
+  }): Promise<{ success: boolean; error?: string }> {
+    if (!this.db) {
+      return { success: false, error: 'Database not initialized' };
+    }
+
+    try {
+      // Get the current resource
+      const resource = await this.getResourceById(resourceId);
+      if (!resource) {
+        return { success: false, error: `Resource with ID ${resourceId} not found` };
+      }
+
+      // Parse existing arweave_hashes or initialize as empty array
+      let arweaveHashes: any[] = [];
+      if (resource.properties['meridian:arweave_hashes']) {
+        try {
+          // If it's already an array, use it directly; if it's a string, parse it
+          const existingHashes = resource.properties['meridian:arweave_hashes'];
+          arweaveHashes = Array.isArray(existingHashes) ? existingHashes : JSON.parse(existingHashes);
+        } catch (err) {
+          console.warn('[UnifiedDatabaseManager] Failed to parse existing arweave_hashes, resetting to empty array');
+          arweaveHashes = [];
+        }
+      }
+
+      // Check for duplicate hash before adding
+      const existingHashes = arweaveHashes.map(upload => upload.hash);
+      if (existingHashes.includes(uploadRecord.hash)) {
+        console.warn(`[UnifiedDatabaseManager] Duplicate hash ${uploadRecord.hash} detected, skipping add`);
+        return { success: true }; // Return success since the hash already exists
+      }
+
+      // Add the new upload record
+      arweaveHashes.push(uploadRecord);
+
+      // Update the resource with the new arweave_hashes using the updateResource method
+      const updates = {
+        properties: {
+          ...resource.properties,
+          'meridian:arweave_hashes': arweaveHashes
+        }
+      };
+      
+      await this.updateResource(resourceId, updates);
+      
+      console.log(`[UnifiedDatabaseManager] Successfully added Arweave upload ${uploadRecord.hash} to resource ${resourceId}`);
+      return { success: true };
+
+    } catch (error) {
+      console.error('[UnifiedDatabaseManager] Error adding Arweave upload to resource:', error);
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
   }
 
   /**
