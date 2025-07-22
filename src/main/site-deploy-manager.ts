@@ -682,9 +682,29 @@ class DeployManager {
     return false;
   }
 
-  async initializeQuartz(workspacePath: string): Promise<void> {
+  async initializeQuartz(workspacePath: string, templateSource?: any): Promise<void> {
     try {
       const quartzPath = path.join(workspacePath, '.quartz');
+      
+      // Get template source - load from settings if not provided
+      let template = templateSource;
+      if (!template) {
+        try {
+          const settings = await this.loadSiteSettings(workspacePath);
+          template = settings.quartz?.template;
+        } catch (error) {
+          console.log('No existing site settings found, using default template');
+        }
+      }
+      
+      // If still no template, use default
+      if (!template) {
+        const { SiteTemplateManager } = await import('./site-template-manager');
+        const templateManager = SiteTemplateManager.getInstance();
+        template = await templateManager.getDefaultTemplate();
+      }
+      
+      console.log(`Initializing Quartz with template: ${template.name} (${template.type})`);
       
       // Clean up existing .quartz directory if it exists
       try {
@@ -696,20 +716,24 @@ class DeployManager {
       // Create .quartz directory
       await fs.mkdir(quartzPath, { recursive: true });
       
-      // Clone pre-configured Meridian-Quartz repository
-      await this.createQuartzProject(quartzPath);
+      // Clone the selected template
+      await this.cloneTemplate(template, quartzPath);
+      
+      // Apply workspace-specific configurations
+      await this.applyWorkspaceSettings(workspacePath);
       
       // Create minimal package.json for workspace (GitHub Actions compatibility)
       await this.createWorkspacePackageJson(workspacePath);
       
-      // No configuration generation needed - meridian-quartz comes pre-configured!
-      
       // Update .gitignore to exclude build artifacts
       await this.updateGitignore(workspacePath);
       
+      // Save template info in site settings
+      await this.updateSiteSettingsWithTemplate(workspacePath, template);
+      
     } catch (error: any) {
-      console.error('Meridian-Quartz initialization error:', error);
-      throw new Error(`Failed to initialize Meridian-Quartz project: ${error.message}`);
+      console.error('Site template initialization error:', error);
+      throw new Error(`Failed to initialize site template: ${error.message}`);
     }
   }
 
@@ -891,6 +915,89 @@ class DeployManager {
   }
 
 
+
+  private async loadSiteSettings(workspacePath: string): Promise<any> {
+    const ConfigManager = (await import('./site-config-manager')).default;
+    const configManager = ConfigManager.getInstance();
+    return await configManager.loadSiteSettings(workspacePath);
+  }
+
+  private async cloneTemplate(template: any, destination: string): Promise<void> {
+    const { SiteTemplateCloner } = await import('./site-template-cloner');
+    const cloner = SiteTemplateCloner.getInstance();
+    const result = await cloner.cloneTemplate(template, destination);
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Template cloning failed');
+    }
+    
+    console.log(`Successfully cloned template to ${destination}`);
+  }
+
+  private async applyWorkspaceSettings(workspacePath: string): Promise<void> {
+    try {
+      const settings = await this.loadSiteSettings(workspacePath);
+      const quartzPath = path.join(workspacePath, '.quartz');
+      
+      // Apply any workspace-specific configurations to the template
+      // For now, this is a placeholder for future workspace customizations
+      console.log('Applied workspace-specific settings');
+    } catch (error) {
+      // Ignore if no settings exist yet
+      console.log('No workspace settings to apply');
+    }
+  }
+
+  private async updateSiteSettingsWithTemplate(workspacePath: string, template: any): Promise<void> {
+    try {
+      const ConfigManager = (await import('./site-config-manager')).default;
+      const configManager = ConfigManager.getInstance();
+      
+      // Load existing settings or create new ones
+      let settings;
+      try {
+        settings = await configManager.loadSiteSettings(workspacePath);
+      } catch (error) {
+        // Create default settings if none exist
+        settings = {
+          version: '1.0.0',
+          lastModified: new Date().toISOString(),
+          site: {
+            title: 'My Digital Garden',
+            description: 'A collection of my thoughts and notes',
+            author: '',
+          },
+          quartz: {
+            enableSPA: true,
+            enablePopovers: true,
+            theme: {
+              mode: 'auto' as const,
+            },
+          },
+          deployment: {
+            branch: 'main',
+            customCNAME: false,
+          },
+          metadata: {
+            createdAt: new Date().toISOString(),
+            workspacePath: workspacePath,
+          },
+        };
+      }
+      
+      // Update template and initialization status
+      settings.quartz.template = template;
+      settings.metadata.initialized = true;
+      settings.lastModified = new Date().toISOString();
+      
+      // Save updated settings
+      await configManager.saveSiteSettings(workspacePath, settings);
+      console.log('Updated site settings with template information');
+    } catch (error) {
+      console.error('Failed to update site settings with template:', error);
+      // Don't throw - this is not critical for initialization
+    }
+  }
 
   private async updateGitignore(workspacePath: string): Promise<void> {
     const gitignoreContent = `# Quartz build artifacts

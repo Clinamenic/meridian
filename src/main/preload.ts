@@ -86,6 +86,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('deploy:github-accounts'),
   },
 
+  // Site template APIs
+  template: {
+    getDefault: () => ipcRenderer.invoke('template:getDefault'),
+    validateCustomUrl: (url: string) => ipcRenderer.invoke('template:validateCustomUrl', url),
+    parseUrl: (url: string) => ipcRenderer.invoke('template:parseUrl', url),
+    cloneTemplate: (source: any, destination: string) => ipcRenderer.invoke('template:cloneTemplate', source, destination),
+    validateTemplate: (templatePath: string) => ipcRenderer.invoke('template:validateTemplate', templatePath),
+    quickValidate: (templatePath: string) => ipcRenderer.invoke('template:quickValidate', templatePath),
+  },
+
   // Broadcast APIs
   broadcast: {
     loadData: () => ipcRenderer.invoke('broadcast:load-data'),
@@ -268,6 +278,15 @@ export interface ElectronAPI {
     startGitHubAccountAddition: (repoName?: string) => Promise<void>;
     generateGitHubTokenUrl: (repoName?: string) => Promise<string>;
     getGitHubAccounts: () => Promise<any[]>;
+  };
+
+  template: {
+    getDefault: () => Promise<any>;
+    validateCustomUrl: (url: string) => Promise<any>;
+    parseUrl: (url: string) => Promise<any>;
+    cloneTemplate: (source: any, destination: string) => Promise<any>;
+    validateTemplate: (templatePath: string) => Promise<any>;
+    quickValidate: (templatePath: string) => Promise<boolean>;
   };
   
   broadcast: {

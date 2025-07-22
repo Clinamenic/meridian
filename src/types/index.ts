@@ -323,6 +323,10 @@ export interface SiteSettings {
     title: string;
     description?: string;
     author?: string;
+    ignorePatterns?: {
+      custom: string[];
+      enabled: boolean;
+    };
   };
   quartz: {
     enableSPA: boolean;
@@ -331,6 +335,7 @@ export interface SiteSettings {
       mode: 'auto' | 'light' | 'dark';
       primaryColor?: string;
     };
+    template?: import('./site-template-types').TemplateSource;
   };
   deployment: {
     provider?: string | null;
@@ -341,6 +346,7 @@ export interface SiteSettings {
   metadata: {
     createdAt: string;
     workspacePath: string;
+    initialized?: boolean;
   };
 }
 

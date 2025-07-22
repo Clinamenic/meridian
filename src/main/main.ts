@@ -12,13 +12,17 @@ import { AccountStateManager } from './account-state-manager';
 import { TemplateManager } from './template-manager';
 import { StagingManager } from './staging-manager';
 import { MarkdownProcessor } from './markdown-processor';
-import DeployManager from './deploy-manager';
-import ConfigManager from './config-manager';
+import DeployManager from './site-deploy-manager';
+import ConfigManager from './site-config-manager';
 import { GitHubManager } from './github-manager';
 import { UnifiedDatabaseManager } from './unified-database-manager';
+import { SiteTemplateManager } from './site-template-manager';
+import { SiteTemplateCloner } from './site-template-cloner';
+import { SiteTemplateValidator } from './site-template-validator';
 import { 
   UnifiedResource 
 } from '../types';
+import { TemplateSource, TemplateCloneResult } from '../types/site-template-types';
 
 class MeridianApp {
   private mainWindow: BrowserWindow | null = null;
@@ -37,6 +41,9 @@ class MeridianApp {
   private configManager: ConfigManager;
   private githubManager: GitHubManager;
   private unifiedDatabaseManager: UnifiedDatabaseManager;
+  private siteTemplateManager: SiteTemplateManager;
+  private siteTemplateCloner: SiteTemplateCloner;
+  private siteTemplateValidator: SiteTemplateValidator;
 
   constructor() {
     this.credentialManager = CredentialManager.getInstance();
@@ -53,6 +60,9 @@ class MeridianApp {
     this.deployManager = new DeployManager();
     this.configManager = ConfigManager.getInstance();
     this.githubManager = new GitHubManager();
+    this.siteTemplateManager = SiteTemplateManager.getInstance();
+    this.siteTemplateCloner = SiteTemplateCloner.getInstance();
+    this.siteTemplateValidator = SiteTemplateValidator.getInstance();
 
     // Initialize centralized account state manager
     this.accountStateManager = AccountStateManager.getInstance(
@@ -581,6 +591,31 @@ class MeridianApp {
 
     ipcMain.handle('broadcast:preview-template', async (_, templateId, variables) => {
       return await this.templateManager.previewTemplate(templateId, variables);
+    });
+
+    // Site template management
+    ipcMain.handle('template:getDefault', async () => {
+      return await this.siteTemplateManager.getDefaultTemplate();
+    });
+
+    ipcMain.handle('template:validateCustomUrl', async (_, url: string) => {
+      return await this.siteTemplateManager.validateCustomUrl(url);
+    });
+
+    ipcMain.handle('template:parseUrl', async (_, url: string) => {
+      return await this.siteTemplateManager.parseRepositoryUrl(url);
+    });
+
+    ipcMain.handle('template:cloneTemplate', async (_, source: TemplateSource, destination: string): Promise<TemplateCloneResult> => {
+      return await this.siteTemplateCloner.cloneTemplate(source, destination);
+    });
+
+    ipcMain.handle('template:validateTemplate', async (_, templatePath: string) => {
+      return await this.siteTemplateValidator.validateTemplate(templatePath);
+    });
+
+    ipcMain.handle('template:quickValidate', async (_, templatePath: string) => {
+      return await this.siteTemplateValidator.quickValidate(templatePath);
     });
 
     // Staging management
