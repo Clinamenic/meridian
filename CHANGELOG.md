@@ -5,6 +5,34 @@ All notable changes to Meridian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-07-22
+
+### Added
+
+- **Site Template Management System**: Comprehensive template management with cloning, validation, and configuration
+- **Template Cloning**: Clone templates from various sources (GitHub, local paths, URLs) with validation
+- **Template Validation**: Multi-level validation system for template integrity and compatibility
+- **Repository URL Parsing**: Intelligent parsing of GitHub repository URLs for template sources
+- **Template Configuration**: Flexible configuration system for site templates with custom URL support
+- **New IPC Handlers**: Added template operations (getDefault, validateCustomUrl, parseUrl, cloneTemplate, validateTemplate, quickValidate)
+- **Site Template Types**: New type definitions for template management system
+- **Modular CSS Structure**: Organized styles into modules for better maintainability
+
+### Changed
+
+- **Deployment Architecture**: Refactored deployment managers for better separation of concerns
+- **Manager Renaming**: Renamed config-manager.ts to site-config-manager.ts and deploy-manager.ts to site-deploy-manager.ts
+- **UI Improvements**: Updated DeployManager to use Configure button instead of Site Settings
+- **Style Organization**: Consolidated styles into organized structure with module-specific CSS files
+- **Font Management**: Removed deprecated font files and reorganized font structure
+
+### Technical Improvements
+
+- **Code Organization**: Better separation of concerns in deployment-related managers
+- **Type Safety**: Enhanced type definitions for template management operations
+- **Maintainability**: Modular CSS structure for easier style management
+- **API Consistency**: Unified template management API across the application
+
 ## [0.5.2] - 2025-01-14
 
 ### Changed
