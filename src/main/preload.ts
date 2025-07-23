@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Workspace management
   selectWorkspace: () => ipcRenderer.invoke('select-workspace'),
   getWorkspace: () => ipcRenderer.invoke('get-workspace'),
+  
+  // Window management for landing page transition
+  transitionToMainApp: () => ipcRenderer.invoke('transitionToMainApp'),
 
 
 
@@ -214,6 +217,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 export interface ElectronAPI {
   selectWorkspace: () => Promise<{ success: boolean; path?: string }>;
   getWorkspace: () => Promise<string | null>;
+  transitionToMainApp: () => Promise<{ success: boolean; error?: string }>;
   
 
   

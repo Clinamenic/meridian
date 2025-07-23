@@ -66,28 +66,13 @@ class MeridianApp {
     // Setup event listeners after modules are initialized
     await this.setupEventListeners();
 
-    // Show landing page if no workspace is selected
+    // Main app initialization - workspace should already be selected
     if (!this.workspacePath) {
-      document.getElementById('landing-page').style.display = 'flex';
-      this.initializeMarblingBackground();
-      await this.loadAppVersion();
-      document.getElementById('landing-workspace-btn').addEventListener('click', async () => {
-        await this.selectWorkspace();
-        if (this.workspacePath) {
-          document.getElementById('landing-page').style.display = 'none';
-          this.cleanupMarblingBackground();
-          await this.loadToolData();
-          // Account state will be automatically initialized by workspace selection
-          await this.waitForAccountStateInitialization();
-          this.updateFooterWorkspace();
-          this.updateFooterStatus('Ready');
-        }
-      });
+      console.warn('[App] No workspace selected in main app window');
       return;
     }
 
-    // If workspace exists, proceed with normal initialization
-    document.getElementById('landing-page').style.display = 'none';
+    // Load all tool data for the selected workspace
     await this.loadAllToolData();
 
     // Check if account state is already initialized, if not wait for it

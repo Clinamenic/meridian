@@ -93,9 +93,8 @@ class MeridianApp {
 
     // All windows closed
     app.on('window-all-closed', () => {
-      if (process.platform !== 'darwin') {
-        app.quit();
-      }
+      // Don't quit the app when windows are closed - we're transitioning between pages
+      // The app will be explicitly quit when the user closes the window
     });
 
         // App quit - cleanup database connections
@@ -119,6 +118,47 @@ class MeridianApp {
 
   private createWindow(): void {
     this.mainWindow = new BrowserWindow({
+      width: 500,
+      height: 500,
+      minWidth: 400,
+      minHeight: 400,
+      resizable: true,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, 'preload.js'),
+        webSecurity: true,
+        allowRunningInsecureContent: false,
+        experimentalFeatures: false
+      },
+      frame: false,
+      transparent: true,
+      show: false
+    });
+
+    // Load the landing page first
+    if (process.env.NODE_ENV === 'development') {
+      this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/landing.html'));
+      this.mainWindow.webContents.openDevTools();
+    } else {
+      this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/landing.html'));
+    }
+
+    // Show when ready
+    this.mainWindow.once('ready-to-show', () => {
+      this.mainWindow?.show();
+    });
+
+    // Handle close
+    this.mainWindow.on('closed', () => {
+      this.mainWindow = null;
+      // Quit the app when the main window is closed
+      app.quit();
+    });
+  }
+
+  private createMainAppWindow(): void {
+    this.mainWindow = new BrowserWindow({
       width: 900,
       height: 800,
       minWidth: 700,
@@ -126,7 +166,6 @@ class MeridianApp {
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-
         preload: path.join(__dirname, 'preload.js'),
         webSecurity: true,
         allowRunningInsecureContent: false,
@@ -136,7 +175,7 @@ class MeridianApp {
       show: false
     });
 
-    // Load the renderer
+    // Load the main app
     if (process.env.NODE_ENV === 'development') {
       this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/index.html'));
       this.mainWindow.webContents.openDevTools();
@@ -152,6 +191,8 @@ class MeridianApp {
     // Handle close
     this.mainWindow.on('closed', () => {
       this.mainWindow = null;
+      // Quit the app when the main window is closed
+      app.quit();
     });
   }
 
@@ -200,6 +241,42 @@ class MeridianApp {
 
     ipcMain.handle('get-workspace', () => {
       return this.dataManager.getWorkspacePath();
+    });
+
+    // Window management IPC handlers for landing page transition
+    ipcMain.handle('transitionToMainApp', async () => {
+      try {
+        console.log('[Main] Transitioning from landing page to main app');
+        
+        if (!this.mainWindow) {
+          throw new Error('No main window available');
+        }
+        
+        console.log('[Main] Loading main app content...');
+        
+        // Load the main app content in the same window
+        if (process.env.NODE_ENV === 'development') {
+          await this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/index.html'));
+        } else {
+          await this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/index.html'));
+        }
+        
+        console.log('[Main] Main app content loaded successfully');
+        
+        return { success: true };
+      } catch (error) {
+        console.error('[Main] Error transitioning to main app:', error);
+        return { success: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    });
+
+    ipcMain.handle('getAppVersion', async () => {
+      try {
+        return app.getVersion();
+      } catch (error) {
+        console.error('[Main] Error getting app version:', error);
+        return '0.4.0'; // Fallback version
+      }
     });
 
 

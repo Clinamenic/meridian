@@ -195,6 +195,11 @@
     background-color: var(--surface-bg);
     line-height: 1.5;
 }
+
+/* Transparent background for landing page */
+body.landing-page {
+    background: transparent;
+}
   
   /* Notification animations */
   @keyframes slideIn {
@@ -1000,54 +1005,72 @@
   
   
   
-  /* Landing Page */
+  /* Landing Page - Frameless Transparent Window */
 .landing-page {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: var(--theme-primary-subtle);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10000;
     overflow: hidden;
+    /* Enable window dragging */
+    -webkit-app-region: drag;
+}
+
+/* Landing Container - Full screen frameless */
+.landing-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    overflow: hidden;
+    /* Disable window dragging to allow sphere interaction */
+    -webkit-app-region: no-drag;
 }
   
-  /* Marbling Background Canvas */
+/* Marbling Background Canvas */
 .marbling-background {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
-    pointer-events: none;
-    /* No mouse interaction needed */
+    z-index: 1;
+    /* Allow interaction with the sphere */
+    pointer-events: auto;
+    /* Enable window dragging on canvas for window movement */
+    -webkit-app-region: drag;
 }
   
 .landing-content {
-    position: relative;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     text-align: center;
     padding: var(--spacing-xl);
-    background-color: rgba(255, 255, 255, 0.35);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    box-shadow:
-      var(--shadow-lg),
-      0 8px 32px rgba(0, 0, 0, 0.1);
-    z-index: 1;
-    max-width: 350px;
+    z-index: 2;
+    max-width: 300px;
     width: 90%;
-    max-height: 350px;
-    height: 90%;
+    /* Allow pointer events to pass through to canvas for sphere dragging */
+    pointer-events: none;
+    /* Disable window dragging on content for button interaction */
+    -webkit-app-region: no-drag;
 }
   
 .landing-content h1 {
-    margin: var(--spacing-2xl) 0 var(--spacing-xs) 0;
+    margin: var(--spacing-md) 0 var(--spacing-xs) 0;
     color: var(--text-primary);
     font-size: var(--font-size-2xl);
     font-weight: 600;
@@ -1068,6 +1091,42 @@
 .landing-content .primary-btn {
     margin-left: auto;
     margin-right: auto;
+    /* Re-enable pointer events for button interaction */
+    pointer-events: auto;
+}
+
+/* Close button for frameless window */
+.close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+    /* Re-enable pointer events for button interaction */
+    pointer-events: auto;
+    /* Disable window dragging on close button */
+    -webkit-app-region: no-drag;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+    transform: scale(1.1);
+}
+
+.close-btn:active {
+    transform: scale(0.95);
 }
   
   
