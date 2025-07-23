@@ -5,6 +5,39 @@ All notable changes to Meridian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-07-22
+
+### Added
+
+- **Landing Page System**: Complete workspace selection interface with enhanced visual presentation
+- **Workspace Selection Workflow**: Streamlined onboarding process with workspace directory selection
+- **Enhanced OrganicWaveRenderer**: Major refactor with spherical terrain visualization and 4-color elevation system
+- **Spherical Terrain Rendering**: Advanced 3D terrain visualization with configurable elevation thresholds
+- **App Lifecycle Management**: Improved window management with proper app lifecycle handling
+- **Loading States**: Comprehensive loading and error state management for workspace selection
+- **Transparent Window Support**: Landing page loads in transparent window for modern UI experience
+
+### Changed
+
+- **Window Management**: Updated main.ts to load landing page first before workspace selection
+- **App Behavior**: Modified app quit behavior to support page transitions instead of immediate closure
+- **Visual Rendering**: Enhanced OrganicWaveRenderer with spherical shading and elevation animation
+- **UI Styling**: Updated CSS for landing page components and improved visual consistency
+
+### Technical Improvements
+
+- **Code Organization**: Separated landing logic into dedicated landing.js module
+- **Performance**: Optimized initial load with minimal imports for fast landing page rendering
+- **User Experience**: Improved onboarding flow with clear workspace selection process
+- **Error Handling**: Robust error handling for workspace selection and app transitions
+
+### User Experience
+
+- **Streamlined Onboarding**: Users now see a landing page before selecting workspace
+- **Visual Appeal**: Enhanced spherical terrain rendering provides engaging visual experience
+- **Clear Workflow**: Workspace selection is now an explicit step in the application flow
+- **Modern Interface**: Transparent window and improved styling create contemporary feel
+
 ## [0.6.0] - 2025-07-22
 
 ### Added
