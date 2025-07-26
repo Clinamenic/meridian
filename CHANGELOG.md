@@ -5,6 +5,36 @@ All notable changes to Meridian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2025-07-26
+
+### Added
+
+- **Template System Enhancements**: Improved template initialization with source parameter support
+- **Template Validation**: Added validation to ensure template objects have required fields (type, url)
+- **Enhanced Dependency Management**: Improved dependency installation workflow in Quartz directory
+
+### Changed
+
+- **Landing Page UI**: Replaced X close button with Exit button positioned next to Select Workspace
+- **Typography**: Fixed horizontal centering of landing page h1 title for better visual alignment
+- **Button Layout**: Improved landing page layout with proper button container styling
+- **OrganicWaveRenderer**: Enhanced configuration for better visual presentation and performance
+- **Template Initialization**: Enhanced template initialization workflow with better error handling
+
+### Technical Improvements
+
+- **IPC Handlers**: Updated deploy:initialize-quartz handler to support template source parameter
+- **Error Handling**: Added comprehensive template validation before initialization
+- **Code Organization**: Improved template system architecture with better separation of concerns
+- **User Experience**: Streamlined landing page interface with more intuitive button placement
+
+### User Experience
+
+- **Improved Onboarding**: Better landing page layout provides clearer workspace selection workflow
+- **Enhanced Visual Design**: Fixed typography alignment and improved button positioning
+- **Template Reliability**: More robust template validation prevents initialization errors
+- **Modern Interface**: Updated styling creates more contemporary and polished appearance
+
 ## [0.7.0] - 2025-07-22
 
 ### Added
