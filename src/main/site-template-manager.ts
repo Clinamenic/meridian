@@ -29,12 +29,41 @@ export class SiteTemplateManager {
     return {
       id: 'vanilla-quartz',
       name: 'Vanilla Quartz',
-      type: 'github',
+      type: 'github' as const,
       url: 'https://github.com/Clinamenic/meridian-quartz.git',
       branch: 'meridian-main',
       description: 'Default Meridian-Quartz template',
       isDefault: true,
     };
+  }
+
+  /**
+   * Get Clinamenic Quartz template
+   */
+  async getClinamenicTemplate(): Promise<TemplateSource> {
+    return {
+      id: 'clinamenic-quartz',
+      name: 'Clinamenic Quartz',
+      type: 'github' as const,
+      url: 'https://github.com/Clinamenic/meridian-quartz-clinamenic.git',
+      branch: 'meridian-main',
+      description: 'Clinamenic-optimized Meridian-Quartz template with enhanced features',
+      isDefault: false,
+    };
+  }
+
+  /**
+   * Get template by ID
+   */
+  async getTemplateById(templateId: string): Promise<TemplateSource | null> {
+    switch (templateId) {
+      case 'vanilla-quartz':
+        return await this.getDefaultTemplate();
+      case 'clinamenic-quartz':
+        return await this.getClinamenicTemplate();
+      default:
+        return null;
+    }
   }
 
   /**

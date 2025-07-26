@@ -749,6 +749,7 @@ export class ArweaveManager {
       // Execute upload
       const { stdout, stderr } = await execAsync(command, {
         timeout: 600000, // 10 minutes timeout for bundles
+        maxBuffer: 10 * 1024 * 1024 // 10MB buffer for large uploads
       });
 
       if (stderr) {

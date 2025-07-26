@@ -7,6 +7,53 @@
 @import url('./modules/broadcast-manager.css');
 
 
+/* Britney Definitions */
+@font-face {
+    font-family: 'Britney';
+    src: url('./fonts/Britney-Light.otf') format('truetype');
+    font-weight: 100;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Britney';
+    src: url('./fonts/Britney-Regular.otf') format('truetype');
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Britney';
+    src: url('./fonts/Britney-Bold.otf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Britney';
+    src: url('./fonts/Britney-Ultra.otf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Plein Definitions */
+@font-face {
+    font-family: 'Plein';
+    src: url('./fonts/Plein-BlackItalic.otf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Lobster Definitions */
+@font-face {
+    font-family: 'Lobster';
+    src: url('./fonts/Lobster-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
 
 /* Geist Font Definitions */
 @font-face {
@@ -90,6 +137,16 @@
     --theme-primary-disabled: hsl(var(--brand-hue), 20%, 85%);
     --theme-primary-dark: hsl(var(--brand-hue), 60%, 25%);
     --theme-primary-darker: hsl(var(--brand-hue), 60%, 16%);
+    --theme-grade-1: hsl(var(--brand-hue), var(--brand-saturation), 15%);
+    --theme-grade-2: hsl(var(--brand-hue), var(--brand-saturation), 20%);
+    --theme-grade-3: hsl(var(--brand-hue), var(--brand-saturation), 25%);
+    --theme-grade-4: hsl(var(--brand-hue), var(--brand-saturation), 30%);
+    --theme-grade-5: hsl(var(--brand-hue), var(--brand-saturation), 35%);
+    --theme-grade-6: hsl(var(--brand-hue), var(--brand-saturation), 40%);
+    --theme-grade-7: hsl(var(--brand-hue), var(--brand-saturation), 45%);
+    --theme-grade-8: hsl(var(--brand-hue), var(--brand-saturation), 50%);
+    --theme-grade-9: hsl(var(--brand-hue), var(--brand-saturation), 55%);
+    --theme-grade-10: hsl(var(--brand-hue), var(--brand-saturation), 60%);
   
     /* Surface Colors */
     --surface-bg: ivory;
@@ -131,8 +188,8 @@
     --spacing-2xl: 3rem;
   
     /* Element Heights */
-    --header-height-sm: 32px;
-    --header-height: 40px;
+    --header-height-sm: 26px;
+    --header-height: 32px;
     --pill-height-sm: 20px;
     --pill-height: 24px;
     --pill-height-lg: 28px;
@@ -237,7 +294,7 @@ body.landing-page {
   /* Main Header (Draggable) */
 .app-header {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
     padding: 0 var(--spacing-md);
     background-color: var(--theme-primary-dark);
@@ -249,7 +306,50 @@ body.landing-page {
 }
   
 .header-left {
-    /* Empty spacer to balance the layout */
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    -webkit-app-region: no-drag;
+}
+
+/* Window Control Buttons */
+.window-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.window-control-btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    -webkit-app-region: no-drag;
+}
+
+.window-control-btn.close {
+    background-color: #ff5f57;
+}
+
+.window-control-btn.minimize {
+    background-color: #febc2e;
+}
+
+.window-control-btn.maximize {
+    background-color: #28c940;
+}
+
+.window-control-btn:hover {
+    filter: brightness(1.1);
+}
+
+.window-control-btn:active {
+    filter: brightness(0.9);
 }
   
 .app-title {
@@ -1017,7 +1117,7 @@ body.landing-page {
     align-items: center;
     justify-content: center;
     z-index: 10000;
-    overflow: hidden;
+    overflow: visible;
     /* Enable window dragging */
     -webkit-app-region: drag;
 }
@@ -1034,7 +1134,7 @@ body.landing-page {
     align-items: center;
     justify-content: center;
     z-index: 10000;
-    overflow: hidden;
+    overflow: visible;
     /* Disable window dragging to allow sphere interaction */
     -webkit-app-region: no-drag;
 }
@@ -1054,12 +1154,10 @@ body.landing-page {
 }
   
 .landing-content {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
+    margin: auto;
     text-align: center;
-    padding: var(--spacing-xl);
+    justify-content: center;
     z-index: 2;
     max-width: 300px;
     width: 90%;
@@ -1071,28 +1169,57 @@ body.landing-page {
   
 .landing-content h1 {
     margin: var(--spacing-md) 0 var(--spacing-xs) 0;
-    color: var(--text-primary);
-    font-size: var(--font-size-2xl);
-    font-weight: 600;
+    color: var(--surface-bg);
+    font-family: 'Britney';
+    font-size: clamp(2rem, 35vw, 5rem);
+    font-weight: 300;
+    opacity: 1;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    transform: translate(-17px, 0);
+    text-align: center;
+    justify-content: center;
+    width: 100%;
+    text-shadow: 
+    -1px -1px 0 var(--theme-primary-dark),
+     1px -1px 0 var(--theme-primary-dark),
+    -2px  2px 0 var(--theme-primary-dark),
+     1px  1px 0 var(--theme-primary-dark);
 }
   
 .landing-content .version-text {
-    margin: 0 0 var(--spacing-lg) 0;
-    color: var(--text-secondary);
-    font-size: var(--font-size-lg);
-    font-weight: 300;
+    margin: 0;
+    color: var(--surface-bg);
+    font-size: var(--font-size-md);
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    transform: translate(120px, -10px);
+    font-style: italic;
+    text-shadow: 
+    -1px -1px 0 var(--theme-primary-dark),
+     1px -1px 0 var(--theme-primary-dark),
+    -1px  1px 0 var(--theme-primary-dark),
+     1px  1px 0 var(--theme-primary-dark);
 }
+
   
-.landing-content p {
-    margin: 0 0 var(--spacing-lg) 0;
-    color: var(--text-secondary);
+.landing-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    align-items: center;
 }
-  
+
 .landing-content .primary-btn {
-    margin-left: auto;
-    margin-right: auto;
     /* Re-enable pointer events for button interaction */
     pointer-events: auto;
+    background-color: var(--theme-primary) !important;
+    opacity: 0.65;
+    border: 1px solid var(--theme-primary-dark);
+}
+
+.landing-content .primary-btn:hover {
+    opacity: 1;
 }
 
 /* Close button for frameless window */

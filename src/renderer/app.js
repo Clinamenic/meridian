@@ -136,6 +136,9 @@ class MeridianApp {
     // Resource events are handled by ResourceManager
     this.setupGlobalSearchEvents();
 
+    // Window control events
+    this.setupWindowControls();
+
     // Account management events are now handled by AccountManager
     // No need to call setupAccountManagementEvents() here
   }
@@ -144,6 +147,31 @@ class MeridianApp {
     // Legacy method - archive events have been removed
     // Archive functionality has been merged into ResourceManager
     console.log('[App] setupArchiveEvents called - archive functionality migrated to ResourceManager');
+  }
+
+  setupWindowControls() {
+    // Window control buttons for frameless window
+    const closeBtn = document.getElementById('window-close-btn');
+    const minimizeBtn = document.getElementById('window-minimize-btn');
+    const maximizeBtn = document.getElementById('window-maximize-btn');
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        window.electronAPI.closeWindow();
+      });
+    }
+
+    if (minimizeBtn) {
+      minimizeBtn.addEventListener('click', () => {
+        window.electronAPI.minimizeWindow();
+      });
+    }
+
+    if (maximizeBtn) {
+      maximizeBtn.addEventListener('click', () => {
+        window.electronAPI.maximizeWindow();
+      });
+    }
   }
 
 

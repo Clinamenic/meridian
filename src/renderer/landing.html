@@ -14,19 +14,14 @@
     <div id="landing-container" class="landing-container">
       <canvas id="marbling-canvas" class="marbling-background"></canvas>
       <div class="landing-content">
-        <button id="close-btn" class="close-btn" title="Close">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-            />
-          </svg>
-        </button>
         <h1>Meridian</h1>
         <p class="version-text" id="version-display">v0.4.0</p>
-        <p>Please select a workspace directory to begin</p>
-        <button id="landing-workspace-btn" class="primary-btn">
-          Select Workspace
-        </button>
+        <div class="landing-buttons">
+          <button id="landing-workspace-btn" class="primary-btn">
+            Select Workspace
+          </button>
+          <button id="exit-btn" class="primary-btn">Exit</button>
+        </div>
       </div>
     </div>
     <script type="module" src="js/OrganicWaveRenderer.js"></script>

@@ -76,7 +76,7 @@ class DeployManager {
   private registerIpcHandlers(): void {
     ipcMain.handle('deploy:load-data', () => this.loadDeployData());
     ipcMain.handle('deploy:save-config', (_, config) => this.saveDeployConfig(config));
-    ipcMain.handle('deploy:initialize-quartz', (_, workspacePath) => this.initializeQuartz(workspacePath));
+    ipcMain.handle('deploy:initialize-quartz', (_, workspacePath, templateSource) => this.initializeQuartz(workspacePath, templateSource));
     ipcMain.handle('deploy:build-site', (_, config) => this.buildSite(config));
     ipcMain.handle('deploy:preview-site', (_, config) => this.previewSite(config));
     ipcMain.handle('deploy:scan-content', (_, workspacePath) => this.scanContent(workspacePath));
@@ -704,6 +704,12 @@ class DeployManager {
         template = await templateManager.getDefaultTemplate();
       }
       
+      // Validate template has required fields
+      if (!template || !template.type || !template.url) {
+        console.error('Invalid template object:', template);
+        throw new Error('Template object is missing required fields (type, url)');
+      }
+      
       console.log(`Initializing Quartz with template: ${template.name} (${template.type})`);
       
       // Clean up existing .quartz directory if it exists
@@ -719,11 +725,17 @@ class DeployManager {
       // Clone the selected template
       await this.cloneTemplate(template, quartzPath);
       
+      // Install dependencies in the Quartz directory (not workspace)
+      await this.installQuartzDependencies(quartzPath);
+      
       // Apply workspace-specific configurations
       await this.applyWorkspaceSettings(workspacePath);
       
-      // Create minimal package.json for workspace (GitHub Actions compatibility)
+      // Create workspace package.json with all Quartz dependencies
       await this.createWorkspacePackageJson(workspacePath);
+      
+      // Install dependencies in workspace (for GitHub Actions compatibility)
+      await this.installWorkspaceDependencies(workspacePath);
       
       // Update .gitignore to exclude build artifacts
       await this.updateGitignore(workspacePath);
@@ -737,17 +749,27 @@ class DeployManager {
     }
   }
 
-  private async createQuartzProject(quartzPath: string): Promise<void> {
-    // Clone the Meridian-Quartz repository (pre-configured for Meridian)
+
+
+
+
+  private async installQuartzDependencies(quartzPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      console.log(`Cloning Meridian-Quartz repository to ${quartzPath}...`);
+      console.log(`Installing Meridian-Quartz dependencies in: ${quartzPath}`);
       
-      const child = spawn('git', [
-        'clone', 
-        '--branch', 'meridian-main',
-        'https://github.com/Clinamenic/meridian-quartz.git', 
-        '.'
-      ], {
+      // Check if package.json exists
+      const packageJsonPath = path.join(quartzPath, 'package.json');
+      if (!require('fs').existsSync(packageJsonPath)) {
+        const errorMessage = `package.json not found in ${quartzPath}`;
+        console.error(errorMessage);
+        reject(new Error(errorMessage));
+        return;
+      }
+      
+      console.log('package.json found, proceeding with npm install...');
+      
+      // Use --force to bypass engine checks if needed
+      const child = spawn('npm', ['install', '--force'], {
         cwd: quartzPath,
         stdio: ['inherit', 'pipe', 'pipe']
       });
@@ -756,48 +778,53 @@ class DeployManager {
       let stderr = '';
       
       child.stdout?.on('data', (data) => {
-        stdout += data.toString();
+        const output = data.toString();
+        stdout += output;
+        console.log(`[npm install stdout] ${output}`);
       });
       
       child.stderr?.on('data', (data) => {
-        stderr += data.toString();
+        const output = data.toString();
+        stderr += output;
+        console.log(`[npm install stderr] ${output}`);
       });
       
-      child.on('close', async (code) => {
+      child.on('close', (code) => {
         if (code === 0) {
-          try {
-            console.log('Meridian-Quartz cloned successfully, installing dependencies...');
-            
-            // No customization needed - meridian-quartz is pre-configured!
-            await this.installQuartzDependencies(quartzPath);
+          console.log('Dependencies installed successfully');
+          
+          // Verify that node_modules was created
+          const nodeModulesPath = path.join(quartzPath, 'node_modules');
+          if (require('fs').existsSync(nodeModulesPath)) {
+            console.log('node_modules directory created successfully');
             resolve();
-          } catch (error) {
-            reject(error);
+          } else {
+            const errorMessage = 'npm install completed but node_modules directory not found';
+            console.error(errorMessage);
+            reject(new Error(errorMessage));
           }
         } else {
-          const errorMessage = `Git clone failed with code ${code}. Stdout: ${stdout}. Stderr: ${stderr}`;
+          const errorMessage = `npm install failed with code ${code}. Stdout: ${stdout}. Stderr: ${stderr}`;
           console.error(errorMessage);
           reject(new Error(errorMessage));
         }
       });
       
       child.on('error', (error) => {
-        const errorMessage = `Failed to clone Meridian-Quartz repository: ${error.message}`;
+        const errorMessage = `Failed to install Quartz dependencies: ${error.message}`;
         console.error(errorMessage);
         reject(new Error(errorMessage));
       });
     });
   }
 
-
-
-  private async installQuartzDependencies(quartzPath: string): Promise<void> {
+  private async installWorkspaceDependencies(workspacePath: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      console.log('Installing Meridian-Quartz dependencies...');
+      console.log('Installing workspace dependencies...');
       
       // Use --force to bypass engine checks if needed
       const child = spawn('npm', ['install', '--force'], {
-        cwd: quartzPath,
+        cwd: workspacePath,
         stdio: ['inherit', 'pipe', 'pipe']
       });
       
@@ -814,7 +841,7 @@ class DeployManager {
       
       child.on('close', (code) => {
         if (code === 0) {
-          console.log('Dependencies installed successfully');
+          console.log('Workspace dependencies installed successfully');
           resolve();
         } else {
           const errorMessage = `npm install failed with code ${code}. Stdout: ${stdout}. Stderr: ${stderr}`;
@@ -824,7 +851,7 @@ class DeployManager {
       });
       
       child.on('error', (error) => {
-        const errorMessage = `Failed to install Quartz dependencies: ${error.message}`;
+        const errorMessage = `Failed to install workspace dependencies: ${error.message}`;
         console.error(errorMessage);
         reject(new Error(errorMessage));
       });
@@ -832,86 +859,42 @@ class DeployManager {
   }
 
   private async createWorkspacePackageJson(workspacePath: string): Promise<void> {
-    // Create a minimal package.json for GitHub Actions compatibility
-    const packageJson = {
-      "name": "meridian-digital-garden",
-      "version": "1.0.0",
-      "type": "module",
-      "engines": { 
-        "node": ">=22",
-        "npm": ">=10.9.2"
-      },
-      "scripts": {
-        "build": "npx quartz build",
-        "serve": "npx quartz build --serve"
-      },
-      "devDependencies": {
-        "@types/d3": "^7.4.0",
-        "@types/hast": "^2.3.4",
-        "@types/js-yaml": "^4.0.5",
-        "@types/node": "^20.14.0",
-        "@types/yargs": "^17.0.24",
-        "esbuild-sass-plugin": "^2.16.0",
-        "tsx": "^4.7.1",
-        "typescript": "^5.4.5"
-      },
-      "dependencies": {
-        "@clack/prompts": "^0.7.0",
-        "@floating-ui/dom": "^1.6.1",
-        "@napi-rs/simple-git": "^0.1.19",
-        "chokidar": "^3.6.0",
-        "d3": "^7.8.5",
-        "esbuild": "0.19.8",
-        "flexsearch": "0.7.21",
-        "github-slugger": "^2.0.0",
-        "gray-matter": "^4.0.3",
-        "hast-util-to-jsx-runtime": "^2.3.0",
-        "hast-util-to-string": "^3.0.0",
-        "is-absolute-url": "^4.0.1",
-        "js-yaml": "^4.1.0",
-        "lightningcss": "^1.21.5",
-        "mdast-util-find-and-replace": "^3.0.1",
-        "mdast-util-to-hast": "^13.0.2",
-        "mdast-util-to-string": "^4.0.0",
-        "micromorph": "^0.4.5",
-        "preact": "^10.19.6",
-        "preact-render-to-string": "^6.4.0",
-        "pretty-bytes": "^6.1.1",
-        "reading-time": "^1.5.0",
-        "rehype-autolink-headings": "^7.1.0",
-        "rehype-citation": "^2.0.0",
-        "rehype-katex": "^7.0.0",
-        "rehype-mathjax": "^6.0.0",
-        "rehype-pretty-code": "^0.13.2",
-        "rehype-raw": "^7.0.0",
-        "rehype-slug": "^6.0.0",
-        "remark": "^15.0.1",
-        "remark-breaks": "^4.0.0",
-        "remark-frontmatter": "^5.0.0",
-        "remark-gfm": "^4.0.0",
-        "remark-math": "^6.0.0",
-        "remark-parse": "^11.0.0",
-        "remark-rehype": "^11.0.0",
-        "remark-wiki-link": "^1.0.4",
-        "rfdc": "^1.3.1",
-        "rimraf": "^5.0.5",
-        "serve-handler": "^6.1.5",
-        "shiki": "^1.3.0",
-        "source-map-support": "^0.5.21",
-        "to-vfile": "^8.0.0",
-        "unified": "^11.0.4",
-        "unist-util-visit": "^5.0.0",
-        "vfile": "^6.0.1",
-        "workbox-build": "^7.0.0",
-        "ws": "^8.16.0",
-        "yargs": "^17.7.2"
-      }
-    };
-    
-    await fs.writeFile(
-      path.join(workspacePath, 'package.json'),
-      JSON.stringify(packageJson, null, 2)
-    );
+    try {
+      const quartzPath = path.join(workspacePath, '.quartz');
+      const quartzPackageJsonPath = path.join(quartzPath, 'package.json');
+      const workspacePackageJsonPath = path.join(workspacePath, 'package.json');
+      
+      // Read the Quartz package.json
+      const quartzPackageJson = JSON.parse(await fs.readFile(quartzPackageJsonPath, 'utf-8'));
+      
+      // Create a workspace package.json that includes all Quartz dependencies
+      const workspacePackageJson = {
+        "name": "meridian-digital-garden",
+        "version": "1.0.0",
+        "type": "module",
+        "engines": quartzPackageJson.engines || { 
+          "node": ">=22",
+          "npm": ">=10.9.2"
+        },
+        "scripts": {
+          "build": "npx quartz build",
+          "serve": "npx quartz build --serve"
+        },
+        // Copy all dependencies from Quartz
+        "devDependencies": quartzPackageJson.devDependencies || {},
+        "dependencies": quartzPackageJson.dependencies || {}
+      };
+      
+      await fs.writeFile(
+        workspacePackageJsonPath,
+        JSON.stringify(workspacePackageJson, null, 2)
+      );
+      
+      console.log('Created workspace package.json with all Quartz dependencies');
+    } catch (error: any) {
+      console.error('Failed to create workspace package.json:', error);
+      throw new Error(`Failed to create workspace package.json: ${error.message}`);
+    }
   }
 
 
@@ -1055,6 +1038,7 @@ yarn-error.log*`;
     try {
       
       console.log(`Starting Meridian-Quartz build for workspace: ${workspacePath}`);
+      console.log(`Build timeout: 5 minutes, Buffer size: 10MB`);
       
       // Inject custom ignore patterns into Quartz config before building
       await this.injectCustomIgnorePatterns(workspacePath, quartzPath);
@@ -1062,10 +1046,23 @@ yarn-error.log*`;
       let stdout: string, stderr: string;
       
       try {
+        // First, verify that dependencies are installed in the quartz directory
+        console.log('Verifying dependencies in quartz directory...');
+        try {
+          await execAsync('npm list async-mutex', { cwd: quartzPath });
+          console.log('async-mutex is installed in quartz directory');
+        } catch (listError) {
+          console.log('async-mutex not found, attempting to install dependencies...');
+          await this.installQuartzDependencies(quartzPath);
+        }
+        
         // Build with Meridian-Quartz reading directly from workspace root
+        console.log('Running quartz build command...');
         const result = await execAsync(`npx quartz build --directory "${workspacePath}" --output "${path.join(quartzPath, 'public')}"`, {
           cwd: quartzPath,
-          env: { ...process.env }
+          env: { ...process.env },
+          maxBuffer: 10 * 1024 * 1024, // 10MB buffer for large builds
+          timeout: 300000 // 5 minutes timeout for large builds
         });
         stdout = result.stdout;
         stderr = result.stderr;
@@ -1111,11 +1108,19 @@ yarn-error.log*`;
       await this.restoreQuartzConfig(quartzPath);
       
       const duration = Date.now() - startTime;
-              console.error(`Build failed after ${duration}ms:`, error);
+      console.error(`Build failed after ${duration}ms:`, error);
+      
+      // Check for specific error types and provide helpful messages
+      let errorMessage = error.message;
+      if (error.message.includes('maxBuffer')) {
+        errorMessage = 'Build output exceeded buffer size (10MB). This may indicate a very large site or build process issue. Consider reducing the number of files or checking for build errors.';
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Build timed out after 5 minutes. This may indicate a very large site or build process hanging. Consider reducing the number of files or checking for build errors.';
+      }
       
       // Format error output
-              let errorOutput = `Build failed after ${duration}ms\n`;
-      errorOutput += `Error: ${error.message}\n\n`;
+      let errorOutput = `Build failed after ${duration}ms\n`;
+      errorOutput += `Error: ${errorMessage}\n\n`;
       
       if (error.stdout && error.stdout.trim()) {
         errorOutput += `--- Partial Output ---\n${error.stdout.trim()}\n\n`;
@@ -1129,7 +1134,7 @@ yarn-error.log*`;
         status: 'error',
         filesProcessed: 0,
         duration,
-        errors: [error.message],
+        errors: [errorMessage],
         output: errorOutput
       };
     }

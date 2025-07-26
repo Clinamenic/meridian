@@ -120,9 +120,14 @@ class MeridianApp {
     this.mainWindow = new BrowserWindow({
       width: 500,
       height: 500,
-      minWidth: 400,
-      minHeight: 400,
-      resizable: true,
+      minWidth: 500,
+      minHeight: 500,
+      maxWidth: 500,
+      maxHeight: 500,
+      resizable: false,
+      closable: true,
+      maximizable: false,
+      minimizable: true,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
@@ -141,7 +146,9 @@ class MeridianApp {
       this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/landing.html'));
       this.mainWindow.webContents.openDevTools();
     } else {
-      this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/landing.html'));
+      // In production, construct path relative to the app root
+      const appPath = app.getAppPath();
+      this.mainWindow.loadFile(path.join(appPath, 'src', 'renderer', 'landing.html'));
     }
 
     // Show when ready
@@ -157,44 +164,7 @@ class MeridianApp {
     });
   }
 
-  private createMainAppWindow(): void {
-    this.mainWindow = new BrowserWindow({
-      width: 900,
-      height: 800,
-      minWidth: 700,
-      minHeight: 600,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        preload: path.join(__dirname, 'preload.js'),
-        webSecurity: true,
-        allowRunningInsecureContent: false,
-        experimentalFeatures: false
-      },
-      titleBarStyle: 'hiddenInset',
-      show: false
-    });
 
-    // Load the main app
-    if (process.env.NODE_ENV === 'development') {
-      this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/index.html'));
-      this.mainWindow.webContents.openDevTools();
-    } else {
-      this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/index.html'));
-    }
-
-    // Show when ready
-    this.mainWindow.once('ready-to-show', () => {
-      this.mainWindow?.show();
-    });
-
-    // Handle close
-    this.mainWindow.on('closed', () => {
-      this.mainWindow = null;
-      // Quit the app when the main window is closed
-      app.quit();
-    });
-  }
 
   private setupIPC(): void {
     // Workspace management
@@ -252,6 +222,15 @@ class MeridianApp {
           throw new Error('No main window available');
         }
         
+        console.log('[Main] Updating window properties for main app...');
+        
+        // Update window properties for main app
+        this.mainWindow.setSize(900, 800);
+        this.mainWindow.setMinimumSize(700, 600);
+        this.mainWindow.setMaximumSize(0, 0); // Remove max size constraint
+        this.mainWindow.setResizable(true);
+        this.mainWindow.setMaximizable(true);
+        
         console.log('[Main] Loading main app content...');
         
         // Load the main app content in the same window
@@ -276,6 +255,29 @@ class MeridianApp {
       } catch (error) {
         console.error('[Main] Error getting app version:', error);
         return '0.4.0'; // Fallback version
+      }
+    });
+
+    // Window control IPC handlers
+    ipcMain.handle('window:close', () => {
+      if (this.mainWindow) {
+        this.mainWindow.close();
+      }
+    });
+
+    ipcMain.handle('window:minimize', () => {
+      if (this.mainWindow) {
+        this.mainWindow.minimize();
+      }
+    });
+
+    ipcMain.handle('window:maximize', () => {
+      if (this.mainWindow) {
+        if (this.mainWindow.isMaximized()) {
+          this.mainWindow.unmaximize();
+        } else {
+          this.mainWindow.maximize();
+        }
       }
     });
 
@@ -673,6 +675,10 @@ class MeridianApp {
     // Site template management
     ipcMain.handle('template:getDefault', async () => {
       return await this.siteTemplateManager.getDefaultTemplate();
+    });
+    
+    ipcMain.handle('template:getClinamenic', async () => {
+      return await this.siteTemplateManager.getClinamenicTemplate();
     });
 
     ipcMain.handle('template:validateCustomUrl', async (_, url: string) => {

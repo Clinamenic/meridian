@@ -1,70 +1,317 @@
+// Preset configurations for different use cases
+const PRESETS = {
+    landing: {
+        // Sphere and terrain parameters - Adjusted for better color distribution
+        sphereRadius: 1.0,
+        sphereSegments: 64,
+        sphereRings: 32,
+        elevationScale: 0.185,
+        noiseOctaves: 2,        // Reduced for less complex noise
+        noiseFrequency: 3,      // Reduced for larger features
+        noisePersistence: 0.3,  // Increased for more variation
+        terrainSeed: 4,
+        
+        // Terrain colors (4-color system) - Now using CSS variables
+        terrainColors: {
+            color1: '--theme-grade-5',   // Darkest stratum
+            color2: '--theme-grade-6',          // Main theme color - Bright mint
+            color3: '--theme-grade-7',     // Dark stratum - Medium green
+            color4: '--theme-grade-8'     // Lightest stratum - Off-white
+        },
+        
+        // Elevation thresholds for 4-color system - Adjusted based on observed distribution
+        elevationThresholds: {
+            threshold1: 0.65,   // Below this = color1 (red) - 60% of terrain
+            threshold2: 0.75,   // Below this = color2 (blue) - 20% of terrain
+            threshold3: 0.82   // Below this = color3 (green) - 15% of terrain, above = color4 (purple) - 5% of terrain
+        },
+        
+        // Interaction
+        enableDrag: true,
+        dragSensitivity: 1.2,
+        autoRotate: true,
+        autoRotateSpeed: 0.05, // Increased for more visible rotation
+        
+        // Viewport
+        circularViewport: true,
+        viewportRadius: 1.0,
+        edgeSoftness: 0.0,
+        
+        // Animation - DISABLED for smooth rotation
+        elevationAnimation: {
+            enabled: false, // Disable to fix rotation issue
+            speed: 0.4,
+            amplitude: 0.15
+        },
+        
+        // Lighting and shading
+        sphericalShading: {
+            enabled: true,
+            intensity: 0.2,
+            lightDirection: [0.5, 1.0, 0.5]
+        },
+        
+        // Contour line configuration
+        contourLines: {
+            enabled: true,
+            spacing: 0.08,        // Distance between contour lines
+            width: 0.004,         // Thickness of contour lines
+            intensity: 0.4,       // Reduced intensity to avoid double contour effect
+            color: '--theme-primary-dark', // Color of contour lines (CSS variable)
+            levels: 12,           // Number of contour levels to generate
+            prominentEvery: 0     // Make every Nth line more prominent
+        }
+    },
+    
+    default: {
+        // Sphere and terrain parameters
+        sphereRadius: 1.0,
+        sphereSegments: 64,
+        sphereRings: 32,
+        elevationScale: 0.3,
+        noiseOctaves: 5,
+        noiseFrequency: 1.5,
+        noisePersistence: 0.6,
+        terrainSeed: 42,
+        
+        // Terrain colors (4-color system) - Simplified to match landing preset
+        terrainColors: {
+            color1: '--theme-primary',
+            color2: '--theme-primary',
+            color3: '--theme-primary',
+            color4: '--theme-primary'
+        },
+        
+        // Elevation thresholds for 4-color system
+        elevationThresholds: {
+            threshold1: 0.3,  // Below this = color1
+            threshold2: 0.5,  // Below this = color2
+            threshold3: 0.8   // Below this = color3, above = color4
+        },
+        
+        // Interaction
+        enableDrag: true,
+        dragSensitivity: 1.2,
+        autoRotate: true,
+        autoRotateSpeed: 0.3,
+        
+        // Viewport
+        circularViewport: true,
+        viewportRadius: 0.42,
+        edgeSoftness: 0.02,
+        
+        // Animation
+        elevationAnimation: {
+            enabled: true,
+            speed: 0.3,
+            amplitude: 0.1
+        },
+        
+        // Lighting and shading
+        sphericalShading: {
+            enabled: true,
+            intensity: 0.3,
+            lightDirection: [0.5, 1.0, 0.5]
+        },
+        
+        // Contour line configuration
+        contourLines: {
+            enabled: true,
+            spacing: 0.06,        // Distance between contour lines
+            width: 0.003,         // Thickness of contour lines
+            intensity: 0.6,       // How prominent the lines are
+            color: '--theme-primary', // Color of contour lines
+            levels: 15,           // Number of contour levels to generate
+            prominentEvery: 0     // Make every Nth line more prominent
+        }
+    }
+};
+
+// Utility function to read CSS variables and convert HSL to RGB
+function getCSSVariableAsRGB(cssVariableName) {
+    try {
+        // Get the computed style value
+        const value = getComputedStyle(document.documentElement)
+            .getPropertyValue(cssVariableName)
+            .trim();
+        
+        // console.log(`Reading CSS variable ${cssVariableName}: "${value}"`);
+        
+        if (!value) {
+            console.warn(`CSS variable ${cssVariableName} not found, using fallback`);
+            return [0.5, 0.5, 0.5]; // Fallback gray
+        }
+        
+        // Parse HSL values
+        if (value.startsWith('hsl(')) {
+            const hslMatch = value.match(/hsl\(([^)]+)\)/);
+            if (hslMatch) {
+                const [h, s, l] = hslMatch[1].split(',').map(v => parseFloat(v.trim()));
+                const result = hslToRgb(h, s, l);
+                // console.log(`HSL ${cssVariableName}: h=${h}, s=${s}, l=${l} -> RGB: [${result.map(v => v.toFixed(3)).join(', ')}]`);
+                return result;
+            }
+        }
+        
+        // Handle direct RGB values
+        if (value.startsWith('rgb(')) {
+            const rgbMatch = value.match(/rgb\(([^)]+)\)/);
+            if (rgbMatch) {
+                const result = rgbMatch[1].split(',').map(v => parseFloat(v.trim()) / 255);
+                // console.log(`RGB ${cssVariableName}: ${value} -> normalized: [${result.map(v => v.toFixed(3)).join(', ')}]`);
+                return result;
+            }
+        }
+        
+        // Handle hex values
+        if (value.startsWith('#')) {
+            const result = hexToRgb(value);
+                            // console.log(`Hex ${cssVariableName}: ${value} -> RGB: [${result.map(v => v.toFixed(3)).join(', ')}]`);
+            return result;
+        }
+        
+        console.warn(`Unsupported color format for ${cssVariableName}: ${value}`);
+        return [0.5, 0.5, 0.5]; // Fallback gray
+        
+    } catch (error) {
+        console.error(`Error reading CSS variable ${cssVariableName}:`, error);
+        return [0.5, 0.5, 0.5]; // Fallback gray
+    }
+}
+
+// Convert HSL to RGB
+function hslToRgb(h, s, l) {
+    s /= 100;
+    l /= 100;
+    
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+    
+    if (0 <= h && h < 60) {
+        r = c; g = x; b = 0;
+    } else if (60 <= h && h < 120) {
+        r = x; g = c; b = 0;
+    } else if (120 <= h && h < 180) {
+        r = 0; g = c; b = x;
+    } else if (180 <= h && h < 240) {
+        r = 0; g = x; b = c;
+    } else if (240 <= h && h < 300) {
+        r = x; g = 0; b = c;
+    } else if (300 <= h && h < 360) {
+        r = c; g = 0; b = x;
+    }
+    
+    return [r + m, g + m, b + m];
+}
+
+// Convert hex to RGB
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+        parseInt(result[1], 16) / 255,
+        parseInt(result[2], 16) / 255,
+        parseInt(result[3], 16) / 255
+    ] : [0.5, 0.5, 0.5];
+}
+
+// Process color configuration to convert CSS variables to RGB values
+function processColorConfig(colorConfig) {
+    const processed = {};
+    
+    // console.log('Processing color config:', colorConfig);
+    
+    for (const [key, value] of Object.entries(colorConfig)) {
+        if (typeof value === 'string' && value.startsWith('--')) {
+            // It's a CSS variable, convert it
+            processed[key] = getCSSVariableAsRGB(value);
+            // console.log(`Processed ${key}: ${value} -> [${processed[key].map(v => v.toFixed(3)).join(', ')}]`);
+        } else if (Array.isArray(value)) {
+            // It's already an RGB array, use as is
+            processed[key] = value;
+            // console.log(`Using existing RGB for ${key}: [${value.map(v => v.toFixed(3)).join(', ')}]`);
+        } else {
+            console.warn(`Invalid color value for ${key}:`, value);
+            processed[key] = [0.5, 0.5, 0.5]; // Fallback gray
+        }
+    }
+    
+    // console.log('Final processed colors:', processed);
+    return processed;
+}
+
 class OrganicWaveRenderer {
     constructor(canvas, config = {}) {
         this.canvas = canvas;
         this.gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
 
-        // Simplified configuration for spherical topological texture
+        // Handle preset configuration
+        let presetConfig = {};
+        let userOverrides = {};
+        
+        if (typeof config === 'string') {
+            // Config is a preset name
+            presetConfig = PRESETS[config] || PRESETS.default;
+        } else if (config.preset) {
+            // Config has preset and overrides
+            presetConfig = PRESETS[config.preset] || PRESETS.default;
+            userOverrides = config.overrides || {};
+        } else {
+            // Config is direct overrides (backward compatibility)
+            presetConfig = PRESETS.default;
+            userOverrides = config;
+        }
+
+        // Merge preset with user overrides
         this.config = {
-            // Sphere and terrain parameters
-            sphereRadius: 1.0,
-            sphereSegments: 64,
-            sphereRings: 32,
-            elevationScale: 0.3,
-            noiseOctaves: 5,
-            noiseFrequency: 1.5,
-            noisePersistence: 0.6,
-            terrainSeed: 42,
-            
-            // Layer configuration
-            layerThresholds: {
-                oceanDeep: -0.8,
-                oceanShallow: -0.3,
-                beach: -0.05,
-                lowland: 0.2,
-                highland: 0.5,
-                mountain: 0.75,
-                peak: 0.9
-            },
-            
-            // Terrain colors
-            terrainColors: {
-                oceanDeep: [0.05, 0.15, 0.35],
-                oceanShallow: [0.1, 0.3, 0.6],
-                beach: [0.8, 0.75, 0.6],
-                lowland: [0.2, 0.5, 0.2],
-                highland: [0.4, 0.35, 0.2],
-                mountain: [0.3, 0.25, 0.2],
-                peak: [0.85, 0.85, 0.9]
-            },
-            
-            // Interaction
-            enableDrag: true,
-            dragSensitivity: 1.2,
-            autoRotate: true,
-            autoRotateSpeed: 0.3,
-            
-            // Viewport
-            circularViewport: true,
-            viewportRadius: 0.42,
-            edgeSoftness: 0.02,
-            
-            // Animation
-            elevationAnimation: {
-                enabled: true,
-                speed: 0.3,
-                amplitude: 0.1
-            },
-            
-            // Lighting and shading
-            sphericalShading: {
-                enabled: true,
-                intensity: 0.3,
-                lightDirection: [0.5, 1.0, 0.5]
-            },
-            
-            // Apply user configuration
-            ...config
+            ...presetConfig,
+            ...userOverrides
         };
+        
+        // Process color configuration to convert CSS variables to RGB
+        if (this.config.terrainColors) {
+            this.config.terrainColors = processColorConfig(this.config.terrainColors);
+        }
+        
+        // Process contour line color configuration
+        if (this.config.contourLines && this.config.contourLines.color) {
+            this.config.contourLines.color = getCSSVariableAsRGB(this.config.contourLines.color);
+        }
+        
+        // Debug: Log the color values to verify they're being processed correctly
+        console.log('=== COLOR DEBUG ===');
+        console.log('Color 1 (red):', this.config.terrainColors.color1);
+        console.log('Color 2 (blue):', this.config.terrainColors.color2);
+        console.log('Color 3 (green):', this.config.terrainColors.color3);
+        console.log('Color 4 (purple):', this.config.terrainColors.color4);
+        console.log('Noise parameters:', {
+            octaves: this.config.noiseOctaves,
+            frequency: this.config.noiseFrequency,
+            persistence: this.config.noisePersistence,
+            seed: this.config.terrainSeed
+        });
+        console.log('==================');
+        
+        // Constructor diagnostics
+        console.log('=== ORGANIC WAVE RENDERER INITIALIZATION ===');
+        console.log('Canvas size:', canvas.width, 'x', canvas.height);
+        console.log('WebGL context:', this.gl ? 'Available' : 'Not available');
+        if (typeof config === 'string') {
+            console.log('Using preset:', config);
+        } else if (config.preset) {
+            console.log('Using preset:', config.preset);
+            console.log('With overrides:', Object.keys(userOverrides));
+        } else {
+            console.log('Using default preset with direct overrides');
+        }
+        console.log('Final config keys:', Object.keys(this.config));
+        console.log('Auto-rotate:', this.config.autoRotate);
+        console.log('Auto-rotate speed:', this.config.autoRotateSpeed);
+        console.log('Elevation animation enabled:', this.config.elevationAnimation.enabled);
+        console.log('Processed terrain colors:', this.config.terrainColors);
+        console.log('Elevation thresholds:', this.config.elevationThresholds);
+        console.log('============================================');
 
         // Core state
         this.uniforms = {};
@@ -136,6 +383,7 @@ class OrganicWaveRenderer {
             uniform bool uEnableElevationAnimation;
             uniform float uElevationAnimationSpeed;
             uniform float uElevationAnimationAmplitude;
+            uniform bool uDebugMode;
             
             out vec3 vWorldPosition;
             out vec3 vNormal;
@@ -227,6 +475,7 @@ class OrganicWaveRenderer {
             uniform bool uEnableElevationAnimation;
             uniform float uElevationAnimationSpeed;
             uniform float uElevationAnimationAmplitude;
+            uniform bool uDebugMode;
             uniform bool uCircularMask;
             uniform float uViewportRadius;
             uniform float uEdgeSoftness;
@@ -236,6 +485,9 @@ class OrganicWaveRenderer {
             uniform float uSphericalShadingIntensity;
             uniform vec3 uLightDirection;
             
+            // Rotation matrix for texture coordinates
+            uniform mat4 uRotationMatrix;
+            
             // Simple 4-color system uniforms
             uniform vec3 uColor1;
             uniform vec3 uColor2;
@@ -244,6 +496,15 @@ class OrganicWaveRenderer {
             uniform float uThreshold1;
             uniform float uThreshold2;
             uniform float uThreshold3;
+            
+            // Contour line configuration uniforms
+            uniform bool uContourLinesEnabled;
+            uniform float uContourLinesSpacing;
+            uniform float uContourLinesWidth;
+            uniform float uContourLinesIntensity;
+            uniform vec3 uContourLinesColor;
+            uniform float uContourLinesLevels;
+            uniform float uContourLinesProminentEvery;
             
             out vec4 fragColor;
             
@@ -294,55 +555,48 @@ class OrganicWaveRenderer {
                 return smoothstep(threshold - afwidth, threshold + afwidth, value);
             }
             
+            // Constant-width step function for uniform contour lines
+            float constantStep(float threshold, float value, float width) {
+                return smoothstep(threshold - width, threshold + width, value);
+            }
+            
             // Calculate base terrain color based on elevation - SOLID POSTERIZED COLORS
             vec3 calculateTerrainColor(float elevation) {
                 // Simple 4-zone system with solid colors, no gradients
                 if (elevation < uThreshold1) {
-                    return uColor1; // Darkest stratum
+                    return uColor1; // Red
                 } else if (elevation < uThreshold2) {
-                    return uColor2; // Dark stratum
+                    return uColor2; // Blue
                 } else if (elevation < uThreshold3) {
-                    return uColor3; // Main theme color
+                    return uColor3; // Green
                 } else {
-                    return uColor4; // Lightest stratum
+                    return uColor4; // Purple
                 }
             }
             
-            // Generate topographic contour lines with improved visibility
-            float generateContourLines(vec3 worldPos) {
-                vec3 noisePos = worldPos * uNoiseFrequency;
-                
-                // Add more dramatic animation to the terrain
-                if (uEnableElevationAnimation) {
-                    noisePos += vec3(
-                        sin(uTime * uElevationAnimationSpeed) * uElevationAnimationAmplitude,
-                        cos(uTime * uElevationAnimationSpeed * 1.3) * uElevationAnimationAmplitude,
-                        sin(uTime * uElevationAnimationSpeed * 0.7) * uElevationAnimationAmplitude
-                    );
-                }
-                
-                float elevation = multiOctaveNoise(noisePos, uNoiseOctaves, 1.0, uNoisePersistence);
+            // Generate topographic contour lines with fixed width
+            float generateContourLines(vec3 noisePos) {
+                float elevation = multiOctaveNoise(noisePos, uNoiseOctaves, uNoiseFrequency, uNoisePersistence);
                 elevation = (elevation + 1.0) * 0.5; // Remap to [0, 1]
                 
-                // Create more prominent contour lines
-                float contourSpacing = 0.08; // Wider spacing for more visible contours
-                float contourWidth = 0.004; // Thicker lines for better visibility
+                // Create contour lines with truly fixed width
+                float contourSpacing = uContourLinesSpacing; // Distance between lines
+                float contourWidth = uContourLinesWidth; // Fixed width
                 
-                // Generate multiple contour levels with varying intensity
-                float contour = 0.0;
-                for (float i = 0.0; i < 12.0; i++) {
+                // Simple approach: check if elevation is within a fixed range of any contour level
+                float line = 0.0;
+                for (float i = 0.0; i < uContourLinesLevels; i++) {
                     float level = i * contourSpacing;
-                    float line = aastep(level - contourWidth, elevation) - aastep(level + contourWidth, elevation);
+                    float distance = abs(elevation - level);
                     
-                    // Make every 4th contour line more prominent
-                    if (mod(i, 4.0) == 0.0) {
-                        line *= 1.5;
+                    // Fixed width check - if within the width range, it's a line
+                    if (distance < contourWidth) {
+                        line = 1.0;
+                        break;
                     }
-                    
-                    contour = max(contour, line);
                 }
                 
-                return contour;
+                return line;
             }
             
             float calculateCircularMask() {
@@ -360,7 +614,17 @@ class OrganicWaveRenderer {
                 if (mask < 0.001) discard;
                 
                 // Generate elevation and contour lines
-                vec3 noisePos = vWorldPosition * uNoiseFrequency;
+                // Use the original sphere position (before rotation) for noise calculation
+                // This ensures the texture rotates with the sphere instead of sliding over it
+                vec3 originalPos = (inverse(uRotationMatrix) * vec4(vWorldPosition, 1.0)).xyz;
+                vec3 noisePos = originalPos * uNoiseFrequency;
+                
+                // Debug: Log noise position changes (only for center pixel to avoid spam)
+                if (uDebugMode && length(gl_FragCoord.xy - uResolution.xy * 0.5) < 10.0) {
+                    // This would need to be handled differently in WebGL - just for reference
+                }
+                
+                // Only animate noise position if elevation animation is enabled
                 if (uEnableElevationAnimation) {
                     noisePos += vec3(
                         sin(uTime * uElevationAnimationSpeed) * uElevationAnimationAmplitude,
@@ -369,18 +633,24 @@ class OrganicWaveRenderer {
                     );
                 }
                 
-                float elevation = multiOctaveNoise(noisePos, uNoiseOctaves, 1.0, uNoisePersistence);
+                float elevation = multiOctaveNoise(noisePos, uNoiseOctaves, uNoiseFrequency, uNoisePersistence);
                 elevation = (elevation + 1.0) * 0.5; // Remap to [0, 1]
                 
-                // Generate contour lines
-                float contourLines = generateContourLines(vWorldPosition);
+                // Generate contour lines using the same noise position as elevation
+                float contourLines = 0.0;
+                if (uContourLinesEnabled) {
+                    contourLines = generateContourLines(noisePos);
+                }
                 
                 // Base terrain color
                 vec3 terrainColor = calculateTerrainColor(elevation);
                 
                 // Add contour lines (dark lines on the terrain)
-                vec3 contourColor = vec3(0.1, 0.1, 0.1); // Dark contour lines
-                vec3 finalColor = mix(terrainColor, contourColor, contourLines * 0.8);
+                vec3 finalColor = terrainColor;
+                if (uContourLinesEnabled && contourLines > 0.0) {
+                    vec3 contourColor = uContourLinesColor; // Use configurable color
+                    finalColor = mix(terrainColor, contourColor, contourLines * uContourLinesIntensity);
+                }
                 
                 // Apply circular mask
                 finalColor *= mask;
@@ -510,17 +780,9 @@ class OrganicWaveRenderer {
             uEnableElevationAnimation: this.gl.getUniformLocation(this.program, 'uEnableElevationAnimation'),
             uElevationAnimationSpeed: this.gl.getUniformLocation(this.program, 'uElevationAnimationSpeed'),
             uElevationAnimationAmplitude: this.gl.getUniformLocation(this.program, 'uElevationAnimationAmplitude'),
+            uDebugMode: this.gl.getUniformLocation(this.program, 'uDebugMode'),
             
-            // Layer thresholds
-            uThresholdOceanDeep: this.gl.getUniformLocation(this.program, 'uThresholdOceanDeep'),
-            uThresholdOceanShallow: this.gl.getUniformLocation(this.program, 'uThresholdOceanShallow'),
-            uThresholdBeach: this.gl.getUniformLocation(this.program, 'uThresholdBeach'),
-            uThresholdLowland: this.gl.getUniformLocation(this.program, 'uThresholdLowland'),
-            uThresholdHighland: this.gl.getUniformLocation(this.program, 'uThresholdHighland'),
-            uThresholdMountain: this.gl.getUniformLocation(this.program, 'uThresholdMountain'),
-            uThresholdPeak: this.gl.getUniformLocation(this.program, 'uThresholdPeak'),
-            
-            // Terrain colors
+            // Terrain colors (4-color system only)
             uColor1: this.gl.getUniformLocation(this.program, 'uColor1'),
             uColor2: this.gl.getUniformLocation(this.program, 'uColor2'),
             uColor3: this.gl.getUniformLocation(this.program, 'uColor3'),
@@ -528,6 +790,15 @@ class OrganicWaveRenderer {
             uThreshold1: this.gl.getUniformLocation(this.program, 'uThreshold1'),
             uThreshold2: this.gl.getUniformLocation(this.program, 'uThreshold2'),
             uThreshold3: this.gl.getUniformLocation(this.program, 'uThreshold3'),
+            
+            // Contour line configuration
+            uContourLinesEnabled: this.gl.getUniformLocation(this.program, 'uContourLinesEnabled'),
+            uContourLinesSpacing: this.gl.getUniformLocation(this.program, 'uContourLinesSpacing'),
+            uContourLinesWidth: this.gl.getUniformLocation(this.program, 'uContourLinesWidth'),
+            uContourLinesIntensity: this.gl.getUniformLocation(this.program, 'uContourLinesIntensity'),
+            uContourLinesColor: this.gl.getUniformLocation(this.program, 'uContourLinesColor'),
+            uContourLinesLevels: this.gl.getUniformLocation(this.program, 'uContourLinesLevels'),
+            uContourLinesProminentEvery: this.gl.getUniformLocation(this.program, 'uContourLinesProminentEvery'),
             
             uResolution: this.gl.getUniformLocation(this.program, 'uResolution'),
             uCircularMask: this.gl.getUniformLocation(this.program, 'uCircularMask'),
@@ -537,7 +808,10 @@ class OrganicWaveRenderer {
             // Spherical shading uniforms
             uSphericalShadingEnabled: this.gl.getUniformLocation(this.program, 'uSphericalShadingEnabled'),
             uSphericalShadingIntensity: this.gl.getUniformLocation(this.program, 'uSphericalShadingIntensity'),
-            uLightDirection: this.gl.getUniformLocation(this.program, 'uLightDirection')
+            uLightDirection: this.gl.getUniformLocation(this.program, 'uLightDirection'),
+            
+            // Fragment shader rotation matrix
+            uFragmentRotationMatrix: this.gl.getUniformLocation(this.program, 'uRotationMatrix')
         };
     }
 
@@ -578,6 +852,19 @@ class OrganicWaveRenderer {
             -cosX * sinY, sinX, cosX * cosY, 0,
             0, 0, 0, 1
         ]);
+        
+        // Debug: Log rotation matrix changes (disabled for performance)
+        // if (Math.floor(this.currentRotation.y * 10) % 60 === 0) {
+        //     console.log('=== ROTATION MATRIX DIAGNOSTICS ===');
+        //     console.log('Rotation Y (radians):', this.currentRotation.y.toFixed(3));
+        //     console.log('cos(Y):', cosY.toFixed(3));
+        //     console.log('sin(Y):', sinY.toFixed(3));
+        //     console.log('Matrix[0] (cosY):', this.rotationMatrix[0].toFixed(3));
+        //     console.log('Matrix[2] (sinY):', this.rotationMatrix[2].toFixed(3));
+        //     console.log('Matrix[8] (-cosX*sinY):', this.rotationMatrix[8].toFixed(3));
+        //     console.log('Matrix[10] (cosX*cosY):', this.rotationMatrix[10].toFixed(3));
+        //     console.log('==================================');
+        // }
     }
 
     render() {
@@ -591,9 +878,37 @@ class OrganicWaveRenderer {
         if (this.config.autoRotate) {
             this.currentRotation.y += this.config.autoRotateSpeed * deltaTime;
             this.updateRotationMatrix();
+            
+            // Comprehensive rotation diagnostics (disabled for performance)
+            // if (Math.floor(this.currentRotation.y * 10) % 30 === 0) { // Every 30 frames
+            //     console.log('=== ROTATION DIAGNOSTICS ===');
+            //     console.log('Rotation Y:', this.currentRotation.y.toFixed(3), 'radians');
+            //     console.log('Rotation Y:', (this.currentRotation.y * 180 / Math.PI).toFixed(1), 'degrees');
+            //     console.log('Auto-rotate speed:', this.config.autoRotateSpeed);
+            //     console.log('Delta time:', deltaTime.toFixed(4), 'seconds');
+            //     console.log('Frame rate:', (1 / deltaTime).toFixed(1), 'FPS');
+            //     console.log('Rotation matrix Y component:', this.rotationMatrix[2].toFixed(3));
+            //     console.log('===========================');
+            // }
         }
 
         const elapsedTime = (Date.now() - this.startTime) / 1000;
+
+        // Animation state diagnostics (disabled for performance)
+        // if (Math.floor(elapsedTime * 10) % 50 === 0) { // Every 5 seconds
+        //     console.log('=== ANIMATION STATE DIAGNOSTICS ===');
+        //     console.log('Elapsed time:', elapsedTime.toFixed(1), 'seconds');
+        //     console.log('Elevation animation enabled:', this.config.elevationAnimation.enabled);
+        //     console.log('Elevation animation speed:', this.config.elevationAnimation.speed);
+        //     console.log('Elevation animation amplitude:', this.config.elevationAnimation.amplitude);
+        //     console.log('Auto-rotate enabled:', this.config.autoRotate);
+        //     console.log('Auto-rotate speed:', this.config.autoRotateSpeed);
+        //     console.log('Noise frequency:', this.config.noiseFrequency);
+        //     console.log('Noise octaves:', this.config.noiseOctaves);
+        //     console.log('Noise persistence:', this.config.noisePersistence);
+        //     console.log('Terrain seed:', this.config.terrainSeed);
+        //     console.log('==================================');
+        // }
 
         // Enable depth testing and blending
         this.gl.enable(this.gl.DEPTH_TEST);
@@ -625,26 +940,43 @@ class OrganicWaveRenderer {
         this.gl.uniform1i(this.uniforms.uEnableElevationAnimation, this.config.elevationAnimation.enabled ? 1 : 0);
         this.gl.uniform1f(this.uniforms.uElevationAnimationSpeed, this.config.elevationAnimation.speed);
         this.gl.uniform1f(this.uniforms.uElevationAnimationAmplitude, this.config.elevationAnimation.amplitude);
+        this.gl.uniform1i(this.uniforms.uDebugMode, 1); // Enable debug mode
+        
+        // Shader uniform diagnostics (disabled for performance)
+        // if (Math.floor(elapsedTime * 60) % 100 === 0) {
+        //     console.log('=== SHADER UNIFORM DIAGNOSTICS ===');
+        //     console.log('uEnableElevationAnimation:', this.config.elevationAnimation.enabled ? 1 : 0);
+        //     console.log('uElevationAnimationSpeed:', this.config.elevationAnimation.speed);
+        //     console.log('uElevationAnimationAmplitude:', this.config.elevationAnimation.amplitude);
+        //     console.log('uTime:', elapsedTime.toFixed(3));
+        //     console.log('uNoiseFrequency:', this.config.noiseFrequency);
+        //     console.log('uNoiseOctaves:', this.config.noiseOctaves);
+        //     console.log('uNoisePersistence:', this.config.noisePersistence);
+        //     console.log('uTerrainSeed:', this.config.terrainSeed);
+        //     console.log('Rotation matrix passed to fragment shader: YES');
+        //     console.log('==================================');
+        // }
 
-        // Layer thresholds
-        this.gl.uniform1f(this.uniforms.uThresholdOceanDeep, this.config.layerThresholds.oceanDeep);
-        this.gl.uniform1f(this.uniforms.uThresholdOceanShallow, this.config.layerThresholds.oceanShallow);
-        this.gl.uniform1f(this.uniforms.uThresholdBeach, this.config.layerThresholds.beach);
-        this.gl.uniform1f(this.uniforms.uThresholdLowland, this.config.layerThresholds.lowland);
-        this.gl.uniform1f(this.uniforms.uThresholdHighland, this.config.layerThresholds.highland);
-        this.gl.uniform1f(this.uniforms.uThresholdMountain, this.config.layerThresholds.mountain);
-        this.gl.uniform1f(this.uniforms.uThresholdPeak, this.config.layerThresholds.peak);
+        // Layer thresholds - simplified to only 4-color system
+        this.gl.uniform1f(this.uniforms.uThreshold1, this.config.elevationThresholds.threshold1);
+        this.gl.uniform1f(this.uniforms.uThreshold2, this.config.elevationThresholds.threshold2);
+        this.gl.uniform1f(this.uniforms.uThreshold3, this.config.elevationThresholds.threshold3);
 
-        // Terrain colors
+        // Terrain colors - simplified to only 4-color system
         const colors = this.config.terrainColors;
-        const thresholds = this.config.elevationThresholds;
         this.gl.uniform3f(this.uniforms.uColor1, ...colors.color1);
         this.gl.uniform3f(this.uniforms.uColor2, ...colors.color2);
         this.gl.uniform3f(this.uniforms.uColor3, ...colors.color3);
         this.gl.uniform3f(this.uniforms.uColor4, ...colors.color4);
-        this.gl.uniform1f(this.uniforms.uThreshold1, thresholds.threshold1);
-        this.gl.uniform1f(this.uniforms.uThreshold2, thresholds.threshold2);
-        this.gl.uniform1f(this.uniforms.uThreshold3, thresholds.threshold3);
+
+        // Contour line configuration
+        this.gl.uniform1i(this.uniforms.uContourLinesEnabled, this.config.contourLines.enabled ? 1 : 0);
+        this.gl.uniform1f(this.uniforms.uContourLinesSpacing, this.config.contourLines.spacing);
+        this.gl.uniform1f(this.uniforms.uContourLinesWidth, this.config.contourLines.width);
+        this.gl.uniform1f(this.uniforms.uContourLinesIntensity, this.config.contourLines.intensity);
+        this.gl.uniform3f(this.uniforms.uContourLinesColor, ...this.config.contourLines.color);
+        this.gl.uniform1f(this.uniforms.uContourLinesLevels, this.config.contourLines.levels);
+        this.gl.uniform1f(this.uniforms.uContourLinesProminentEvery, this.config.contourLines.prominentEvery);
 
         // Viewport configuration
         this.gl.uniform1i(this.uniforms.uCircularMask, this.config.circularViewport ? 1 : 0);
@@ -655,6 +987,9 @@ class OrganicWaveRenderer {
         this.gl.uniform1i(this.uniforms.uSphericalShadingEnabled, this.config.sphericalShading.enabled ? 1 : 0);
         this.gl.uniform1f(this.uniforms.uSphericalShadingIntensity, this.config.sphericalShading.intensity);
         this.gl.uniform3f(this.uniforms.uLightDirection, ...this.config.sphericalShading.lightDirection);
+        
+        // Pass rotation matrix to fragment shader for texture coordinate transformation
+        this.gl.uniformMatrix4fv(this.uniforms.uFragmentRotationMatrix, false, this.rotationMatrix);
 
         // Clear and render
         this.gl.clearColor(0, 0, 0, 0);
@@ -780,6 +1115,16 @@ class OrganicWaveRenderer {
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
         return !!gl;
+    }
+
+    // Get available presets
+    static getPresets() {
+        return Object.keys(PRESETS);
+    }
+
+    // Get preset configuration
+    static getPresetConfig(presetName) {
+        return PRESETS[presetName] || null;
     }
 }
 

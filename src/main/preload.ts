@@ -10,6 +10,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // Window management for landing page transition
   transitionToMainApp: () => ipcRenderer.invoke('transitionToMainApp'),
+  
+  // Window control methods
+  closeWindow: () => ipcRenderer.invoke('window:close'),
+  minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
+  maximizeWindow: () => ipcRenderer.invoke('window:maximize'),
 
 
 
@@ -64,7 +69,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deploy: {
     loadData: () => ipcRenderer.invoke('deploy:load-data'),
     saveConfig: (config: any) => ipcRenderer.invoke('deploy:save-config', config),
-    initializeQuartz: (workspacePath: string) => ipcRenderer.invoke('deploy:initialize-quartz', workspacePath),
+    initializeQuartz: (workspacePath: string, templateSource?: any) => ipcRenderer.invoke('deploy:initialize-quartz', workspacePath, templateSource),
     buildSite: (config: any) => ipcRenderer.invoke('deploy:build-site', config),
     previewSite: (config: any) => ipcRenderer.invoke('deploy:preview-site', config),
     scanContent: (workspacePath: string) => ipcRenderer.invoke('deploy:scan-content', workspacePath),
@@ -92,6 +97,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Site template APIs
   template: {
     getDefault: () => ipcRenderer.invoke('template:getDefault'),
+    getClinamenic: () => ipcRenderer.invoke('template:getClinamenic'),
     validateCustomUrl: (url: string) => ipcRenderer.invoke('template:validateCustomUrl', url),
     parseUrl: (url: string) => ipcRenderer.invoke('template:parseUrl', url),
     cloneTemplate: (source: any, destination: string) => ipcRenderer.invoke('template:cloneTemplate', source, destination),
@@ -262,7 +268,7 @@ export interface ElectronAPI {
   deploy: {
     loadData: () => Promise<any>;
     saveConfig: (config: any) => Promise<void>;
-    initializeQuartz: (workspacePath: string) => Promise<void>;
+    initializeQuartz: (workspacePath: string, templateSource?: any) => Promise<void>;
     buildSite: (config: any) => Promise<any>;
     previewSite: (config: any) => Promise<string>;
     scanContent: (workspacePath: string) => Promise<any>;
@@ -286,6 +292,7 @@ export interface ElectronAPI {
 
   template: {
     getDefault: () => Promise<any>;
+    getClinamenic: () => Promise<any>;
     validateCustomUrl: (url: string) => Promise<any>;
     parseUrl: (url: string) => Promise<any>;
     cloneTemplate: (source: any, destination: string) => Promise<any>;

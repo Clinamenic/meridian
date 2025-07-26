@@ -323,9 +323,10 @@ export class DeployManager extends ModuleBase {
 
       // Get default template for reference
       const defaultTemplate = await window.electronAPI.template.getDefault();
+      const clinamenicTemplate = await window.electronAPI.template.getClinamenic();
       
       // Create unified configuration modal
-      await this.createUnifiedConfigurationModal(isInitialized, currentSettings, defaultTemplate);
+      await this.createUnifiedConfigurationModal(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate);
       
     } catch (error) {
       console.error('Failed to open configuration modal:', error);
@@ -333,7 +334,7 @@ export class DeployManager extends ModuleBase {
     }
   }
 
-  async createUnifiedConfigurationModal(isInitialized, currentSettings, defaultTemplate) {
+  async createUnifiedConfigurationModal(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate) {
     try {
       const currentTemplate = currentSettings.quartz?.template || defaultTemplate;
       
@@ -350,7 +351,7 @@ export class DeployManager extends ModuleBase {
                   <h4>Initialization ${!isInitialized ? '(Required)' : ''}</h4>
                   <div class="template-options">
                     <label class="radio-option">
-                      <input type="radio" name="template" value="vanilla" ${currentTemplate.isDefault !== false ? 'checked' : ''}>
+                      <input type="radio" name="template" value="vanilla" ${currentTemplate.id === 'vanilla-quartz' ? 'checked' : ''}>
                       <div class="radio-content">
                         <strong>Vanilla Quartz</strong>
                         <p>Default Meridian-Quartz template with clean styling</p>
@@ -358,7 +359,15 @@ export class DeployManager extends ModuleBase {
                     </label>
                     
                     <label class="radio-option">
-                      <input type="radio" name="template" value="custom" ${currentTemplate.isDefault === false ? 'checked' : ''}>
+                      <input type="radio" name="template" value="clinamenic" ${currentTemplate.id === 'clinamenic-quartz' ? 'checked' : ''}>
+                      <div class="radio-content">
+                        <strong>Clinamenic Quartz</strong>
+                        <p>Enhanced Meridian-Quartz template with advanced features and optimizations</p>
+                      </div>
+                    </label>
+                    
+                    <label class="radio-option">
+                      <input type="radio" name="template" value="custom" ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'checked' : ''}>
                       <div class="radio-content">
                         <strong>Custom Template</strong>
                         <p>Use a custom Quartz template from a repository URL</p>
@@ -762,8 +771,27 @@ export class DeployManager extends ModuleBase {
     let template;
     
     if (templateType === 'vanilla') {
-      // Use default template (will be resolved on backend)
-      template = null;
+      // For vanilla template, send a default template object
+      template = {
+        id: 'vanilla-quartz',
+        name: 'Vanilla Quartz',
+        type: 'github',
+        url: 'https://github.com/Clinamenic/meridian-quartz.git',
+        branch: 'meridian-main',
+        description: 'Default Meridian-Quartz template',
+        isDefault: true,
+      };
+    } else if (templateType === 'clinamenic') {
+      // For Clinamenic template, send the Clinamenic template object
+      template = {
+        id: 'clinamenic-quartz',
+        name: 'Clinamenic Quartz',
+        type: 'github',
+        url: 'https://github.com/Clinamenic/meridian-quartz-clinamenic.git',
+        branch: 'meridian-main',
+        description: 'Clinamenic-optimized Meridian-Quartz template with enhanced features',
+        isDefault: false,
+      };
     } else {
       // Custom template
       const customUrl = document.getElementById('custom-template-url').value.trim();
@@ -806,13 +834,30 @@ export class DeployManager extends ModuleBase {
   }
 
   hasTemplateChanged(currentTemplate, selectedTemplate) {
+    // Handle undefined/null cases
     if (!currentTemplate && !selectedTemplate) return false;
     if (!currentTemplate && selectedTemplate) return true;
     if (currentTemplate && !selectedTemplate) return true;
     
-    if (currentTemplate.isDefault && !selectedTemplate) return false;
-    if (!currentTemplate.isDefault && selectedTemplate?.isCustom) {
-      return currentTemplate.url !== selectedTemplate.url;
+    // If current template is default and selected is default, no change
+    if (currentTemplate?.isDefault && selectedTemplate?.isDefault) return false;
+    
+    // If current template is Clinamenic and selected is Clinamenic, no change
+    if (currentTemplate?.id === 'clinamenic-quartz' && selectedTemplate?.id === 'clinamenic-quartz') return false;
+    
+    // If current template is default but selected is Clinamenic, it's a change
+    if (currentTemplate?.isDefault && selectedTemplate?.id === 'clinamenic-quartz') return true;
+    
+    // If current template is Clinamenic but selected is default, it's a change
+    if (currentTemplate?.id === 'clinamenic-quartz' && selectedTemplate?.isDefault) return true;
+    
+    // If current template is not default/Clinamenic but selected is default/Clinamenic, it's a change
+    if (!currentTemplate?.isDefault && currentTemplate?.id !== 'clinamenic-quartz' && 
+        (selectedTemplate?.isDefault || selectedTemplate?.id === 'clinamenic-quartz')) return true;
+    
+    // If selected template is custom, compare URLs
+    if (selectedTemplate?.isCustom) {
+      return !currentTemplate?.isDefault && currentTemplate?.id !== 'clinamenic-quartz' || currentTemplate.url !== selectedTemplate.url;
     }
     
     return true;
@@ -828,11 +873,14 @@ export class DeployManager extends ModuleBase {
   }
 
   async initializeWithConfiguration(configData) {
-    let template = null;
+    let template = undefined;
     
     if (configData.template?.isCustom) {
       // Parse custom template URL
       template = await window.electronAPI.template.parseUrl(configData.template.url);
+    } else if (configData.template?.isDefault || configData.template?.id === 'clinamenic-quartz') {
+      // Use the template object directly for both default and Clinamenic templates
+      template = configData.template;
     }
     
     // Initialize Quartz with selected template
@@ -843,11 +891,14 @@ export class DeployManager extends ModuleBase {
   }
 
   async reinitializeWithTemplate(configData) {
-    let template = null;
+    let template = undefined;
     
     if (configData.template?.isCustom) {
       // Parse custom template URL
       template = await window.electronAPI.template.parseUrl(configData.template.url);
+    } else if (configData.template?.isDefault || configData.template?.id === 'clinamenic-quartz') {
+      // Use the template object directly for both default and Clinamenic templates
+      template = configData.template;
     }
     
     // Reinitialize with new template
