@@ -5,6 +5,42 @@ All notable changes to Meridian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2025-07-28
+
+### Added
+
+- **Deploy Panel Header Collapsible Feature**: Added collapsible header with collapse/expand button positioned on right side
+- **Header State Persistence**: Collapsible header state saved to localStorage for user preference retention
+- **Enhanced Resource Display**: Made URLs clickable in resource list with proper link styling and external browser opening
+
+### Changed
+
+- **Deploy Panel UI**: Removed 'Deploy' text from header and added collapsible functionality
+- **Header Layout**: Button positioned at top of header instead of vertically centered for better accessibility
+- **Panel Header Heights**: Updated panel header heights with new header-height-lg variable (40px)
+- **Tab Navigation**: Improved tab navigation styling with transparent backgrounds and better spacing
+
+### Fixed
+
+- **DeployManager Form Data Collection**: Fixed "Cannot read properties of null" error when switching templates in Configure subtab
+- **Form Element References**: Updated collectConfigurationData() to use correct element IDs matching subtab form structure
+- **Modal Context Issues**: Removed inappropriate modal close calls in subtab context
+- **Error Handling**: Added comprehensive error handling and debugging for form data collection
+
+### Technical Improvements
+
+- **CSS Variables**: Added header-height-lg variable for consistent header sizing across panels
+- **Form Validation**: Enhanced form data collection with proper null checks and error messages
+- **State Management**: Implemented header collapse state management with localStorage persistence
+- **Code Organization**: Improved DeployManager structure with better separation of collapse and form handling logic
+
+### User Experience
+
+- **Space Efficiency**: Collapsible header provides more content area when collapsed
+- **Consistent Interface**: Header collapse pattern matches ResourceManager for UI consistency
+- **Improved Usability**: Fixed template switching functionality in Configure subtab
+- **Better Accessibility**: Collapse button positioned at top for easier access
+
 ## [0.7.1] - 2025-07-26
 
 ### Added

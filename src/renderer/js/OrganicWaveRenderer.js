@@ -6,22 +6,22 @@ const PRESETS = {
         sphereSegments: 64,
         sphereRings: 32,
         elevationScale: 0.185,
-        noiseOctaves: 2,        // Reduced for less complex noise
-        noiseFrequency: 3,      // Reduced for larger features
-        noisePersistence: 0.3,  // Increased for more variation
+        noiseOctaves: 3.5,        // Reduced for less complex noise
+        noiseFrequency: 2.5,      // Reduced for larger features
+        noisePersistence: 0.5,  // Increased for more variation
         terrainSeed: 4,
         
         // Terrain colors (4-color system) - Now using CSS variables
         terrainColors: {
-            color1: '--theme-grade-5',   // Darkest stratum
-            color2: '--theme-grade-6',          // Main theme color - Bright mint
-            color3: '--theme-grade-7',     // Dark stratum - Medium green
-            color4: '--theme-grade-8'     // Lightest stratum - Off-white
+            color1: '--theme-grade-12',  
+            color2: '--theme-grade-14', 
+            color3: '--theme-grade-16',  
+            color4: '--theme-grade-18'  
         },
         
         // Elevation thresholds for 4-color system - Adjusted based on observed distribution
         elevationThresholds: {
-            threshold1: 0.65,   // Below this = color1 (red) - 60% of terrain
+            threshold1: 0.69,   // Below this = color1 (red) - 60% of terrain
             threshold2: 0.75,   // Below this = color2 (blue) - 20% of terrain
             threshold3: 0.82   // Below this = color3 (green) - 15% of terrain, above = color4 (purple) - 5% of terrain
         },
@@ -51,15 +51,26 @@ const PRESETS = {
             lightDirection: [0.5, 1.0, 0.5]
         },
         
-        // Contour line configuration
+        // Contour line configuration - aligned with elevation thresholds
         contourLines: {
             enabled: true,
-            spacing: 0.08,        // Distance between contour lines
-            width: 0.004,         // Thickness of contour lines
-            intensity: 0.4,       // Reduced intensity to avoid double contour effect
-            color: '--theme-primary-dark', // Color of contour lines (CSS variable)
-            levels: 12,           // Number of contour levels to generate
-            prominentEvery: 0     // Make every Nth line more prominent
+            spacing: 0.0,         // Not used - lines are at exact thresholds
+            width: 0.005,        // Very thin fixed width for boundary lines
+            intensity: 0.5,       // Intensity of boundary lines
+            color: '--theme-grade-4', // Color of contour lines (CSS variable)
+            levels: 3,            // Number of threshold boundaries (3 thresholds)
+            prominentEvery: 0     // Not used - all lines are equal
+        },
+        
+        // Grain texture overlay configuration
+        grainTexture: {
+            enabled: true,        // Enable/disable grain texture
+            intensity: 0.38,      // Strength of grain effect (0.0 - 1.0)
+            scale: 1,          // Scale of grain pattern (higher = finer grain)
+            speed: 0.01,           // Animation speed of grain movement
+            contrast: 0.4,        // Contrast of grain pattern
+            color: [0.9, 0.9, 0.9], // Grain color (dark gray by default)
+            animated: true        // Whether grain should animate over time
         }
     },
     
@@ -114,15 +125,26 @@ const PRESETS = {
             lightDirection: [0.5, 1.0, 0.5]
         },
         
-        // Contour line configuration
+        // Contour line configuration - aligned with elevation thresholds
         contourLines: {
             enabled: true,
-            spacing: 0.06,        // Distance between contour lines
-            width: 0.003,         // Thickness of contour lines
-            intensity: 0.6,       // How prominent the lines are
+            spacing: 0.0,         // Not used - lines are at exact thresholds
+            width: 0.010,         // Thickness of threshold boundary lines
+            intensity: 0.8,       // Intensity of boundary lines
             color: '--theme-primary', // Color of contour lines
-            levels: 15,           // Number of contour levels to generate
-            prominentEvery: 0     // Make every Nth line more prominent
+            levels: 3,            // Number of threshold boundaries (3 thresholds)
+            prominentEvery: 0     // Not used - all lines are equal
+        },
+        
+        // Grain texture overlay configuration
+        grainTexture: {
+            enabled: false,       // Disabled by default for main app
+            intensity: 0.1,       // Lower intensity for main app
+            scale: 40.0,          // Slightly coarser grain
+            speed: 0.05,          // Slower animation
+            contrast: 1.1,        // Lower contrast
+            color: [0.05, 0.05, 0.05], // Very subtle grain
+            animated: true
         }
     }
 };
@@ -130,30 +152,26 @@ const PRESETS = {
 // Utility function to read CSS variables and convert HSL to RGB
 function getCSSVariableAsRGB(cssVariableName) {
     try {
-        // Get the computed style value
-        const value = getComputedStyle(document.documentElement)
-            .getPropertyValue(cssVariableName)
-            .trim();
+        // Create a temporary element to get computed styles
+        const tempElement = document.createElement('div');
+        tempElement.style.color = `var(${cssVariableName})`;
+        document.body.appendChild(tempElement);
         
-        // console.log(`Reading CSS variable ${cssVariableName}: "${value}"`);
+        // Get the computed style value (this resolves nested variables and calc() functions)
+        const computedStyle = getComputedStyle(tempElement);
+        const value = computedStyle.color;
+        
+        // Clean up
+        document.body.removeChild(tempElement);
+        
+        console.log(`Reading CSS variable ${cssVariableName}: "${value}"`);
         
         if (!value) {
             console.warn(`CSS variable ${cssVariableName} not found, using fallback`);
             return [0.5, 0.5, 0.5]; // Fallback gray
         }
         
-        // Parse HSL values
-        if (value.startsWith('hsl(')) {
-            const hslMatch = value.match(/hsl\(([^)]+)\)/);
-            if (hslMatch) {
-                const [h, s, l] = hslMatch[1].split(',').map(v => parseFloat(v.trim()));
-                const result = hslToRgb(h, s, l);
-                // console.log(`HSL ${cssVariableName}: h=${h}, s=${s}, l=${l} -> RGB: [${result.map(v => v.toFixed(3)).join(', ')}]`);
-                return result;
-            }
-        }
-        
-        // Handle direct RGB values
+        // Parse RGB values (computed style returns rgb(r, g, b) format)
         if (value.startsWith('rgb(')) {
             const rgbMatch = value.match(/rgb\(([^)]+)\)/);
             if (rgbMatch) {
@@ -163,10 +181,21 @@ function getCSSVariableAsRGB(cssVariableName) {
             }
         }
         
+        // Handle rgba values
+        if (value.startsWith('rgba(')) {
+            const rgbaMatch = value.match(/rgba\(([^)]+)\)/);
+            if (rgbaMatch) {
+                const parts = rgbaMatch[1].split(',').map(v => parseFloat(v.trim()));
+                const result = [parts[0] / 255, parts[1] / 255, parts[2] / 255];
+                // console.log(`RGBA ${cssVariableName}: ${value} -> normalized: [${result.map(v => v.toFixed(3)).join(', ')}]`);
+                return result;
+            }
+        }
+        
         // Handle hex values
         if (value.startsWith('#')) {
             const result = hexToRgb(value);
-                            // console.log(`Hex ${cssVariableName}: ${value} -> RGB: [${result.map(v => v.toFixed(3)).join(', ')}]`);
+            // console.log(`Hex ${cssVariableName}: ${value} -> RGB: [${result.map(v => v.toFixed(3)).join(', ')}]`);
             return result;
         }
         
@@ -497,14 +526,20 @@ class OrganicWaveRenderer {
             uniform float uThreshold2;
             uniform float uThreshold3;
             
-            // Contour line configuration uniforms
+            // Contour line configuration uniforms - threshold-aligned
             uniform bool uContourLinesEnabled;
-            uniform float uContourLinesSpacing;
             uniform float uContourLinesWidth;
             uniform float uContourLinesIntensity;
             uniform vec3 uContourLinesColor;
-            uniform float uContourLinesLevels;
-            uniform float uContourLinesProminentEvery;
+            
+            // Grain texture overlay uniforms
+            uniform bool uGrainTextureEnabled;
+            uniform float uGrainIntensity;
+            uniform float uGrainScale;
+            uniform float uGrainSpeed;
+            uniform float uGrainContrast;
+            uniform vec3 uGrainColor;
+            uniform bool uGrainAnimated;
             
             out vec4 fragColor;
             
@@ -549,6 +584,28 @@ class OrganicWaveRenderer {
                 return total / maxValue;
             }
             
+            // Grain noise function for static texture overlay
+            float grainNoise(vec2 uv, float time) {
+                // Create animated grain pattern using screen coordinates and time
+                vec2 grainPos = uv * uGrainScale;
+                
+                // Add time-based animation if enabled
+                if (uGrainAnimated) {
+                    grainPos += vec2(
+                        sin(time * uGrainSpeed * 1.1) * 0.5,
+                        cos(time * uGrainSpeed * 0.9) * 0.5
+                    );
+                }
+                
+                // Generate noise using the hash function
+                vec3 p = vec3(grainPos, time * uGrainSpeed * 0.1);
+                float noise = hash(p);
+                
+                // Apply contrast and remap to [-1, 1] range
+                noise = pow(noise, uGrainContrast);
+                return noise * 2.0 - 1.0;
+            }
+            
             // Anti-aliased step function for smooth contour lines
             float aastep(float threshold, float value) {
                 float afwidth = 0.7 * length(vec2(dFdx(value), dFdy(value)));
@@ -574,26 +631,31 @@ class OrganicWaveRenderer {
                 }
             }
             
-            // Generate topographic contour lines with fixed width
+            // Generate topographic contour lines aligned with elevation thresholds
             float generateContourLines(vec3 noisePos) {
                 float elevation = multiOctaveNoise(noisePos, uNoiseOctaves, uNoiseFrequency, uNoisePersistence);
                 elevation = (elevation + 1.0) * 0.5; // Remap to [0, 1]
                 
-                // Create contour lines with truly fixed width
-                float contourSpacing = uContourLinesSpacing; // Distance between lines
-                float contourWidth = uContourLinesWidth; // Fixed width
+                // Use a very small fixed width for boundary lines
+                // This creates thin, consistent boundary markers
+                float boundaryWidth = uContourLinesWidth;
                 
-                // Simple approach: check if elevation is within a fixed range of any contour level
+                // Check if we're exactly at any threshold boundary
                 float line = 0.0;
-                for (float i = 0.0; i < uContourLinesLevels; i++) {
-                    float level = i * contourSpacing;
-                    float distance = abs(elevation - level);
-                    
-                    // Fixed width check - if within the width range, it's a line
-                    if (distance < contourWidth) {
-                        line = 1.0;
-                        break;
-                    }
+                
+                // Threshold 1 boundary
+                if (abs(elevation - uThreshold1) < boundaryWidth) {
+                    line = 1.0;
+                }
+                
+                // Threshold 2 boundary  
+                if (abs(elevation - uThreshold2) < boundaryWidth) {
+                    line = 1.0;
+                }
+                
+                // Threshold 3 boundary
+                if (abs(elevation - uThreshold3) < boundaryWidth) {
+                    line = 1.0;
                 }
                 
                 return line;
@@ -667,6 +729,17 @@ class OrganicWaveRenderer {
                 // Add subtle depth variation
                 float depthVariation = 1.0 + (vDepth - 1.0) * 0.1;
                 finalColor *= depthVariation * shading;
+                
+                // Apply grain texture overlay
+                if (uGrainTextureEnabled) {
+                    vec2 screenUV = gl_FragCoord.xy / uResolution;
+                    float grain = grainNoise(screenUV, uTime);
+                    
+                    // Blend grain with final color
+                    vec3 grainColor = uGrainColor * (grain * 0.5 + 0.5); // Remap grain to [0, 1]
+                    finalColor = mix(finalColor, grainColor, uGrainIntensity);
+                }
+                
                 finalColor = clamp(finalColor, 0.0, 1.0);
                 
                 fragColor = vec4(finalColor, 1.0);
@@ -791,14 +864,20 @@ class OrganicWaveRenderer {
             uThreshold2: this.gl.getUniformLocation(this.program, 'uThreshold2'),
             uThreshold3: this.gl.getUniformLocation(this.program, 'uThreshold3'),
             
-            // Contour line configuration
+            // Contour line configuration - threshold-aligned
             uContourLinesEnabled: this.gl.getUniformLocation(this.program, 'uContourLinesEnabled'),
-            uContourLinesSpacing: this.gl.getUniformLocation(this.program, 'uContourLinesSpacing'),
             uContourLinesWidth: this.gl.getUniformLocation(this.program, 'uContourLinesWidth'),
             uContourLinesIntensity: this.gl.getUniformLocation(this.program, 'uContourLinesIntensity'),
             uContourLinesColor: this.gl.getUniformLocation(this.program, 'uContourLinesColor'),
-            uContourLinesLevels: this.gl.getUniformLocation(this.program, 'uContourLinesLevels'),
-            uContourLinesProminentEvery: this.gl.getUniformLocation(this.program, 'uContourLinesProminentEvery'),
+            
+            // Grain texture overlay uniforms
+            uGrainTextureEnabled: this.gl.getUniformLocation(this.program, 'uGrainTextureEnabled'),
+            uGrainIntensity: this.gl.getUniformLocation(this.program, 'uGrainIntensity'),
+            uGrainScale: this.gl.getUniformLocation(this.program, 'uGrainScale'),
+            uGrainSpeed: this.gl.getUniformLocation(this.program, 'uGrainSpeed'),
+            uGrainContrast: this.gl.getUniformLocation(this.program, 'uGrainContrast'),
+            uGrainColor: this.gl.getUniformLocation(this.program, 'uGrainColor'),
+            uGrainAnimated: this.gl.getUniformLocation(this.program, 'uGrainAnimated'),
             
             uResolution: this.gl.getUniformLocation(this.program, 'uResolution'),
             uCircularMask: this.gl.getUniformLocation(this.program, 'uCircularMask'),
@@ -969,14 +1048,11 @@ class OrganicWaveRenderer {
         this.gl.uniform3f(this.uniforms.uColor3, ...colors.color3);
         this.gl.uniform3f(this.uniforms.uColor4, ...colors.color4);
 
-        // Contour line configuration
+        // Contour line configuration - threshold-aligned
         this.gl.uniform1i(this.uniforms.uContourLinesEnabled, this.config.contourLines.enabled ? 1 : 0);
-        this.gl.uniform1f(this.uniforms.uContourLinesSpacing, this.config.contourLines.spacing);
         this.gl.uniform1f(this.uniforms.uContourLinesWidth, this.config.contourLines.width);
         this.gl.uniform1f(this.uniforms.uContourLinesIntensity, this.config.contourLines.intensity);
         this.gl.uniform3f(this.uniforms.uContourLinesColor, ...this.config.contourLines.color);
-        this.gl.uniform1f(this.uniforms.uContourLinesLevels, this.config.contourLines.levels);
-        this.gl.uniform1f(this.uniforms.uContourLinesProminentEvery, this.config.contourLines.prominentEvery);
 
         // Viewport configuration
         this.gl.uniform1i(this.uniforms.uCircularMask, this.config.circularViewport ? 1 : 0);
@@ -987,6 +1063,15 @@ class OrganicWaveRenderer {
         this.gl.uniform1i(this.uniforms.uSphericalShadingEnabled, this.config.sphericalShading.enabled ? 1 : 0);
         this.gl.uniform1f(this.uniforms.uSphericalShadingIntensity, this.config.sphericalShading.intensity);
         this.gl.uniform3f(this.uniforms.uLightDirection, ...this.config.sphericalShading.lightDirection);
+        
+        // Grain texture overlay configuration
+        this.gl.uniform1i(this.uniforms.uGrainTextureEnabled, this.config.grainTexture.enabled ? 1 : 0);
+        this.gl.uniform1f(this.uniforms.uGrainIntensity, this.config.grainTexture.intensity);
+        this.gl.uniform1f(this.uniforms.uGrainScale, this.config.grainTexture.scale);
+        this.gl.uniform1f(this.uniforms.uGrainSpeed, this.config.grainTexture.speed);
+        this.gl.uniform1f(this.uniforms.uGrainContrast, this.config.grainTexture.contrast);
+        this.gl.uniform3f(this.uniforms.uGrainColor, ...this.config.grainTexture.color);
+        this.gl.uniform1i(this.uniforms.uGrainAnimated, this.config.grainTexture.animated ? 1 : 0);
         
         // Pass rotation matrix to fragment shader for texture coordinate transformation
         this.gl.uniformMatrix4fv(this.uniforms.uFragmentRotationMatrix, false, this.rotationMatrix);

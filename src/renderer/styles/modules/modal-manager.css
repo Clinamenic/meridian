@@ -30,8 +30,7 @@
     max-height: 60vh;
     display: flex;
     flex-direction: column;
-    transform: scale(0.95);
-    transition: transform 0.2s ease;
+    overflow: hidden;
 }
   
 .modal.large-modal {
@@ -93,7 +92,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 var(--spacing-md);
-    background-color: var(--theme-primary-dark);
+    background-color: var(--theme-grade-4);
     border-bottom: 1px solid var(--surface-border);
     height: var(--header-height);
     flex-shrink: 0;
@@ -166,7 +165,7 @@
 }
   
 .modal-tab-btn {
-    width: 33%;
+    flex: 1;
     display: flex;
     align-items: center;
     gap: var(--spacing-xs);
@@ -277,7 +276,7 @@
 .form-group input,
 .form-group textarea {
     width: 100%;
-    padding: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
     border: 1px solid var(--surface-border);
     border-radius: var(--border-radius);
     background-color: var(--surface-bg);
@@ -379,6 +378,7 @@
 .modal-tab-phase-card {
     flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: var(--spacing-sm);
     padding: var(--spacing-sm);
@@ -430,6 +430,7 @@
 .phase-title {
     font-size: var(--font-size-sm);
     font-weight: 500;
+    text-align: center;
 }
   
 
@@ -465,7 +466,6 @@
   
 .form-group-inline input {
     flex: 1;
-    padding: 8px 12px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background: var(--bg-primary);
@@ -1267,12 +1267,10 @@
 .deploy-config-form .form-group input,
 .deploy-config-form .form-group select {
     width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md);
     border: 1px solid var(--surface-border);
     border-radius: var(--border-radius);
     background-color: var(--surface-bg);
     color: var(--text-primary);
-    font-size: var(--font-size-base);
 }
   
 .deploy-config-form .form-group input:focus,
@@ -1515,12 +1513,10 @@
 .settings-section .form-group textarea,
 .settings-section .form-group select {
     width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md);
     border: 1px solid var(--surface-border);
     border-radius: var(--border-radius);
     background-color: var(--surface-bg);
     color: var(--text-primary);
-    font-size: var(--font-size-base);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
   
@@ -1592,6 +1588,7 @@
   
 .theme-mode-option {
     display: flex;
+    flex-direction: row;
     align-items: center;
     gap: var(--spacing-xs);
 }

@@ -1211,9 +1211,10 @@ export class AccountManager extends ModuleBase {
       </div>
     `;
 
-    // Show the modal
-    await this.getApp().openModal('add-github-account-modal');
-    document.getElementById('add-github-account-modal').innerHTML = modalHtml;
+    // Use ModalManager to create and open the modal
+    const modalManager = this.getModalManager();
+    modalManager.createDynamicModal('add-github-account-modal', modalHtml);
+    modalManager.openModal('add-github-account-modal');
 
     // Setup event listeners
     const createTokenBtn = document.getElementById('create-token-btn');
@@ -1392,9 +1393,10 @@ export class AccountManager extends ModuleBase {
       </div>
     `;
 
-    // Show the modal
-    this.getApp().openModal('security-guide-modal');
-    document.getElementById('security-guide-modal').innerHTML = modalHtml;
+    // Use ModalManager to create and open the modal
+    const modalManager = this.getModalManager();
+    modalManager.createDynamicModal('security-guide-modal', modalHtml);
+    modalManager.openModal('security-guide-modal');
 
     // Setup event listeners
     const fineGrainedBtn = document.getElementById('create-fine-grained-token');
@@ -1420,5 +1422,9 @@ export class AccountManager extends ModuleBase {
         this.getApp().closeModal();
       });
     }
+  }
+
+  getModalManager() {
+    return this.app.getModule('modalManager');
   }
 } 

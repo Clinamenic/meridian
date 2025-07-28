@@ -61,9 +61,6 @@ class LandingApp {
     async selectWorkspace() {
         console.log('Loading workspace...');
         
-        // Show loading state
-        this.showLoadingState();
-        
         try {
             const workspacePath = await window.electronAPI.selectWorkspace();
             
@@ -85,7 +82,6 @@ class LandingApp {
             } else {
                 // User cancelled workspace selection
                 console.log('Workspace selection cancelled');
-                this.hideLoadingState();
             }
         } catch (error) {
             console.error('Error during workspace selection:', error);
@@ -93,36 +89,7 @@ class LandingApp {
         }
     }
 
-    // Show loading state
-    showLoadingState() {
-        const content = document.querySelector('.landing-content');
-        if (content) {
-            content.innerHTML = `
-                <h1>Loading...</h1>
-                <p>Initializing workspace</p>
-            `;
-        }
-    }
 
-    hideLoadingState() {
-        const content = document.querySelector('.landing-content');
-        if (content) {
-            content.innerHTML = `
-                <h1>Meridian</h1>
-                <p class="version-text" id="version-display">v0.4.0</p>
-                <div class="landing-buttons">
-                    <button id="landing-workspace-btn" class="primary-btn">
-                        Select Workspace
-                    </button>
-                    <button id="exit-btn" class="primary-btn">Exit</button>
-                </div>
-            `;
-            // Re-attach event listeners
-            this.setupWorkspaceSelection();
-            this.setupExitButton();
-            this.loadAppVersion();
-        }
-    }
 
     // Show error state
     showErrorState(error) {

@@ -93,16 +93,94 @@
           <div id="deploy-panel" class="tool-panel">
             <div class="panel-header">
               <div class="panel-header-left">
-                <div class="panel-title">
-                  <span id="deploy-site-status">Site Status: Ready</span>
-                </div>
+                <!-- Left side content can go here in the future -->
               </div>
               <div class="panel-header-right">
-                <!-- Site settings now handled by Configure button in workflow cards -->
+                <button
+                  id="deploy-header-collapse-btn"
+                  class="panel-header-icon-btn"
+                  title="Collapse Header"
+                  data-state="expanded"
+                >
+                  <svg
+                    class="collapse-icon collapse-down"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                  >
+                    <path
+                      d="M4 2L8 6L12 2"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M4 14L8 10L12 14"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                  <svg
+                    class="collapse-icon collapse-up"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                  >
+                    <path
+                      d="M4 6L8 2L12 6"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M4 10L8 14L12 10"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+                <!-- Future: Other panel actions can go here -->
               </div>
             </div>
             <div class="panel-content">
-              <div id="deploy-content"></div>
+              <!-- Subtab Navigation (positioned under panel header, similar to main tab navigation) -->
+              <div class="deploy-subtab-navigation">
+                <button class="deploy-subtab-btn active" data-tab="configure">
+                  <span class="subtab-label">Configure</span>
+                </button>
+                <button class="deploy-subtab-btn" data-tab="build">
+                  <span class="subtab-label">Build</span>
+                </button>
+                <button class="deploy-subtab-btn" data-tab="publish">
+                  <span class="subtab-label">Publish</span>
+                </button>
+              </div>
+
+              <!-- Subtab Content Panels -->
+              <div class="deploy-subtab-content">
+                <!-- Configure Tab -->
+                <div class="deploy-subtab-panel active" id="configure-tab">
+                  <!-- Site Configuration content (moved from modal) -->
+                </div>
+
+                <!-- Build Tab -->
+                <div class="deploy-subtab-panel" id="build-tab">
+                  <!-- Build logs and composition sections -->
+                </div>
+
+                <!-- Publish Tab -->
+                <div class="deploy-subtab-panel" id="publish-tab">
+                  <!-- GitHub Pages deployment content (moved from modal) -->
+                </div>
+              </div>
             </div>
           </div>
 
@@ -445,7 +523,7 @@
               </div>
 
               <div class="footer-info">
-                <p><strong>Version:</strong> 0.4.0</p>
+                <p><strong>Version:</strong> 0.7.2</p>
                 <p>
                   <strong>Local-First:</strong> All data is stored locally on
                   your machine

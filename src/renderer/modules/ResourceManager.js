@@ -306,7 +306,10 @@ export class ResourceManager extends ModuleBase {
               <h4 class="resource-title">${this.escapeHtml(resource.properties["dc:title"] || "Untitled")}</h4>
               <div class="resource-path">
                 <span class="file-status-indicator ${this.getResourceStatusIndicator(resource)}"></span>
-                ${this.escapeHtml(resource.locations.primary.value)}
+                ${resource.locations.primary.type === 'http-url' && this.isValidUrl(resource.locations.primary.value) 
+                  ? `<a href="${this.escapeHtml(resource.locations.primary.value)}" target="_blank" rel="noopener noreferrer" class="resource-url-link" title="Open in browser">${this.escapeHtml(resource.locations.primary.value)}</a>`
+                  : this.escapeHtml(resource.locations.primary.value)
+                }
               </div>
             </div>
             <div class="resource-actions">

@@ -1136,94 +1136,93 @@ class MeridianApp {
   }
 
   showSecurityGuide() {
-    const modalHtml = `
-      <div class="modal security-guide-modal">
-        <div class="modal-header">
-          <h3>GitHub Token Security Guide</h3>
-          <button class="modal-close">&times;</button>
-        </div>
-        <div class="modal-content">
-          <div class="modal-body">
-            <div class="security-guide">
-              <div class="guide-section">
-                <h4>🔒 Fine-grained Personal Access Tokens (Recommended)</h4>
-                <div class="guide-content">
-                  <p><strong>Why Fine-grained Tokens are Better:</strong></p>
-                  <ul>
-                    <li>Repository-specific access only</li>
-                    <li>Minimal required permissions</li>
-                    <li>Mandatory expiration dates</li>
-                    <li>Better audit trail</li>
-                    <li>Organization approval workflow</li>
-                  </ul>
-                  
-                  <p><strong>How to Create a Fine-grained Token:</strong></p>
-                  <ol>
-                    <li>Go to GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens</li>
-                    <li>Click "Generate new token"</li>
-                    <li>Select specific repositories or "All repositories"</li>
-                    <li>Set minimal permissions: Contents (Read/Write), Metadata (Read), Pages (Write)</li>
-                    <li>Set expiration (90 days recommended)</li>
-                    <li>Generate and copy token</li>
-                  </ol>
-                </div>
+    const modalContent = `
+      <div class="modal-header">
+        <h3>GitHub Token Security Guide</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="security-guide">
+            <div class="guide-section">
+              <h4>🔒 Fine-grained Personal Access Tokens (Recommended)</h4>
+              <div class="guide-content">
+                <p><strong>Why Fine-grained Tokens are Better:</strong></p>
+                <ul>
+                  <li>Repository-specific access only</li>
+                  <li>Minimal required permissions</li>
+                  <li>Mandatory expiration dates</li>
+                  <li>Better audit trail</li>
+                  <li>Organization approval workflow</li>
+                </ul>
+                
+                <p><strong>How to Create a Fine-grained Token:</strong></p>
+                <ol>
+                  <li>Go to GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens</li>
+                  <li>Click "Generate new token"</li>
+                  <li>Select specific repositories or "All repositories"</li>
+                  <li>Set minimal permissions: Contents (Read/Write), Metadata (Read), Pages (Write)</li>
+                  <li>Set expiration (90 days recommended)</li>
+                  <li>Generate and copy token</li>
+                </ol>
               </div>
-              
-              <div class="guide-section warning">
-                <h4>⚠️ Classic Personal Access Tokens (Security Risk)</h4>
-                <div class="guide-content">
-                  <p><strong>Why Classic Tokens are Risky:</strong></p>
-                  <ul>
-                    <li>Access to ALL your repositories</li>
-                    <li>Broad permissions (repo scope)</li>
-                    <li>No mandatory expiration</li>
-                    <li>Difficult to audit usage</li>
-                  </ul>
-                  
-                  <p><strong>Only use Classic tokens if:</strong></p>
-                  <ul>
-                    <li>Fine-grained tokens are not available for your use case</li>
-                    <li>You need access to GitHub Apps or other advanced features</li>
-                    <li>You're working with older GitHub Enterprise versions</li>
-                  </ul>
-                </div>
+            </div>
+            
+            <div class="guide-section warning">
+              <h4>⚠️ Classic Personal Access Tokens (Security Risk)</h4>
+              <div class="guide-content">
+                <p><strong>Why Classic Tokens are Risky:</strong></p>
+                <ul>
+                  <li>Access to ALL your repositories</li>
+                  <li>Broad permissions (repo scope)</li>
+                  <li>No mandatory expiration</li>
+                  <li>Difficult to audit usage</li>
+                </ul>
+                
+                <p><strong>Only use Classic tokens if:</strong></p>
+                <ul>
+                  <li>Fine-grained tokens are not available for your use case</li>
+                  <li>You need access to GitHub Apps or other advanced features</li>
+                  <li>You're working with older GitHub Enterprise versions</li>
+                </ul>
               </div>
-              
-              <div class="guide-section">
-                <h4>🛡️ Security Best Practices</h4>
-                <div class="guide-content">
-                  <ul>
-                    <li><strong>Regular Rotation:</strong> Rotate tokens every 90 days</li>
-                    <li><strong>Minimal Scope:</strong> Only grant necessary permissions</li>
-                    <li><strong>Environment Isolation:</strong> Use different tokens for different projects</li>
-                    <li><strong>Monitor Usage:</strong> Regularly review token usage in GitHub settings</li>
-                    <li><strong>Secure Storage:</strong> Meridian encrypts tokens using OS-native security</li>
-                  </ul>
-                </div>
+            </div>
+            
+            <div class="guide-section">
+              <h4>🛡️ Security Best Practices</h4>
+              <div class="guide-content">
+                <ul>
+                  <li><strong>Regular Rotation:</strong> Rotate tokens every 90 days</li>
+                  <li><strong>Minimal Scope:</strong> Only grant necessary permissions</li>
+                  <li><strong>Environment Isolation:</strong> Use different tokens for different projects</li>
+                  <li><strong>Monitor Usage:</strong> Regularly review token usage in GitHub settings</li>
+                  <li><strong>Secure Storage:</strong> Meridian encrypts tokens using OS-native security</li>
+                </ul>
               </div>
-              
-              <div class="guide-section">
-                <h4>📚 Learn More</h4>
-                <div class="guide-content">
-                  <ul>
-                    <li><a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" target="_blank">GitHub PAT Documentation</a></li>
-                    <li><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site" target="_blank">GitHub Pages Setup</a></li>
-                    <li><a href="https://docs.github.com/en/rest/pages" target="_blank">GitHub Pages API</a></li>
-                  </ul>
-                </div>
+            </div>
+            
+            <div class="guide-section">
+              <h4>📚 Learn More</h4>
+              <div class="guide-content">
+                <ul>
+                  <li><a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" target="_blank">GitHub PAT Documentation</a></li>
+                  <li><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site" target="_blank">GitHub Pages Setup</a></li>
+                  <li><a href="https://docs.github.com/en/rest/pages" target="_blank">GitHub Pages API</a></li>
+                </ul>
               </div>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="primary-btn modal-close">Got it!</button>
-        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="primary-btn modal-close">Got it!</button>
       </div>
     `;
 
-    const modal = document.getElementById('modal-overlay');
-    modal.innerHTML = modalHtml;
-    modal.classList.add('active');
+    // Use ModalManager to create and open the modal
+    const modalManager = this.getModalManager();
+    modalManager.createDynamicModal('security-guide-modal', modalContent);
+    modalManager.openModal('security-guide-modal');
   }
 
   updateFooterX(isConnected = false, username = null) {

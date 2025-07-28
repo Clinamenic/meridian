@@ -15,6 +15,12 @@ export class DeployManager extends ModuleBase {
     // Setup deploy-related event listeners
     this.setupDeployEvents();
     
+    // Setup subtab navigation
+    this.setupDeploySubtabs();
+    
+    // Initialize header collapse state
+    this.initializeHeaderCollapseState();
+    
     console.log('[DeployManager] Initialized');
   }
 
@@ -27,25 +33,496 @@ export class DeployManager extends ModuleBase {
    * Set up all deploy-related event listeners
    */
   setupDeployEvents() {
-    // Site configuration is now handled by the Configure button in the workflow cards
+    // Setup header collapse functionality
+    this.setupHeaderCollapse();
+    
+    // Subtab navigation is handled by setupDeploySubtabs()
+    
+    // Optional: Add any future header actions here
+    // Example: Settings button, help button, etc.
+  }
 
-    // Deploy button - set up a delegated event listener since the button is dynamically created
-    document.addEventListener('click', async (e) => {
-      if (e.target && e.target.id === 'deploy-workflow-btn') {
-        // Check if Quartz is initialized before proceeding
-        try {
-          const isInitialized = await this.checkQuartzInitialized();
-          if (!isInitialized) {
-            this.getApp().showError('Please initialize Quartz first before deploying');
-            return;
-          }
-          await this.deploySite();
-        } catch (error) {
-          console.error('Error in deploy button handler:', error);
-          this.getApp().showError(`Deploy failed: ${error.message}`);
-        }
+  /**
+   * Setup header collapse/expand functionality
+   */
+  setupHeaderCollapse() {
+    const collapseBtn = document.getElementById('deploy-header-collapse-btn');
+    if (collapseBtn) {
+      collapseBtn.addEventListener('click', () => {
+        this.toggleHeaderCollapse();
+      });
+    }
+  }
+
+  /**
+   * Toggle header collapse state
+   */
+  toggleHeaderCollapse() {
+    const header = document.querySelector('#deploy-panel .panel-header');
+    const collapseBtn = document.getElementById('deploy-header-collapse-btn');
+    
+    if (!header || !collapseBtn) return;
+    
+    const isCollapsed = header.classList.contains('collapsed');
+    const newState = isCollapsed ? 'expanded' : 'collapsed';
+    
+    // Update header class
+    header.classList.toggle('collapsed', !isCollapsed);
+    
+    // Update button state
+    collapseBtn.setAttribute('data-state', newState);
+    collapseBtn.setAttribute('title', newState === 'expanded' ? 'Collapse Header' : 'Expand Header');
+    
+    // Save state to localStorage
+    localStorage.setItem('deployHeaderCollapsed', (!isCollapsed).toString());
+  }
+
+  /**
+   * Initialize header collapse state from localStorage
+   */
+  initializeHeaderCollapseState() {
+    const header = document.querySelector('#deploy-panel .panel-header');
+    const collapseBtn = document.getElementById('deploy-header-collapse-btn');
+    
+    if (!header || !collapseBtn) return;
+    
+    try {
+      const savedState = localStorage.getItem('deployHeaderCollapsed');
+      if (savedState === 'true') {
+        header.classList.add('collapsed');
+        collapseBtn.setAttribute('data-state', 'collapsed');
+        collapseBtn.setAttribute('title', 'Expand Header');
+      } else {
+        header.classList.remove('collapsed');
+        collapseBtn.setAttribute('data-state', 'expanded');
+        collapseBtn.setAttribute('title', 'Collapse Header');
       }
+    } catch (error) {
+      console.warn('[DeployManager] Failed to load header collapse state:', error);
+    }
+  }
+
+  /**
+   * Set up subtab navigation event listeners
+   */
+  setupDeploySubtabs() {
+    const subtabBtns = document.querySelectorAll('.deploy-subtab-btn');
+    subtabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.switchDeploySubtab(btn.dataset.tab);
+      });
     });
+  }
+
+  /**
+   * Switch to a specific deploy subtab
+   */
+  switchDeploySubtab(tabName) {
+    // Hide all panels
+    document.querySelectorAll('.deploy-subtab-panel').forEach(panel => {
+      panel.classList.remove('active');
+    });
+    
+    // Show selected panel
+    const targetPanel = document.getElementById(`${tabName}-tab`);
+    if (targetPanel) {
+      targetPanel.classList.add('active');
+    }
+    
+    // Update button states
+    document.querySelectorAll('.deploy-subtab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+    
+    // Load tab-specific content if needed
+    this.loadSubtabContent(tabName);
+  }
+
+  /**
+   * Load content for a specific subtab
+   */
+  loadSubtabContent(tabName) {
+    switch (tabName) {
+      case 'configure':
+        this.loadConfigureContent();
+        break;
+      case 'build':
+        this.loadBuildContent();
+        break;
+      case 'publish':
+        this.loadPublishContent();
+        break;
+    }
+  }
+
+  /**
+   * Load configure tab content
+   */
+  async loadConfigureContent() {
+    try {
+      const isInitialized = await this.checkQuartzInitialized();
+      const currentSettings = await window.electronAPI.config.loadSiteSettings(this.app.workspacePath);
+      const defaultTemplate = await window.electronAPI.template.getDefault();
+      const clinamenicTemplate = await window.electronAPI.template.getClinamenic();
+      
+      this.renderConfigureContent(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate);
+    } catch (error) {
+      console.error('Failed to load configure content:', error);
+      this.getApp().showError('Failed to load configuration content');
+    }
+  }
+
+  /**
+   * Load build tab content
+   */
+  loadBuildContent() {
+    this.renderBuildContent();
+  }
+
+  /**
+   * Load publish tab content
+   */
+  async loadPublishContent() {
+    try {
+      const githubAccounts = await window.electronAPI.deploy.githubAccounts();
+      this.renderPublishContent(githubAccounts);
+    } catch (error) {
+      console.error('Failed to load publish content:', error);
+      this.getApp().showError('Failed to load deployment content');
+    }
+  }
+
+  /**
+   * Render configure tab content
+   */
+  renderConfigureContent(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate) {
+    const container = document.getElementById('configure-tab');
+    
+    // Extract form content from existing modal creation logic
+    const formContent = this.generateConfigurationFormContent(
+      isInitialized, currentSettings, defaultTemplate, clinamenicTemplate
+    );
+    
+    container.innerHTML = formContent;
+    this.setupConfigurationFormEvents(isInitialized, currentSettings);
+  }
+
+  /**
+   * Render build tab content
+   */
+  renderBuildContent() {
+    const container = document.getElementById('build-tab');
+    
+    // Move existing build logs and composition content
+    container.innerHTML = this.generateBuildContent();
+    this.setupBuildContentEvents();
+    this.setupPreviewControls();
+  }
+
+  /**
+   * Render publish tab content
+   */
+  renderPublishContent(githubAccounts) {
+    const container = document.getElementById('publish-tab');
+    
+    // Extract deployment form content from existing modal logic
+    const deploymentContent = this.generateDeploymentFormContent(githubAccounts);
+    
+    container.innerHTML = deploymentContent;
+    this.setupDeploymentFormEvents();
+  }
+
+  /**
+   * Generate configuration form content (extracted from modal)
+   */
+  generateConfigurationFormContent(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate) {
+    const currentTemplate = currentSettings.quartz?.template || defaultTemplate;
+    
+    return `
+      <div class="deploy-main-content">
+        <form id="site-configuration-form">
+          <!-- Initialization Section -->
+          <div class="form-section ${!isInitialized ? 'highlight-section' : ''}">
+            <h4>Initialization ${!isInitialized ? '(Required)' : ''}</h4>
+            <div class="template-options">
+              <label class="radio-option">
+                <input type="radio" name="template" value="vanilla" ${currentTemplate.id === 'vanilla-quartz' ? 'checked' : ''}>
+                <div class="radio-content">
+                  <strong>Vanilla Quartz</strong>
+                  <p>Default Meridian-Quartz template with clean styling</p>
+                </div>
+              </label>
+              
+              <label class="radio-option">
+                <input type="radio" name="template" value="clinamenic" ${currentTemplate.id === 'clinamenic-quartz' ? 'checked' : ''}>
+                <div class="radio-content">
+                  <strong>Clinamenic Quartz</strong>
+                  <p>Enhanced Meridian-Quartz template with advanced features and optimizations</p>
+                </div>
+              </label>
+              
+              <label class="radio-option">
+                <input type="radio" name="template" value="custom" ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'checked' : ''}>
+                <div class="radio-content">
+                  <strong>Custom Template</strong>
+                  <p>Use a custom Quartz template from GitHub or other source</p>
+                </div>
+              </label>
+            </div>
+            
+            <div class="form-group" id="custom-template-group" style="display: ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'block' : 'none'};">
+              <label for="custom-template-url">Custom Template URL:</label>
+              <input type="text" id="custom-template-url" placeholder="https://github.com/username/repo" value="${currentTemplate.url || ''}">
+              <small>Enter the GitHub repository URL for your custom template</small>
+            </div>
+          </div>
+
+          <!-- Site Settings Section -->
+          <div class="form-section">
+            <h4>Site Settings</h4>
+            <div class="form-group">
+              <label for="site-title">Site Title:</label>
+              <input type="text" id="site-title" value="${currentSettings.site?.title || ''}" maxlength="100">
+              <div class="character-count">
+                <span id="title-count">0</span>/100
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="site-description">Site Description:</label>
+              <textarea id="site-description" rows="3" maxlength="300">${currentSettings.site?.description || ''}</textarea>
+              <div class="character-count">
+                <span id="description-count">0</span>/300
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="base-url">Base URL:</label>
+              <input type="text" id="base-url" placeholder="https://example.com" value="${currentSettings.site?.baseUrl || ''}">
+              <small>Your site's public URL (e.g., https://example.com)</small>
+            </div>
+          </div>
+
+          <!-- Custom Ignore Patterns Section -->
+          <div class="form-section">
+            <h4>Custom Ignore Patterns</h4>
+            <div class="form-group">
+              <label for="custom-ignore-patterns">Additional Ignore Patterns:</label>
+              <textarea id="custom-ignore-patterns" rows="4" placeholder="*.tmp&#10;private/**&#10;drafts/&#10;.env">${currentSettings.site?.ignorePatterns?.custom?.join('\n') || ''}</textarea>
+              <small>One pattern per line. These will be added to the default Quartz ignore patterns.</small>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="submit" class="primary-btn">
+              ${isInitialized ? 'Apply Changes' : 'Initialize Site'}
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate build content (extracted from existing renderDeployStatus)
+   */
+  generateBuildContent() {
+    return `
+      <div class="deploy-main-content">
+        <!-- Build Logs Section -->
+        <div class="build-logs-section" id="build-logs-section">
+          <div class="section-header">
+            <button type="button" class="primary-btn" id="build-site-btn">
+              Build Site
+            </button>
+            <button class="secondary-btn" id="open-external-btn" disabled>Open in Browser</button>
+            <span class="preview-status" id="preview-status">Server: Starting...</span>
+            <button class="expand-btn" id="build-logs-toggle">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 8.5L2.5 5l1-1L6 6.5 8.5 4l1 1L6 8.5z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="build-logs-content">
+            <pre id="build-logs-output"></pre>
+          </div>
+        </div>
+
+        <!-- Composition Section -->
+        <div class="build-status-tile">
+          <div class="status-info">
+            <div class="status-item expandable">
+              <div class="status-row">
+                <span class="status-label">Composition:</span>
+                <span class="status-value composition-summary">
+                  <span class="build-included">0</span> included, 
+                  <span class="build-excluded">0</span> excluded
+                </span>
+                <button class="expand-btn" onclick="this.parentElement.parentElement.classList.toggle('expanded')">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                    <path d="M6 8.5L2.5 5l1-1L6 6.5 8.5 4l1 1L6 8.5z"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="expandable-content">
+                <div class="composition-breakdown">
+                  <div class="composition-column">
+                    <div class="breakdown-section">
+                      <h5>Included Files</h5>
+                      <div class="file-type-breakdown-compact">
+                        <div class="no-exclusions">No files processed yet</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="composition-column">
+                    <div class="breakdown-section">
+                      <h5>Excluded Files</h5>
+                      <div class="file-type-breakdown-compact">
+                        <div class="no-exclusions">No files processed yet</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Generate deployment form content (extracted from modal)
+   */
+  generateDeploymentFormContent(githubAccounts) {
+    if (githubAccounts.length === 0) {
+      return `
+        <div class="deploy-main-content">
+          <div class="no-accounts-message">
+            <div class="message-icon">🔗</div>
+            <h4>No GitHub Accounts Connected</h4>
+            <p>To deploy your site to GitHub Pages, you'll need to connect a GitHub account first.</p>
+            <div class="account-setup-info">
+              <h5>What you'll need:</h5>
+              <ul>
+                <li>GitHub Personal Access Token (Fine-grained recommended)</li>
+                <li>Repository access permissions</li>
+                <li>GitHub Pages enabled on your account</li>
+              </ul>
+            </div>
+            <button type="button" class="primary-btn" id="setup-github-btn">
+              <span class="btn-icon">⚙️</span>
+              Set Up GitHub Account
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    const accountOptions = githubAccounts.map(account => 
+      `<option value="${account.id}" data-username="${account.username}" data-token-type="${account.tokenType}">
+        ${account.nickname} (@${account.username}) ${account.tokenType === 'classic' ? '⚠️' : '🔒'}
+      </option>`
+    ).join('');
+
+    return `
+      <div class="deploy-main-content">
+        <form id="deploy-config-form">
+          <div class="form-group">
+            <label for="github-account">GitHub Account</label>
+            <select id="github-account" required>
+              <option value="">Select GitHub account...</option>
+              ${accountOptions}
+            </select>
+            <button type="button" id="add-github-account-btn" class="link-btn">+ Add Account</button>
+          </div>
+          
+          <div id="security-info" class="security-panel" style="display: none;">
+            <!-- Dynamic security information -->
+          </div>
+          
+          <div class="form-group">
+            <label for="repository-name">Repository Name</label>
+            <input type="text" id="repository-name" placeholder="my-site" required>
+            <small>Will create: <span id="repo-preview">username/my-site</span></small>
+          </div>
+          
+          <div class="form-group">
+            <label for="custom-domain">Custom Domain (Optional)</label>
+            <input type="text" id="custom-domain" placeholder="example.com">
+            <small>Leave empty to use GitHub Pages default domain</small>
+          </div>
+          
+          <div class="deployment-options">
+            <h4>Deployment Options</h4>
+            <div class="option-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="auto-create-repo" checked>
+                <span class="checkmark"></span>
+                Automatically create repository if it doesn't exist
+              </label>
+            </div>
+            <div class="option-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="enable-custom-domain" disabled>
+                <span class="checkmark"></span>
+                Configure custom domain (requires domain ownership)
+              </label>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <button type="submit" class="primary-btn">
+              <span class="btn-icon">🚀</span>
+              Deploy to GitHub Pages
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+  }
+
+  /**
+   * Setup configuration form events
+   */
+  setupConfigurationFormEvents(isInitialized, currentSettings) {
+    // Add form event handlers here
+    const form = document.getElementById('site-configuration-form');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleConfigurationSubmit(isInitialized, currentSettings);
+      });
+    }
+  }
+
+  /**
+   * Setup build content events
+   */
+  setupBuildContentEvents() {
+    // Build site button (creates preview by default)
+    const buildSiteBtn = document.getElementById('build-site-btn');
+    if (buildSiteBtn) {
+      buildSiteBtn.addEventListener('click', async () => {
+        await this.buildSiteWithPreview();
+      });
+    }
+  }
+
+  /**
+   * Setup deployment form events
+   */
+  setupDeploymentFormEvents() {
+    // Add deployment form event handlers here
+    const form = document.getElementById('deploy-config-form');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleDeploySubmit();
+      });
+    }
   }
 
   /**
@@ -67,7 +544,7 @@ export class DeployManager extends ModuleBase {
   }
 
   renderDeployNoWorkspace() {
-    const container = document.getElementById('deploy-content');
+    const container = document.getElementById('configure-tab');
     container.innerHTML = `
       <div class="no-workspace-state">
         <div class="no-workspace-icon">Deploy</div>
@@ -83,195 +560,19 @@ export class DeployManager extends ModuleBase {
 
   async renderDeployStatus() {
     try {
-      const container = document.getElementById('deploy-content');
-      if (!container) return;
-
       // Check if workspace is connected
       if (!this.app.workspacePath) {
         this.renderDeployNoWorkspace();
         return;
       }
 
-      // Scan workspace content
-      const contentSummary = await window.electronAPI.deploy.scanContent(this.app.workspacePath);
-      
-      // Check if Quartz is initialized by looking for .quartz directory
-      const isQuartzInitialized = await this.checkQuartzInitialized();
-      
-      // Update site status in header
-      const siteStatusElement = document.getElementById('deploy-site-status');
-      if (siteStatusElement) {
-        siteStatusElement.textContent = `Site Status: ${isQuartzInitialized ? 'Ready' : 'Not Initialized'}`;
-        siteStatusElement.className = isQuartzInitialized ? 'ready' : 'not-initialized';
-      }
-
-      container.innerHTML = `
-        <div class="deploy-main-content">
-          <!-- Deployment Workflow Cards -->
-          <div class="deploy-phase-cards">
-                        <div class="deploy-phase-card ${isQuartzInitialized ? 'completed' : 'active'}" data-phase="configure">
-                          <div class="phase-number">1</div>
-                          <button class="secondary-btn" id="configure-workflow-btn">
-                            Configure
-                          </button>
-                          <div class="phase-description">${isQuartzInitialized ? 'Modify site settings or template' : 'Set up site template and settings'}</div>
-                        </div>
-                        
-                        <div class="deploy-phase-card ${isQuartzInitialized ? '' : 'disabled'}" data-phase="build-preview">
-                          <svg class="preview-eye-icon" id="enable-preview-toggle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" title="Start preview server" ${isQuartzInitialized ? '' : 'disabled'}>
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                          </svg>
-                          <div class="phase-number">2</div>
-                          <button class="secondary-btn" id="build-preview-workflow-btn" ${isQuartzInitialized ? '' : 'disabled'}>Build</button>
-                          <div class="phase-description">Generate static site and optionally preview</div>
-                        </div>
-                        
-                        <div class="deploy-phase-card ${isQuartzInitialized ? '' : 'disabled'}" data-phase="deploy">
-                          <div class="phase-number">3</div>
-                          <button class="secondary-btn" id="deploy-workflow-btn" ${isQuartzInitialized ? '' : 'disabled'}>Deploy</button>
-                          <div class="phase-description">Publish to GitHub Pages</div>
-                        </div>
-                      </div>
-                      
-                      <!-- Build Logs Section -->
-                      <div class="build-logs-section" id="build-logs-section" style="display: none;">
-                        <div class="section-header">
-                          <h4>📋 Build Logs</h4>
-                          <button class="collapse-btn" id="build-logs-toggle">Hide</button>
-                        </div>
-                        <div class="build-logs-content">
-                          <pre id="build-logs-output"></pre>
-                        </div>
-                      </div>
-                      
-                      <!-- Preview Section -->
-                      <div class="preview-section" id="preview-section" style="display: none;">
-                        <div class="section-header">
-                          <h4>Site Preview</h4>
-                          <div class="preview-controls">
-                            <span class="preview-status" id="preview-status">Server: Stopped</span>
-                            <button class="secondary-btn" id="open-external-btn">Open in Browser</button>
-                            <button class="collapse-btn" id="preview-toggle">Hide</button>
-                          </div>
-                        </div>
-                        <div class="preview-content">
-                          <webview id="site-preview" src="about:blank" style="width: 100%; height: 400px; border: 1px solid var(--surface-border);"></webview>
-                        </div>
-                      </div>
-
-              <!-- Composition Section -->
-              <div class="build-status-tile">
-                <div class="status-info">
-                  <div class="status-item expandable">
-                    <div class="status-row">
-                      <span class="status-label">Composition:</span>
-                      <span class="status-value composition-summary">
-                        <span class="build-included">${contentSummary.buildIncludedFiles || 0}</span> included, 
-                        <span class="build-excluded">${contentSummary.buildExcludedFiles || 0}</span> excluded
-                      </span>
-                      <button class="expand-btn" onclick="this.parentElement.parentElement.classList.toggle('expanded')">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                          <path d="M6 8.5L2.5 5l1-1L6 6.5 8.5 4l1 1L6 8.5z"/>
-                        </svg>
-                      </button>
-                    </div>
-                    <div class="expandable-content">
-                      <div class="composition-breakdown">
-                        <div class="composition-column">
-                          <div class="breakdown-section">
-                            <h5>Included Files</h5>
-                            <div class="file-type-breakdown-compact">
-                              ${this.formatFileTypesList(contentSummary.buildFileTypes || {})}
-                            </div>
-                            <div class="composition-footer">
-                              <div class="file-type-row">
-                                <span class="file-type-label">Total</span>
-                                <span class="file-type-value">${contentSummary.buildIncludedFiles || 0}</span>
-                              </div>
-                              <div class="file-type-row">
-                                <span class="file-type-label">Total Size</span>
-                                <span class="file-type-value">${this.formatFileSize(contentSummary.buildIncludedSize || 0)}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="composition-column">
-                          <div class="breakdown-section">
-                            <h5>Excluded Files</h5>
-                            <div class="file-type-breakdown-compact">
-                              ${contentSummary.buildExcludedFiles > 0 ? this.formatExclusionsList(contentSummary) : '<div class="no-exclusions">No files excluded</div>'}
-                            </div>
-                            <div class="composition-footer">
-                              <div class="file-type-row">
-                                <span class="file-type-label">Total</span>
-                                <span class="file-type-value">${contentSummary.buildExcludedFiles || 0}</span>
-                              </div>
-                              <div class="file-type-row">
-                                <span class="file-type-label">Total Size</span>
-                                <span class="file-type-value">${this.formatFileSize(contentSummary.buildExcludedSize || 0)}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-        </div>
-      `;
-
-      // Add event listeners for workflow buttons
-      const configureBtn = document.getElementById('configure-workflow-btn');
-      if (configureBtn) {
-        configureBtn.addEventListener('click', async () => {
-          await this.openConfigurationModal();
-        });
-      }
-      
-      const buildPreviewBtn = document.getElementById('build-preview-workflow-btn');
-      const previewToggle = document.getElementById('enable-preview-toggle');
-      if (buildPreviewBtn && previewToggle && isQuartzInitialized) {
-        // Track toggle state
-        let previewEnabled = false;
-        
-        // Update button text and icon state
-        const updateButtonAndIcon = () => {
-          buildPreviewBtn.textContent = 'Build';
-          previewToggle.classList.toggle('active', previewEnabled);
-        };
-        
-        // Set initial state
-        updateButtonAndIcon();
-        
-        // Handle eye icon toggle
-        previewToggle.addEventListener('click', () => {
-          if (!previewToggle.hasAttribute('disabled')) {
-            previewEnabled = !previewEnabled;
-            updateButtonAndIcon();
-          }
-        });
-        
-        // Handle build button click
-        buildPreviewBtn.addEventListener('click', async () => {
-          await this.buildSiteWithOptionalPreview(previewEnabled);
-        });
-      }
-      
-      // Deploy button event listener is now handled in setupDeployEvents() with delegation
-      
-      this.setupPreviewControls();
-      
+      // Load initial content for all tabs
+      await this.loadConfigureContent();
+      this.loadBuildContent();
+      await this.loadPublishContent();
     } catch (error) {
       console.error('Failed to render deploy status:', error);
-      container.innerHTML = `
-        <div class="error-state">
-          <h3>Failed to Load Deployment Status</h3>
-          <p>${error.message}</p>
-          <button class="secondary-btn" onclick="meridianApp.renderDeployStatus()">Retry</button>
-        </div>
-      `;
+      this.getApp().showError('Failed to load deployment status');
     }
   }
 
@@ -287,6 +588,72 @@ export class DeployManager extends ModuleBase {
       console.error('Error checking Quartz initialization:', error);
       return false;
     }
+  }
+
+  /**
+   * Update header button states based on Quartz initialization status
+   */
+  updateHeaderButtonStates(isQuartzInitialized) {
+    const configureGroup = document.getElementById('configure-group');
+    const buildGroup = document.getElementById('build-group');
+    const publishGroup = document.getElementById('publish-group');
+    
+    const configureBtn = document.getElementById('configure-header-btn');
+    const buildBtn = document.getElementById('build-header-btn');
+    const publishBtn = document.getElementById('publish-header-btn');
+
+    if (!configureGroup || !buildGroup || !publishGroup) {
+      return; // Elements not found, likely not rendered yet
+    }
+
+    if (isQuartzInitialized) {
+      // Configure phase completed
+      configureGroup.classList.remove('active');
+      configureGroup.classList.add('completed');
+      
+      // Build phase active
+      buildGroup.classList.remove('disabled');
+      buildGroup.classList.add('active');
+      if (buildBtn) buildBtn.disabled = false;
+      
+      // Publish phase disabled until build completes
+      publishGroup.classList.add('disabled');
+      if (publishBtn) publishBtn.disabled = true;
+    } else {
+      // Configure phase active
+      configureGroup.classList.remove('completed');
+      configureGroup.classList.add('active');
+      
+      // Build and Publish phases disabled
+      buildGroup.classList.remove('active');
+      buildGroup.classList.add('disabled');
+      if (buildBtn) buildBtn.disabled = true;
+      
+      publishGroup.classList.add('disabled');
+      if (publishBtn) publishBtn.disabled = true;
+    }
+  }
+
+  /**
+   * Update header button states after successful build
+   */
+  updateBuildCompletionState() {
+    const buildGroup = document.getElementById('build-group');
+    const publishGroup = document.getElementById('publish-group');
+    const publishBtn = document.getElementById('publish-header-btn');
+
+    if (!buildGroup || !publishGroup) {
+      return;
+    }
+
+    // Build phase completed
+    buildGroup.classList.remove('active');
+    buildGroup.classList.add('completed');
+    
+    // Publish phase active
+    publishGroup.classList.remove('disabled');
+    publishGroup.classList.add('active');
+    if (publishBtn) publishBtn.disabled = false;
   }
 
   async initializeQuartzProject() {
@@ -726,10 +1093,12 @@ export class DeployManager extends ModuleBase {
 
   async handleConfigurationSubmit(isInitialized, currentSettings) {
     try {
+      console.log('[DeployManager] Handling configuration submit...');
       this.app.updateFooterStatus('Saving configuration...', false);
       
       // Get form data
       const formData = this.collectConfigurationData();
+      console.log('[DeployManager] Form data collected:', formData);
       
       // Determine if template changed (destructive change)
       const currentTemplate = currentSettings.quartz?.template;
@@ -754,10 +1123,14 @@ export class DeployManager extends ModuleBase {
         await this.applySafeConfigurationChanges(formData);
       }
       
-      this.app.closeModal();
-      await this.renderDeployStatus();
+      // Refresh the configuration content to show updated state
+      await this.loadConfigureContent();
       this.app.updateFooterStatus('Ready', false);
       this.app.showSuccess('Configuration updated successfully!');
+      
+      // Update header button states after configuration changes
+      const isQuartzInitialized = await this.checkQuartzInitialized();
+      this.updateHeaderButtonStates(isQuartzInitialized);
       
     } catch (error) {
       console.error('Failed to save configuration:', error);
@@ -767,7 +1140,16 @@ export class DeployManager extends ModuleBase {
   }
 
   collectConfigurationData() {
-    const templateType = document.querySelector('input[name="template"]:checked').value;
+    console.log('[DeployManager] Collecting configuration data...');
+    
+    // Get the selected template type
+    const templateRadio = document.querySelector('input[name="template"]:checked');
+    if (!templateRadio) {
+      console.error('[DeployManager] No template radio button found');
+      throw new Error('No template option selected');
+    }
+    
+    const templateType = templateRadio.value;
     let template;
     
     if (templateType === 'vanilla') {
@@ -794,41 +1176,59 @@ export class DeployManager extends ModuleBase {
       };
     } else {
       // Custom template
-      const customUrl = document.getElementById('custom-template-url').value.trim();
+      const customUrlElement = document.getElementById('custom-template-url');
+      if (!customUrlElement) {
+        throw new Error('Custom template URL field not found');
+      }
+      const customUrl = customUrlElement.value.trim();
       if (!customUrl) {
         throw new Error('Custom template URL is required when using custom template');
       }
       template = { isCustom: true, url: customUrl };
     }
     
-    // Collect ignore patterns
-    const ignorePatternsValue = document.getElementById('ignore-patterns').value;
+    // Collect ignore patterns - using the correct element ID from the form
+    const ignorePatternsElement = document.getElementById('custom-ignore-patterns');
+    if (!ignorePatternsElement) {
+      throw new Error('Ignore patterns field not found');
+    }
+    
+    const ignorePatternsValue = ignorePatternsElement.value;
     const customPatterns = ignorePatternsValue
       .split('\n')
       .map(p => p.trim())
       .filter(p => p.length > 0);
     
+    // Get site settings - using the correct element IDs from the form
+    const siteTitleElement = document.getElementById('site-title');
+    const siteDescriptionElement = document.getElementById('site-description');
+    const baseUrlElement = document.getElementById('base-url');
+    
+    if (!siteTitleElement || !siteDescriptionElement || !baseUrlElement) {
+      throw new Error('Required site settings fields not found');
+    }
+    
     return {
       template,
       site: {
-        title: document.getElementById('site-title').value.trim(),
-        description: document.getElementById('site-description').value.trim(),
-        author: document.getElementById('site-author').value.trim(),
-        baseUrl: document.getElementById('site-base-url').value.trim(),
+        title: siteTitleElement.value.trim(),
+        description: siteDescriptionElement.value.trim(),
+        author: '', // Not in current form
+        baseUrl: baseUrlElement.value.trim(),
         ignorePatterns: {
           custom: customPatterns,
-          enabled: document.getElementById('enable-ignore-patterns').checked,
+          enabled: true, // Always enabled in current form
         },
       },
       quartz: {
-        enableSPA: document.getElementById('enable-spa').checked,
-        enablePopovers: document.getElementById('enable-popovers').checked,
+        enableSPA: true, // Default values since not in current form
+        enablePopovers: true,
         theme: {
-          mode: document.querySelector('input[name="theme-mode"]:checked').value,
+          mode: 'light', // Default value
         },
       },
       deployment: {
-        customCNAME: document.getElementById('custom-cname').checked,
+        customCNAME: false, // Default value since not in current form
       },
     };
   }
@@ -1017,7 +1417,7 @@ export class DeployManager extends ModuleBase {
     }
   }
 
-  async buildSiteWithOptionalPreview(enablePreview = false) {
+  async buildSiteWithPreview() {
     try {
       this.app.updateFooterStatus('Building site...', false);
       
@@ -1037,26 +1437,26 @@ export class DeployManager extends ModuleBase {
           this.appendBuildLog(buildResult.output);
         }
         
-        if (enablePreview) {
-          this.appendBuildLog('Starting preview server...');
-          this.app.updateFooterStatus('Starting preview server...', false);
+        // Always start preview after successful build
+        this.appendBuildLog('Starting preview server...');
+        this.app.updateFooterStatus('Starting preview server...', false);
+        
+        try {
+          const previewUrl = await window.electronAPI.deploy.previewSite({
+            workspacePath: this.app.workspacePath
+          });
           
-          try {
-            const previewUrl = await window.electronAPI.deploy.previewSite({
-              workspacePath: this.app.workspacePath
-            });
-            
-            // Show preview section and load the site
-            this.showPreviewSection(previewUrl);
-            this.appendBuildLog(`Preview server started at ${previewUrl}`);
-            this.app.showSuccess(`Site built and preview started at ${previewUrl}`);
-          } catch (previewError) {
-            console.error('Failed to start preview:', previewError);
-            this.appendBuildLog(`Preview failed: ${previewError.message}`);
-            this.app.showError(`Build succeeded but preview failed: ${previewError.message}`);
-          }
-        } else {
-          this.app.showSuccess(`Site built successfully!`);
+                  // Show preview section and load the site
+        this.showPreviewSection(previewUrl);
+        this.appendBuildLog(`Preview server started at ${previewUrl}`);
+        this.app.showSuccess(`Site built and preview started at ${previewUrl}`);
+        
+        // Update header button states to show build completion
+        this.updateBuildCompletionState();
+        } catch (previewError) {
+          console.error('Failed to start preview:', previewError);
+          this.appendBuildLog(`Preview failed: ${previewError.message}`);
+          this.app.showError(`Build succeeded but preview failed: ${previewError.message}`);
         }
       } else {
         this.appendBuildLog('Build failed!');
@@ -1100,6 +1500,7 @@ export class DeployManager extends ModuleBase {
     const buildLogsSection = document.getElementById('build-logs-section');
     if (buildLogsSection) {
       buildLogsSection.style.display = 'block';
+      buildLogsSection.classList.remove('collapsed'); // Ensure it starts expanded
     }
   }
 
@@ -1113,14 +1514,12 @@ export class DeployManager extends ModuleBase {
   }
 
   showPreviewSection(previewUrl) {
-    const previewSection = document.getElementById('preview-section');
     const previewStatus = document.getElementById('preview-status');
-    const sitePreview = document.getElementById('site-preview');
+    const openExternalBtn = document.getElementById('open-external-btn');
     
-    if (previewSection && previewStatus && sitePreview) {
-      previewSection.style.display = 'block';
+    if (previewStatus && openExternalBtn) {
       previewStatus.textContent = `Server: Running at ${previewUrl}`;
-      sitePreview.src = previewUrl;
+      openExternalBtn.disabled = false;
     }
   }
 
@@ -1130,24 +1529,8 @@ export class DeployManager extends ModuleBase {
     if (buildLogsToggle) {
       buildLogsToggle.addEventListener('click', () => {
         const buildLogsSection = document.getElementById('build-logs-section');
-        const buildLogsContent = document.querySelector('.build-logs-content');
-        if (buildLogsSection && buildLogsContent) {
-          const isVisible = buildLogsContent.style.display !== 'none';
-          buildLogsContent.style.display = isVisible ? 'none' : 'block';
-          buildLogsToggle.textContent = isVisible ? 'Show' : 'Hide';
-        }
-      });
-    }
-
-    // Preview toggle
-    const previewToggle = document.getElementById('preview-toggle');
-    if (previewToggle) {
-      previewToggle.addEventListener('click', () => {
-        const previewContent = document.querySelector('.preview-content');
-        if (previewContent) {
-          const isVisible = previewContent.style.display !== 'none';
-          previewContent.style.display = isVisible ? 'none' : 'block';
-          previewToggle.textContent = isVisible ? 'Show' : 'Hide';
+        if (buildLogsSection) {
+          buildLogsSection.classList.toggle('collapsed');
         }
       });
     }
@@ -1156,9 +1539,13 @@ export class DeployManager extends ModuleBase {
     const openExternalBtn = document.getElementById('open-external-btn');
     if (openExternalBtn) {
       openExternalBtn.addEventListener('click', () => {
-        const sitePreview = document.getElementById('site-preview');
-        if (sitePreview && sitePreview.src && sitePreview.src !== 'about:blank') {
-          window.electronAPI.openExternal(sitePreview.src);
+        const previewStatus = document.getElementById('preview-status');
+        if (previewStatus && previewStatus.textContent.includes('http://')) {
+          // Extract URL from the status text
+          const urlMatch = previewStatus.textContent.match(/http:\/\/[^\s]+/);
+          if (urlMatch) {
+            window.electronAPI.openExternal(urlMatch[0]);
+          }
         }
       });
     }
@@ -1202,42 +1589,41 @@ export class DeployManager extends ModuleBase {
       
       if (githubAccounts.length === 0) {
         // No GitHub accounts - show setup message
-        const modalHtml = `
-          <div class="modal deploy-modal">
-            <div class="modal-header">
-              <h3>Deploy to GitHub Pages</h3>
-              <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-content">
-              <div class="modal-body">
-                <div class="no-accounts-message">
-                  <div class="message-icon">🔗</div>
-                  <h4>No GitHub Accounts Connected</h4>
-                  <p>To deploy your site to GitHub Pages, you'll need to connect a GitHub account first.</p>
-                  <div class="account-setup-info">
-                    <h5>What you'll need:</h5>
-                    <ul>
-                      <li>GitHub Personal Access Token (Fine-grained recommended)</li>
-                      <li>Repository access permissions</li>
-                      <li>GitHub Pages enabled on your account</li>
-                    </ul>
-                  </div>
-                  <button type="button" class="primary-btn" id="setup-github-btn">
-                    <span class="btn-icon">⚙️</span>
-                    Set Up GitHub Account
-                  </button>
+        const modalContent = `
+          <div class="modal-header">
+            <h3>Deploy to GitHub Pages</h3>
+            <button class="modal-close">&times;</button>
+          </div>
+          <div class="modal-content">
+            <div class="modal-body">
+              <div class="no-accounts-message">
+                <div class="message-icon">🔗</div>
+                <h4>No GitHub Accounts Connected</h4>
+                <p>To deploy your site to GitHub Pages, you'll need to connect a GitHub account first.</p>
+                <div class="account-setup-info">
+                  <h5>What you'll need:</h5>
+                  <ul>
+                    <li>GitHub Personal Access Token (Fine-grained recommended)</li>
+                    <li>Repository access permissions</li>
+                    <li>GitHub Pages enabled on your account</li>
+                  </ul>
                 </div>
+                <button type="button" class="primary-btn" id="setup-github-btn">
+                  <span class="btn-icon">⚙️</span>
+                  Set Up GitHub Account
+                </button>
               </div>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="secondary-btn modal-cancel">Cancel</button>
-            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="secondary-btn modal-cancel">Cancel</button>
           </div>
         `;
         
-        const modal = document.getElementById('modal-overlay');
-        modal.innerHTML = modalHtml;
-        modal.classList.add('active');
+        // Use ModalManager to create and open the modal
+        const modalManager = this.getModalManager();
+        modalManager.createDynamicModal('deploy-modal', modalContent);
+        modalManager.openModal('deploy-modal');
         
         // Setup GitHub account button
         document.getElementById('setup-github-btn').addEventListener('click', () => {
@@ -1255,73 +1641,72 @@ export class DeployManager extends ModuleBase {
         </option>`
       ).join('');
       
-      const modalHtml = `
-        <div class="modal deploy-modal">
-          <div class="modal-header">
-            <h3>Deploy to GitHub Pages</h3>
-            <button class="modal-close">&times;</button>
+      const modalContent = `
+        <div class="modal-header">
+          <h3>Deploy to GitHub Pages</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="modal-body">
+            <form id="deploy-config-form">
+              <div class="form-group">
+                <label for="github-account">GitHub Account</label>
+                <select id="github-account" required>
+                  <option value="">Select GitHub account...</option>
+                  ${accountOptions}
+                </select>
+                <button type="button" id="add-github-account-btn" class="link-btn">+ Add Account</button>
+              </div>
+              
+              <div id="security-info" class="security-panel" style="display: none;">
+                <!-- Dynamic security information -->
+              </div>
+              
+              <div class="form-group">
+                <label for="repository-name">Repository Name</label>
+                <input type="text" id="repository-name" placeholder="my-site" required>
+                <small>Will create: <span id="repo-preview">username/my-site</span></small>
+              </div>
+              
+              <div class="form-group">
+                <label for="custom-domain">Custom Domain (Optional)</label>
+                <input type="text" id="custom-domain" placeholder="example.com">
+                <small>Leave empty to use GitHub Pages default domain</small>
+              </div>
+              
+              <div class="deployment-options">
+                <h4>Deployment Options</h4>
+                <div class="option-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="auto-create-repo" checked>
+                    <span class="checkmark"></span>
+                    Automatically create repository if it doesn't exist
+                  </label>
+                </div>
+                <div class="option-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="enable-custom-domain" disabled>
+                    <span class="checkmark"></span>
+                    Configure custom domain (requires domain ownership)
+                  </label>
+                </div>
+              </div>
+            </form>
           </div>
-          <div class="modal-content">
-            <div class="modal-body">
-              <form id="deploy-config-form">
-                <div class="form-group">
-                  <label for="github-account">GitHub Account</label>
-                  <select id="github-account" required>
-                    <option value="">Select GitHub account...</option>
-                    ${accountOptions}
-                  </select>
-                  <button type="button" id="add-github-account-btn" class="link-btn">+ Add Account</button>
-                </div>
-                
-                <div id="security-info" class="security-panel" style="display: none;">
-                  <!-- Dynamic security information -->
-                </div>
-                
-                <div class="form-group">
-                  <label for="repository-name">Repository Name</label>
-                  <input type="text" id="repository-name" placeholder="my-site" required>
-                  <small>Will create: <span id="repo-preview">username/my-site</span></small>
-                </div>
-                
-                <div class="form-group">
-                  <label for="custom-domain">Custom Domain (Optional)</label>
-                  <input type="text" id="custom-domain" placeholder="example.com">
-                  <small>Leave empty to use GitHub Pages default domain</small>
-                </div>
-                
-                <div class="deployment-options">
-                  <h4>Deployment Options</h4>
-                  <div class="option-group">
-                    <label class="checkbox-label">
-                      <input type="checkbox" id="auto-create-repo" checked>
-                      <span class="checkmark"></span>
-                      Automatically create repository if it doesn't exist
-                    </label>
-                  </div>
-                  <div class="option-group">
-                    <label class="checkbox-label">
-                      <input type="checkbox" id="enable-custom-domain" disabled>
-                      <span class="checkmark"></span>
-                      Configure custom domain (requires domain ownership)
-                    </label>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="secondary-btn modal-cancel">Cancel</button>
-            <button type="submit" form="deploy-config-form" class="primary-btn">
-              <span class="btn-icon">🚀</span>
-              Deploy to GitHub Pages
-            </button>
-          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="secondary-btn modal-cancel">Cancel</button>
+          <button type="submit" form="deploy-config-form" class="primary-btn">
+            <span class="btn-icon">🚀</span>
+            Deploy to GitHub Pages
+          </button>
         </div>
       `;
       
-      const modal = document.getElementById('modal-overlay');
-      modal.innerHTML = modalHtml;
-      modal.classList.add('active');
+      // Use ModalManager to create and open the modal
+      const modalManager = this.getModalManager();
+      modalManager.createDynamicModal('deploy-modal', modalContent);
+      modalManager.openModal('deploy-modal');
       
       // Setup event listeners
       this.setupDeploymentModalEvents();
@@ -1718,5 +2103,9 @@ export class DeployManager extends ModuleBase {
     }
 
     this.app.showSuccess('Settings reset to defaults');
+  }
+
+  getModalManager() {
+    return this.app.getModule('modalManager');
   }
 } 
