@@ -13,9 +13,9 @@ const PRESETS = {
         
         // Terrain colors (4-color system) - Now using CSS variables
         terrainColors: {
-            color1: '--theme-grade-12',  
-            color2: '--theme-grade-14', 
-            color3: '--theme-grade-16',  
+            color1: '--theme-grade-7',  
+            color2: '--theme-grade-11', 
+            color3: '--theme-grade-15',  
             color4: '--theme-grade-18'  
         },
         
@@ -47,7 +47,7 @@ const PRESETS = {
         // Lighting and shading
         sphericalShading: {
             enabled: true,
-            intensity: 0.2,
+            intensity: 0.3,
             lightDirection: [0.5, 1.0, 0.5]
         },
         
@@ -57,7 +57,7 @@ const PRESETS = {
             spacing: 0.0,         // Not used - lines are at exact thresholds
             width: 0.005,        // Very thin fixed width for boundary lines
             intensity: 0.5,       // Intensity of boundary lines
-            color: '--theme-grade-4', // Color of contour lines (CSS variable)
+            color: '--theme-grade-12', // Color of contour lines (CSS variable)
             levels: 3,            // Number of threshold boundaries (3 thresholds)
             prominentEvery: 0     // Not used - all lines are equal
         },
@@ -270,7 +270,7 @@ function processColorConfig(colorConfig) {
     return processed;
 }
 
-class OrganicWaveRenderer {
+class TopologyRenderer {
     constructor(canvas, config = {}) {
         this.canvas = canvas;
         this.gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
@@ -323,7 +323,7 @@ class OrganicWaveRenderer {
         console.log('==================');
         
         // Constructor diagnostics
-        console.log('=== ORGANIC WAVE RENDERER INITIALIZATION ===');
+        console.log('=== TOPOLOGY RENDERER INITIALIZATION ===');
         console.log('Canvas size:', canvas.width, 'x', canvas.height);
         console.log('WebGL context:', this.gl ? 'Available' : 'Not available');
         if (typeof config === 'string') {
@@ -340,7 +340,7 @@ class OrganicWaveRenderer {
         console.log('Elevation animation enabled:', this.config.elevationAnimation.enabled);
         console.log('Processed terrain colors:', this.config.terrainColors);
         console.log('Elevation thresholds:', this.config.elevationThresholds);
-        console.log('============================================');
+        console.log('==========================================');
 
         // Core state
         this.uniforms = {};
@@ -388,7 +388,7 @@ class OrganicWaveRenderer {
             this.isInitialized = true;
             this.start();
         } catch (error) {
-            console.error('Failed to initialize OrganicWaveRenderer:', error);
+            console.error('Failed to initialize TopologyRenderer:', error);
             this.fallbackToCSS();
         }
     }
@@ -1214,4 +1214,4 @@ class OrganicWaveRenderer {
 }
 
 // Export for module usage
-export { OrganicWaveRenderer }; 
+export { TopologyRenderer }; 

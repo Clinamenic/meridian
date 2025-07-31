@@ -1,5 +1,5 @@
 // Landing-specific app logic - minimal imports for fast loading
-import { OrganicWaveRenderer } from './js/OrganicWaveRenderer.js';
+import { TopologyRenderer } from './js/TopologyRenderer.js';
 
 console.log('[Landing] ===== LANDING.JS LOADED =====');
 
@@ -26,7 +26,7 @@ class LandingApp {
         
         try {
             // Use the new preset system - much cleaner configuration
-            this.marblingRenderer = new OrganicWaveRenderer(canvas, 'landing');
+            this.marblingRenderer = new TopologyRenderer(canvas, 'landing');
             console.log('Landing sphere initialized successfully with preset configuration');
         } catch (error) {
             console.error('Failed to initialize landing sphere:', error);

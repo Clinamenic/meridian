@@ -22,96 +22,47 @@
 #deploy-panel .panel-header.collapsed {
     height: var(--header-height-lg);
   }
-
-  /* Deploy Subtab Navigation */
-  .deploy-subtab-navigation {
-    height: var(--header-height-lg);
-    display: flex;
-    background-color: var(--theme-grade-18);
-    padding: var(--spacing-sm) var(--spacing-lg);
-    gap: calc(clamp(var(--spacing-md), 4vw, var(--spacing-md)));
-    padding-left: clamp(var(--spacing-md), 4vw, var(--spacing-md)) !important;
-    padding-right: clamp(var(--spacing-md), 4vw, var(--spacing-md)) !important;
-    justify-content: space-around;
-  }
-
-  .deploy-subtab-btn {
-    flex: 1;
+  
+  /* Composition Section Header Styling */
+  #composition-section .section-header-right {
     display: flex;
     align-items: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border: 1px solid var(--surface-border);
-    border-radius: var(--border-radius-lg);
-    background-color: var(--surface-bg);
-    color: var(--text-secondary);
-    cursor: pointer;
+    gap: var(--spacing-md);
+  }
+
+  #composition-section .composition-summary {
     font-size: var(--font-size-sm);
-    transition: all 0.2s ease;
-    justify-content: center;
-    max-width: 150px;
-    & .subtab-label {
-      text-transform: uppercase !important;
-      font-size: var(--font-size-2xs) !important;
-      font-family: var(--standard-font-mono);
-      font-weight: 500;
-      letter-spacing: 3px;
-      opacity: 0.5;
-    }
+    color: var(--text-secondary);
+    font-family: var(--standard-font-mono);
   }
 
-  .deploy-subtab-btn:hover {
-    background-color: var(--theme-grade-17);
-    color: var(--text-primary);
-    border: var(--border-color-theme-light);
+  #composition-section .build-included {
+    color: var(--success-color);
+    font-weight: 600;
   }
 
-  .deploy-subtab-btn.active {
-    color: var(--text-primary);
-    background-color: var(--theme-grade-14);
-    cursor: default;
-    & .subtab-label {
-      opacity: 1;
-    }
+  #composition-section .build-excluded {
+    color: var(--warning-color);
+    font-weight: 600;
   }
 
-  .deploy-subtab-icon {
-    font-size: var(--font-size-lg);
+  /* Build Logs Section Header Styling */
+  #build-logs-section .section-header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
   }
 
-  
-
-  /* Deploy Subtab Content */
-  .deploy-subtab-content {
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-    background-color: var(--surface-bg);
+  #build-logs-section .build-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
   }
 
-  .deploy-subtab-panel {
-    display: none;
-    height: 100%;
-    overflow-y: auto;
-    padding: var(--spacing-md) var(--spacing-sm) var(--spacing-md) var(--spacing-md);
-  }
-
-  .deploy-subtab-panel.active {
-    display: block;
-  }
-
-  /* Form styles for deploy subtab panels - using existing modal styles */
-  .deploy-subtab-panel .form-section {
-    margin-bottom: var(--spacing-xl);
-    padding: var(--spacing-lg);
-    background-color: var(--surface-bg-elevated);
-    border: 1px solid var(--surface-border);
-    border-radius: var(--border-radius-lg);
-  }
-
-  .deploy-subtab-panel .highlight-section {
-    border-color: var(--theme-primary);
-    background-color: var(--theme-primary-subtle);
+  #build-logs-section .preview-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
   }
 
   /* Deploy Workflow Header Buttons */
@@ -190,7 +141,6 @@
     display: flex;
     flex-direction: column;
     margin: 0 auto;
-    gap: var(--spacing-md);
   }
   
   .deploy-status-section {
@@ -537,90 +487,43 @@
 
 
 /* Build Logs Section */
-.build-logs-section {
-  background-color: var(--surface-bg-elevated);
-  border: 1px solid var(--surface-border);
-  border-radius: var(--border-radius-lg);
-  margin-right: var(--spacing-sm);
-  overflow: hidden;
-  & pre {
-    margin: 0;
-  }
+/* Build logs specific styles - using global collapsible pattern */
+
+#build-logs-section .section-content {
+  padding: 0 !important;
+
 }
 
-.section-header {
-  height: var(--header-height-lg);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--surface-bg-subtle);
+/* Section-specific overrides */
+#initialization-section .section-header {
+  border-bottom: 1px solid var(--surface-border);
 }
 
-/* Build logs section header - group left elements together */
-.build-logs-section .section-header {
+#site-settings-section .section-content {
+  padding-top: var(--spacing-lg);
+}
+
+#ignore-patterns-section .section-content {
+  padding-top: var(--spacing-lg);
+}
+
+/* Build logs specific styles */
+#build-logs-section .section-header-left {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: var(--spacing-md);
 }
 
-.build-logs-section .section-header > *:not(:last-child) {
-  margin-right: var(--spacing-xs);
-}
-
-.build-logs-section .section-header .expand-btn {
-  margin-left: auto;
-}
-
-.section-header h4 {
+#build-logs-section .section-content pre {
   margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: 400;
-  color: var(--text-primary);
+  font-family: var(--standard-font-mono);
+  font-size: var(--font-size-xs);
+  line-height: 1.3;
+  background-color: var(--theme-grade-19);
+  padding: var(--spacing-md);
+  max-height: 400px;
+  overflow-y: auto;
 }
-
-.collapse-btn {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  background-color: transparent;
-  border: 1px solid var(--surface-border);
-  border-radius: var(--border-radius);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.collapse-btn:hover {
-  background-color: var(--surface-bg-subtle);
-  color: var(--text-primary);
-}
-
-  .build-logs-content {
-    padding: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.2s ease;
-  }
-
-  .build-logs-section.collapsed .build-logs-content {
-    max-height: 0;
-    opacity: 0;
-  }
-
-  .build-logs-section:not(.collapsed) .build-logs-content {
-    max-height: 500px;
-    opacity: 1;
-  }
-
-  /* Build logs expand button rotation */
-  .build-logs-section .expand-btn svg {
-    transition: transform 0.2s ease;
-    transform: rotate(180deg);
-  }
-
-  .build-logs-section.collapsed .expand-btn svg {
-    transform: rotate(0deg);
-  }
 
   .preview-info {
     display: flex;
@@ -638,6 +541,8 @@
     height: var(--pill-height);
     display: flex;
     align-items: center;
+    white-space: nowrap;
+    min-width: 0px;
   }
 
   .preview-status.active {
@@ -901,8 +806,9 @@
   
   /* Composition Section Styles */
   .composition-summary {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs) !important;
     font-weight: 500;
+    opacity: 0.5;
   }
   
   .composition-breakdown {

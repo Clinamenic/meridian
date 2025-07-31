@@ -21,6 +21,9 @@ export class DeployManager extends ModuleBase {
     // Initialize header collapse state
     this.initializeHeaderCollapseState();
     
+    // Setup global collapsible section functionality
+    this.setupGlobalCollapsibleSections();
+    
     console.log('[DeployManager] Initialized');
   }
 
@@ -106,7 +109,7 @@ export class DeployManager extends ModuleBase {
    * Set up subtab navigation event listeners
    */
   setupDeploySubtabs() {
-    const subtabBtns = document.querySelectorAll('.deploy-subtab-btn');
+    const subtabBtns = document.querySelectorAll('.subtab-btn');
     subtabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         this.switchDeploySubtab(btn.dataset.tab);
@@ -119,7 +122,7 @@ export class DeployManager extends ModuleBase {
    */
   switchDeploySubtab(tabName) {
     // Hide all panels
-    document.querySelectorAll('.deploy-subtab-panel').forEach(panel => {
+    document.querySelectorAll('.subtab-panel').forEach(panel => {
       panel.classList.remove('active');
     });
     
@@ -130,7 +133,7 @@ export class DeployManager extends ModuleBase {
     }
     
     // Update button states
-    document.querySelectorAll('.deploy-subtab-btn').forEach(btn => {
+    document.querySelectorAll('.subtab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.tab === tabName);
     });
     
@@ -242,74 +245,101 @@ export class DeployManager extends ModuleBase {
       <div class="deploy-main-content">
         <form id="site-configuration-form">
           <!-- Initialization Section -->
-          <div class="form-section ${!isInitialized ? 'highlight-section' : ''}">
-            <h4>Initialization ${!isInitialized ? '(Required)' : ''}</h4>
-            <div class="template-options">
-              <label class="radio-option">
-                <input type="radio" name="template" value="vanilla" ${currentTemplate.id === 'vanilla-quartz' ? 'checked' : ''}>
-                <div class="radio-content">
-                  <strong>Vanilla Quartz</strong>
-                  <p>Default Meridian-Quartz template with clean styling</p>
-                </div>
-              </label>
-              
-              <label class="radio-option">
-                <input type="radio" name="template" value="clinamenic" ${currentTemplate.id === 'clinamenic-quartz' ? 'checked' : ''}>
-                <div class="radio-content">
-                  <strong>Clinamenic Quartz</strong>
-                  <p>Enhanced Meridian-Quartz template with advanced features and optimizations</p>
-                </div>
-              </label>
-              
-              <label class="radio-option">
-                <input type="radio" name="template" value="custom" ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'checked' : ''}>
-                <div class="radio-content">
-                  <strong>Custom Template</strong>
-                  <p>Use a custom Quartz template from GitHub or other source</p>
-                </div>
-              </label>
+          <div class="collapsible-section" id="initialization-section">
+            <div class="section-header" data-section="initialization">
+              <h4>Initialization ${!isInitialized ? '(Required)' : ''}</h4>
+              <button type="button" class="expand-btn" aria-label="Toggle initialization section">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
             </div>
-            
-            <div class="form-group" id="custom-template-group" style="display: ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'block' : 'none'};">
-              <label for="custom-template-url">Custom Template URL:</label>
-              <input type="text" id="custom-template-url" placeholder="https://github.com/username/repo" value="${currentTemplate.url || ''}">
-              <small>Enter the GitHub repository URL for your custom template</small>
+            <div class="section-content">
+              <div class="template-options">
+                <label class="radio-option">
+                  <input type="radio" name="template" value="vanilla" ${currentTemplate.id === 'vanilla-quartz' ? 'checked' : ''}>
+                  <div class="radio-content">
+                    <strong>Vanilla Quartz</strong>
+                    <p>Default Meridian-Quartz template with clean styling</p>
+                  </div>
+                </label>
+                
+                <label class="radio-option">
+                  <input type="radio" name="template" value="clinamenic" ${currentTemplate.id === 'clinamenic-quartz' ? 'checked' : ''}>
+                  <div class="radio-content">
+                    <strong>Clinamenic Quartz</strong>
+                    <p>Enhanced Meridian-Quartz template with advanced features and optimizations</p>
+                  </div>
+                </label>
+                
+                <label class="radio-option">
+                  <input type="radio" name="template" value="custom" ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'checked' : ''}>
+                  <div class="radio-content">
+                    <strong>Custom Template</strong>
+                    <p>Use a custom Quartz template from GitHub or other source</p>
+                  </div>
+                </label>
+              </div>
+              
+              <div class="form-group" id="custom-template-group" style="display: ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'block' : 'none'};">
+                <label for="custom-template-url">Custom Template URL:</label>
+                <input type="text" id="custom-template-url" placeholder="https://github.com/username/repo" value="${currentTemplate.url || ''}">
+                <small>Enter the GitHub repository URL for your custom template</small>
+              </div>
             </div>
           </div>
 
           <!-- Site Settings Section -->
-          <div class="form-section">
-            <h4>Site Settings</h4>
-            <div class="form-group">
-              <label for="site-title">Site Title:</label>
-              <input type="text" id="site-title" value="${currentSettings.site?.title || ''}" maxlength="100">
-              <div class="character-count">
-                <span id="title-count">0</span>/100
-              </div>
+          <div class="collapsible-section" id="site-settings-section">
+            <div class="section-header" data-section="site-settings">
+              <h4>Site Settings</h4>
+              <button type="button" class="expand-btn" aria-label="Toggle site settings section">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
             </div>
-            
-            <div class="form-group">
-              <label for="site-description">Site Description:</label>
-              <textarea id="site-description" rows="3" maxlength="300">${currentSettings.site?.description || ''}</textarea>
-              <div class="character-count">
-                <span id="description-count">0</span>/300
+            <div class="section-content">
+              <div class="form-group">
+                <label for="site-title">Site Title:</label>
+                <input type="text" id="site-title" value="${currentSettings.site?.title || ''}" maxlength="100">
+                <div class="character-count">
+                  <span id="title-count">0</span>/100
+                </div>
               </div>
-            </div>
-            
-            <div class="form-group">
-              <label for="base-url">Base URL:</label>
-              <input type="text" id="base-url" placeholder="https://example.com" value="${currentSettings.site?.baseUrl || ''}">
-              <small>Your site's public URL (e.g., https://example.com)</small>
+              
+              <div class="form-group">
+                <label for="site-description">Site Description:</label>
+                <textarea id="site-description" rows="3" maxlength="300">${currentSettings.site?.description || ''}</textarea>
+                <div class="character-count">
+                  <span id="description-count">0</span>/300
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="base-url">Base URL:</label>
+                <input type="text" id="base-url" placeholder="https://example.com" value="${currentSettings.site?.baseUrl || ''}">
+                <small>Your site's public URL (e.g., https://example.com)</small>
+              </div>
             </div>
           </div>
 
           <!-- Custom Ignore Patterns Section -->
-          <div class="form-section">
-            <h4>Custom Ignore Patterns</h4>
-            <div class="form-group">
-              <label for="custom-ignore-patterns">Additional Ignore Patterns:</label>
-              <textarea id="custom-ignore-patterns" rows="4" placeholder="*.tmp&#10;private/**&#10;drafts/&#10;.env">${currentSettings.site?.ignorePatterns?.custom?.join('\n') || ''}</textarea>
-              <small>One pattern per line. These will be added to the default Quartz ignore patterns.</small>
+          <div class="collapsible-section" id="ignore-patterns-section">
+            <div class="section-header" data-section="ignore-patterns">
+              <h4>Custom Ignore Patterns</h4>
+              <button type="button" class="expand-btn" aria-label="Toggle ignore patterns section">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <div class="section-content">
+              <div class="form-group">
+                <label for="custom-ignore-patterns">Additional Ignore Patterns:</label>
+                <textarea id="custom-ignore-patterns" rows="4" placeholder="*.tmp&#10;private/**&#10;drafts/&#10;.env">${currentSettings.site?.ignorePatterns?.custom?.join('\n') || ''}</textarea>
+                <small>One pattern per line. These will be added to the default Quartz ignore patterns.</small>
+              </div>
             </div>
           </div>
 
@@ -331,57 +361,64 @@ export class DeployManager extends ModuleBase {
     return `
       <div class="deploy-main-content">
         <!-- Build Logs Section -->
-        <div class="build-logs-section" id="build-logs-section">
-          <div class="section-header">
-            <button type="button" class="primary-btn" id="build-site-btn">
-              Build Site
-            </button>
-            <button class="secondary-btn" id="open-external-btn" disabled>Open in Browser</button>
-            <span class="preview-status" id="preview-status">Server: Starting...</span>
-            <button class="expand-btn" id="build-logs-toggle">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                <path d="M6 8.5L2.5 5l1-1L6 6.5 8.5 4l1 1L6 8.5z"/>
-              </svg>
-            </button>
+        <div class="collapsible-section" id="build-logs-section">
+          <div class="section-header" data-section="build-logs">
+            <h4>Build Logs</h4>
+            <div class="section-header-right">
+              <div class="build-controls">
+                <button type="button" class="primary-btn" id="build-site-btn">
+                  Build Site
+                </button>
+                <div class="preview-info">
+                  <span class="preview-status" id="preview-status">Server: Not running</span>
+                  <button type="button" class="secondary-btn" id="open-external-btn" disabled>
+                    Open External
+                  </button>
+                </div>
+              </div>
+              <button type="button" class="expand-btn" aria-label="Toggle build logs">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
-          <div class="build-logs-content">
+          <div class="section-content">
             <pre id="build-logs-output"></pre>
           </div>
         </div>
 
         <!-- Composition Section -->
-        <div class="build-status-tile">
-          <div class="status-info">
-            <div class="status-item expandable">
-              <div class="status-row">
-                <span class="status-label">Composition:</span>
-                <span class="status-value composition-summary">
-                  <span class="build-included">0</span> included, 
-                  <span class="build-excluded">0</span> excluded
-                </span>
-                <button class="expand-btn" onclick="this.parentElement.parentElement.classList.toggle('expanded')">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                    <path d="M6 8.5L2.5 5l1-1L6 6.5 8.5 4l1 1L6 8.5z"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="expandable-content">
-                <div class="composition-breakdown">
-                  <div class="composition-column">
-                    <div class="breakdown-section">
-                      <h5>Included Files</h5>
-                      <div class="file-type-breakdown-compact">
-                        <div class="no-exclusions">No files processed yet</div>
-                      </div>
-                    </div>
+        <div class="collapsible-section" id="composition-section">
+          <div class="section-header" data-section="composition">
+            <h4>Composition</h4>
+            <div class="section-header-right">
+              <span class="composition-summary">
+                <span class="build-included">0</span> included, 
+                <span class="build-excluded">0</span> excluded
+              </span>
+              <button type="button" class="expand-btn" aria-label="Toggle composition section">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="section-content">
+            <div class="composition-breakdown">
+              <div class="composition-column">
+                <div class="breakdown-section">
+                  <h5>Included Files</h5>
+                  <div class="file-type-breakdown-compact">
+                    <div class="no-exclusions">No files processed yet</div>
                   </div>
-                  <div class="composition-column">
-                    <div class="breakdown-section">
-                      <h5>Excluded Files</h5>
-                      <div class="file-type-breakdown-compact">
-                        <div class="no-exclusions">No files processed yet</div>
-                      </div>
-                    </div>
+                </div>
+              </div>
+              <div class="composition-column">
+                <div class="breakdown-section">
+                  <h5>Excluded Files</h5>
+                  <div class="file-type-breakdown-compact">
+                    <div class="no-exclusions">No files processed yet</div>
                   </div>
                 </div>
               </div>
@@ -496,6 +533,112 @@ export class DeployManager extends ModuleBase {
         await this.handleConfigurationSubmit(isInitialized, currentSettings);
       });
     }
+
+    // Collapsible sections are now handled globally in setupGlobalCollapsibleSections()
+  }
+
+  /**
+   * Setup global collapsible sections functionality
+   * This method sets up event delegation for all collapsible sections
+   */
+  setupGlobalCollapsibleSections() {
+    // Use event delegation on the document to handle all collapsible sections
+    // This ensures it works for dynamically created content and survives page refreshes
+    
+    // Handle section header clicks
+    document.addEventListener('click', (e) => {
+      const sectionHeader = e.target.closest('.collapsible-section .section-header');
+      if (sectionHeader) {
+        // Don't toggle if clicking on the expand button (it has its own handler)
+        if (e.target.closest('.expand-btn')) {
+          return;
+        }
+        
+        const section = sectionHeader.closest('.collapsible-section');
+        this.toggleSection(section);
+      }
+    });
+
+    // Handle expand button clicks
+    document.addEventListener('click', (e) => {
+      const expandBtn = e.target.closest('.collapsible-section .expand-btn');
+      if (expandBtn) {
+        e.stopPropagation(); // Prevent header click
+        const section = expandBtn.closest('.collapsible-section');
+        this.toggleSection(section);
+      }
+    });
+
+    // Load saved states after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      this.loadSectionStates();
+    }, 100);
+  }
+
+  /**
+   * Setup collapsible sections functionality (legacy method - kept for compatibility)
+   */
+  setupCollapsibleSections() {
+    // This method is now deprecated in favor of setupGlobalCollapsibleSections()
+    // It's kept for backward compatibility but delegates to the global setup
+    console.log('[DeployManager] setupCollapsibleSections() is deprecated, use setupGlobalCollapsibleSections()');
+  }
+
+  /**
+   * Toggle a collapsible section
+   */
+  toggleSection(section) {
+    if (!section || !section.id) {
+      console.warn('[DeployManager] Cannot toggle section without ID:', section);
+      return;
+    }
+    
+    const isCollapsed = section.classList.contains('collapsed');
+    const newState = !isCollapsed;
+    
+    if (newState) {
+      section.classList.add('collapsed');
+    } else {
+      section.classList.remove('collapsed');
+    }
+    
+    // Save state to localStorage
+    this.saveSectionState(section.id, newState);
+    
+    console.log(`[DeployManager] Toggled section "${section.id}" to ${newState ? 'collapsed' : 'expanded'}`);
+  }
+
+  /**
+   * Save section state to localStorage
+   */
+  saveSectionState(sectionId, isExpanded) {
+    const sectionStates = JSON.parse(localStorage.getItem('deploySectionStates') || '{}');
+    sectionStates[sectionId] = isExpanded;
+    localStorage.setItem('deploySectionStates', JSON.stringify(sectionStates));
+  }
+
+  /**
+   * Load section states from localStorage
+   */
+  loadSectionStates() {
+    try {
+      const sectionStates = JSON.parse(localStorage.getItem('deploySectionStates') || '{}');
+      
+      Object.entries(sectionStates).forEach(([sectionId, isExpanded]) => {
+        const section = document.getElementById(sectionId);
+        if (section) {
+          if (!isExpanded) {
+            section.classList.add('collapsed');
+          } else {
+            section.classList.remove('collapsed');
+          }
+        }
+      });
+      
+      console.log('[DeployManager] Loaded section states:', Object.keys(sectionStates));
+    } catch (error) {
+      console.warn('[DeployManager] Failed to load section states:', error);
+    }
   }
 
   /**
@@ -509,6 +652,8 @@ export class DeployManager extends ModuleBase {
         await this.buildSiteWithPreview();
       });
     }
+
+    // Collapsible sections are now handled globally in setupGlobalCollapsibleSections()
   }
 
   /**
@@ -1524,17 +1669,6 @@ export class DeployManager extends ModuleBase {
   }
 
   setupPreviewControls() {
-    // Build logs toggle
-    const buildLogsToggle = document.getElementById('build-logs-toggle');
-    if (buildLogsToggle) {
-      buildLogsToggle.addEventListener('click', () => {
-        const buildLogsSection = document.getElementById('build-logs-section');
-        if (buildLogsSection) {
-          buildLogsSection.classList.toggle('collapsed');
-        }
-      });
-    }
-
     // Open external button
     const openExternalBtn = document.getElementById('open-external-btn');
     if (openExternalBtn) {

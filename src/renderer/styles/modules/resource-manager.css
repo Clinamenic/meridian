@@ -16,6 +16,7 @@
 .resource-count {
   flex-shrink: 0;
   margin-left: var(--spacing-xs);
+  padding-bottom: 2px;
 }
   
 .resource-count span {
@@ -370,7 +371,7 @@
   min-width: 0;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
   
   /* Resource Actions */
@@ -380,6 +381,12 @@
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-xs);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.resource-item:hover .resource-actions {
+  opacity: 1;
 }
   
 .resource-action-btn {

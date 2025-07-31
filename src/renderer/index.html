@@ -9,7 +9,7 @@
     />
     <title>Meridian - Local-First Multi-Tool Interface</title>
     <link rel="stylesheet" href="styles/main.css" />
-    <script src="js/OrganicWaveRenderer.js"></script>
+    <script type="module" src="js/TopologyRenderer.js"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -68,11 +68,11 @@
       <main class="main-content">
         <!-- Tab Navigation -->
         <nav class="tab-navigation">
-          <button class="tab-btn active" data-tool="resource">
+          <button class="tab-btn" data-tool="resource">
             <span class="tab-icon"></span>
             <span class="tab-label">Resources</span>
           </button>
-          <button class="tab-btn" data-tool="deploy">
+          <button class="tab-btn active" data-tool="deploy">
             <span class="tab-icon"></span>
             <span class="tab-label">Deploy</span>
           </button>
@@ -85,12 +85,12 @@
         <!-- Tool Panels -->
         <div class="tool-panels">
           <!-- Resource Panel -->
-          <div id="resource-panel" class="tool-panel active">
+          <div id="resource-panel" class="tool-panel">
             <!-- Content will be rendered by ResourceManager -->
           </div>
 
           <!-- Deploy Panel -->
-          <div id="deploy-panel" class="tool-panel">
+          <div id="deploy-panel" class="tool-panel active">
             <div class="panel-header">
               <div class="panel-header-left">
                 <!-- Left side content can go here in the future -->
@@ -152,32 +152,32 @@
             </div>
             <div class="panel-content">
               <!-- Subtab Navigation (positioned under panel header, similar to main tab navigation) -->
-              <div class="deploy-subtab-navigation">
-                <button class="deploy-subtab-btn active" data-tab="configure">
+              <div class="subtab-navigation">
+                <button class="subtab-btn active" data-tab="configure">
                   <span class="subtab-label">Configure</span>
                 </button>
-                <button class="deploy-subtab-btn" data-tab="build">
+                <button class="subtab-btn" data-tab="build">
                   <span class="subtab-label">Build</span>
                 </button>
-                <button class="deploy-subtab-btn" data-tab="publish">
+                <button class="subtab-btn" data-tab="publish">
                   <span class="subtab-label">Publish</span>
                 </button>
               </div>
 
               <!-- Subtab Content Panels -->
-              <div class="deploy-subtab-content">
+              <div class="subtab-content">
                 <!-- Configure Tab -->
-                <div class="deploy-subtab-panel active" id="configure-tab">
+                <div class="subtab-panel active" id="configure-tab">
                   <!-- Site Configuration content (moved from modal) -->
                 </div>
 
                 <!-- Build Tab -->
-                <div class="deploy-subtab-panel" id="build-tab">
+                <div class="subtab-panel" id="build-tab">
                   <!-- Build logs and composition sections -->
                 </div>
 
                 <!-- Publish Tab -->
-                <div class="deploy-subtab-panel" id="publish-tab">
+                <div class="subtab-panel" id="publish-tab">
                   <!-- GitHub Pages deployment content (moved from modal) -->
                 </div>
               </div>

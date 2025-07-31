@@ -5,6 +5,36 @@ All notable changes to Meridian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2025-07-31
+
+### Added
+
+- **TopologyRenderer**: Complete replacement of OrganicWaveRenderer with enhanced 3D terrain visualization system
+- **Development Documentation**: Added CLAUDE.md with comprehensive development guidance and architecture overview
+- **Enhanced Terrain Rendering**: Advanced spherical terrain with 4-color elevation system and configurable presets
+- **Grain Texture System**: Animated grain texture overlay for enhanced visual depth
+- **Contour Line Visualization**: Terrain boundary lines with configurable intensity and color
+
+### Changed
+
+- **Renderer Architecture**: Replaced OrganicWaveRenderer.js with TopologyRenderer.js for improved performance and features
+- **Visual Rendering**: Enhanced terrain visualization with spherical shading and elevation animation
+- **CSS Integration**: Terrain colors now use CSS variables for better theme integration
+- **Performance Optimization**: Improved rendering performance with optimized shader configurations
+
+### Technical Improvements
+
+- **Code Organization**: Streamlined renderer architecture with better separation of concerns
+- **Shader System**: Enhanced WebGL shader implementation with improved lighting and shading
+- **Configuration System**: Flexible preset-based configuration for different use cases
+- **Documentation**: Comprehensive development documentation for contributors and maintainers
+
+### User Experience
+
+- **Enhanced Visual Appeal**: Improved terrain rendering with better color distribution and visual depth
+- **Smooth Performance**: Optimized rendering for better frame rates and responsiveness
+- **Consistent Theming**: Terrain colors now integrate with application theme system
+
 ## [0.7.2] - 2025-07-28
 
 ### Added

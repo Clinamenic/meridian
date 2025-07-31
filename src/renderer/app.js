@@ -302,8 +302,8 @@ class MeridianApp {
 
         // Ensure a tool is active
         if (!activeTab) {
-                  console.log('[DEBUG] No active tool, activating Resource tool');
-        await this.switchTool('resource');
+                  console.log('[DEBUG] No active tool, activating Deploy tool');
+        await this.switchTool('deploy');
 
           // Verify activation worked
           const newActiveTab = document.querySelector('.tab-btn.active');
@@ -1909,7 +1909,7 @@ class MeridianApp {
 
     try {
       // Use the meridianDefault preset for professional appearance
-      this.marblingRenderer = new OrganicWaveRenderer(canvas, OrganicWaveRenderer.presets.meridianDefault);
+              this.marblingRenderer = new TopologyRenderer(canvas, TopologyRenderer.presets.meridianDefault);
       console.log('Marbling background initialized successfully');
     } catch (error) {
       console.error('Failed to initialize marbling background:', error);

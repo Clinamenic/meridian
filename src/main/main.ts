@@ -226,7 +226,7 @@ class MeridianApp {
         
         // Update window properties for main app
         this.mainWindow.setSize(900, 800);
-        this.mainWindow.setMinimumSize(700, 600);
+        this.mainWindow.setMinimumSize(500, 500);
         this.mainWindow.setMaximumSize(0, 0); // Remove max size constraint
         this.mainWindow.setResizable(true);
         this.mainWindow.setMaximizable(true);
