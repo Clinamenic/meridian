@@ -5,6 +5,39 @@ All notable changes to Meridian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2025-09-10
+
+### Added
+
+- **Arweave Deployment System**: Comprehensive deployment functionality for static sites to Arweave network
+- **Hybrid Deployment Support**: Combined GitHub Pages and Arweave deployment capabilities
+- **Enhanced Site Deploy Manager**: Extended with Arweave integration and deployment cost estimation
+- **Deployment Verification**: New verification system for deployed sites with accessibility checks
+- **Cost Estimation**: Real-time deployment cost calculation for Arweave uploads
+- **Direct File Upload**: New `uploadFileDirect` method for streamlined Arweave file uploads
+- **Deployment Manifest System**: Structured deployment tracking with file metadata and verification
+
+### Changed
+
+- **Site Deploy Manager Architecture**: Enhanced with ArweaveManager integration and unified deployment workflow
+- **Type System Extensions**: New interfaces for Arweave deployment configuration and results
+- **Deployment Configuration**: Restructured site settings to support multiple deployment providers
+- **IPC Handler Registration**: Extended with new Arweave deployment handlers
+- **Workspace Structure**: Enhanced .workspace/ directory organization with comprehensive documentation
+
+### Technical Improvements
+
+- **API Extensions**: New IPC handlers for Arweave deployment operations
+- **Data Flow**: Integrated deployment verification and cost estimation into site deployment workflow
+- **Storage**: Extended configuration schema to support hybrid deployment options
+- **Architecture Documentation**: Updated main process architecture documentation for deployment features
+- **Version Management**: Improved version bump workflow with comprehensive documentation updates
+
+### References
+
+- Version bump commit: [40128aa](https://github.com/meridian-app/meridian/commit/40128aa)
+- Architecture documentation: Updated main-process-architecture.md
+
 ## [0.7.3] - 2025-07-31
 
 ### Added
