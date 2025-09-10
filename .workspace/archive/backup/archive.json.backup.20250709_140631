@@ -1,0 +1,1842 @@
+{
+  "uploads": [
+    {
+      "filename": "Lgyia Clark, Untitled, 1954.jpg",
+      "filePath": "/Users/gideon/Desktop/Lgyia Clark, Untitled, 1954.jpg",
+      "fileSize": 553157,
+      "contentType": "image/jpeg",
+      "tags": [
+        "uuid:5c602d41-ba0a-4deb-8559-55c0c06704e7",
+        "title:Lgyia Clark, Untitled, 1954",
+        "content-type:image/jpeg",
+        "file-size:553157",
+        "content-hash:sha256:5c602d41ba0a0debe55955c0c06704e77bbd32a6cec567af8537532a1dd2d968",
+        "upload-timestamp:2025-06-20T17:18:19.157Z"
+      ],
+      "transactionId": "0IdLzyoRVytPW66egKd-zH57ZWbmUMUX44wM4_luZcc",
+      "status": "pending",
+      "cost": {
+        "ar": "0.00128792",
+        "usd": "0.01"
+      },
+      "id": "mc52q0m74wx0k74hxkh",
+      "uploadedAt": "2025-06-20T17:18:22.111Z"
+    },
+    {
+      "filename": "Untitled, 1952.jpg",
+      "filePath": "/Users/gideon/Desktop/Untitled, 1952.jpg",
+      "fileSize": 420414,
+      "contentType": "image/jpeg",
+      "tags": [
+        "uuid:d22acae9-0ffa-4cae-8f16-2c5a10412083",
+        "title:Untitled, 1952",
+        "content-type:image/jpeg",
+        "file-size:420414",
+        "content-hash:sha256:d22acae90ffa4cae5f162c5a10412083231acfb11c22213e2b2eccc256212f09",
+        "upload-timestamp:2025-06-27T00:41:01.816Z"
+      ],
+      "transactionId": "4hakJ6ZKRC7qIWH3sbZihkNlJu10aBJ6uv2XPGzjzwc",
+      "status": "pending",
+      "cost": {
+        "ar": "0.00097885",
+        "usd": "0.00"
+      },
+      "id": "mce36gj3xnd3lg8y0jj",
+      "uploadedAt": "2025-06-27T00:41:04.815Z"
+    },
+    {
+      "filename": "Untitled, 1954.jpg",
+      "filePath": "/Users/gideon/Desktop/Untitled, 1954.jpg",
+      "fileSize": 550597,
+      "contentType": "image/jpeg",
+      "tags": [
+        "uuid:38b644f7-1ae3-4a44-86ff-4960d49e83cb",
+        "title:Untitled, 1954",
+        "content-type:image/jpeg",
+        "file-size:550597",
+        "content-hash:sha256:38b644f71ae38a4466ff4960d49e83cb939be71806efea188da9c9cce2afa0dc",
+        "upload-timestamp:2025-06-27T00:41:28.271Z"
+      ],
+      "transactionId": "9GTAs6A4-y8olXJWCqbZkeRJ5kMic-gsDuhZifi-4A8",
+      "status": "pending",
+      "cost": {
+        "ar": "0.00128196",
+        "usd": "0.01"
+      },
+      "id": "mce370kus92vau9umr",
+      "uploadedAt": "2025-06-27T00:41:30.799Z"
+    }
+  ],
+  "wallet": {
+    "address": ""
+  },
+  "lastUpdated": "2025-06-27T01:46:02.279Z",
+  "files": [
+    {
+      "uuid": "34c294e7-68b2-41f9-88f1-a1225cf1c065",
+      "title": "Test Note",
+      "filePath": "/Users/gideon/Hub/private/projects/Cosmo/test-note.md",
+      "contentHash": "sha256:ef399bf9f6de6cafb5b7b6eb7a945339df1709be78bf20d8ef9dc9b882bcfdbd",
+      "fileSize": 63,
+      "mimeType": "text/markdown",
+      "created": "2025-06-11T19:09:55.848Z",
+      "modified": "2025-06-11T19:10:27.821Z",
+      "tags": [],
+      "metadata": {
+        "author": "Sample Author",
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "6p_0-auZFcX8EDxHsyIFkZ7boKX7HqsVypT5qwNGCYI",
+          "timestamp": "2025-02-14T05:20:33+00:00",
+          "link": "https://www.arweave.net/6p_0-auZFcX8EDxHsyIFkZ7boKX7HqsVypT5qwNGCYI",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-02-14T05:20:33+00:00"
+          ]
+        },
+        {
+          "hash": "m_wm9sqhhYNO8cxEDqliGktGChGI7uK2AxOtOS_pvgY",
+          "timestamp": "2025-02-14T05:26:25+00:00",
+          "link": "https://www.arweave.net/m_wm9sqhhYNO8cxEDqliGktGChGI7uK2AxOtOS_pvgY",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-02-14T05:26:25+00:00"
+          ]
+        },
+        {
+          "hash": "RAS16XrX2TgV5udkyiAmePGEEIMdEQOtJtXnHa7JD9g",
+          "timestamp": "2025-02-14T05:26:25+00:00",
+          "link": "https://www.arweave.net/RAS16XrX2TgV5udkyiAmePGEEIMdEQOtJtXnHa7JD9g",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-02-14T05:26:25+00:00"
+          ]
+        },
+        {
+          "hash": "wvs4QFBTMEiB9zlIeA1guN-Q8RpxPFGenlVobcctPZ0",
+          "timestamp": "2025-02-14T05:30:49+00:00",
+          "link": "https://www.arweave.net/wvs4QFBTMEiB9zlIeA1guN-Q8RpxPFGenlVobcctPZ0",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-02-14T05:30:49+00:00"
+          ]
+        },
+        {
+          "hash": "K8-2eolSSmCwDr6QYyJCuo28umxHetvM2DyXW5UZY2U",
+          "timestamp": "2025-02-14T06:44:06+00:00",
+          "link": "https://www.arweave.net/K8-2eolSSmCwDr6QYyJCuo28umxHetvM2DyXW5UZY2U",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-02-14T06:44:06+00:00"
+          ]
+        },
+        {
+          "hash": "KJS4h8XqXRoT2MScGl9mP7kGxAKgW5wHvWOTpDg3evA",
+          "timestamp": "2025-02-15T17:32:02.327690+00:00",
+          "link": "https://www.arweave.net/KJS4h8XqXRoT2MScGl9mP7kGxAKgW5wHvWOTpDg3evA",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-02-15T17:32:02.327690+00:00"
+          ]
+        },
+        {
+          "hash": "w6_q8IwiG_kNCCeuHiThg4Dq30_UMdCWVCaN38LJs1c",
+          "timestamp": "2025-02-18T21:30:10.921065+00:00",
+          "link": "https://www.arweave.net/w6_q8IwiG_kNCCeuHiThg4Dq30_UMdCWVCaN38LJs1c",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-02-18T21:30:10.921065+00:00"
+          ]
+        },
+        {
+          "hash": "AVJi-8QQmnKw4Wr61CMoN-pytA50ImAp0DHanJMFuSM",
+          "timestamp": "2025-04-22T17:12:30.326210+00:00",
+          "link": "https://www.arweave.net/AVJi-8QQmnKw4Wr61CMoN-pytA50ImAp0DHanJMFuSM",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-22T17:12:30.326210+00:00"
+          ]
+        },
+        {
+          "hash": "c2duBCsmR1p1OkUi2T5LNr5Uuxlf6dluxyU0fUe60iw",
+          "timestamp": "2025-04-22T20:13:21.619467+00:00",
+          "link": "https://www.arweave.net/c2duBCsmR1p1OkUi2T5LNr5Uuxlf6dluxyU0fUe60iw",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-22T20:13:21.619467+00:00"
+          ]
+        },
+        {
+          "hash": "8R3cqNB4BzC_B7eg2n44vLVeNMvw4qPI3Bort-k5bFA",
+          "timestamp": "2025-04-22T20:18:27.644072+00:00",
+          "link": "https://www.arweave.net/8R3cqNB4BzC_B7eg2n44vLVeNMvw4qPI3Bort-k5bFA",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-22T20:18:27.644072+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "e836933a-e99c-4c6a-abf3-9a03fe90f47c",
+      "title": "A Crypto-Native Invoice Template",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/A Crypto-Native Invoice Template.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 7544,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.306Z",
+      "modified": "2025-06-15T03:57:18.946Z",
+      "tags": [
+        "migrated",
+        "article",
+        "writing",
+        "template"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "p9gGX1WhTPClo3xP84rUHhNFd6f9CC_atIm6WIW2b9U",
+          "timestamp": "2024-03-26T04:29:44+00:00",
+          "link": "https://www.arweave.net/p9gGX1WhTPClo3xP84rUHhNFd6f9CC_atIm6WIW2b9U",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2024-03-26T04:29:44+00:00"
+          ]
+        },
+        {
+          "hash": "vIzKQwpKOY1dGdPa-sXNQFSbqEQcItMNtoj4m0h1KdQ",
+          "timestamp": "2025-04-19T19:11:26.430004+00:00",
+          "link": "https://www.arweave.net/vIzKQwpKOY1dGdPa-sXNQFSbqEQcItMNtoj4m0h1KdQ",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:26.430004+00:00"
+          ]
+        },
+        {
+          "hash": "piHxW3bWd_3qXrtkesE8mNmDgH-Zjd0U_dvVUXhW8LU",
+          "timestamp": "2025-04-20T23:35:12.507711+00:00",
+          "link": "https://www.arweave.net/piHxW3bWd_3qXrtkesE8mNmDgH-Zjd0U_dvVUXhW8LU",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-20T23:35:12.507711+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "2c7b519f-e30c-4677-9bea-8b667f0c3f22",
+      "title": "Toward a Content Commons",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Toward a Content Commons.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 11254,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.318Z",
+      "modified": "2025-06-15T00:38:51.938Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "digital-public-infra"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "6Kc8f4GgBN6t2VX5AQ4fPed63oqP7za46SXNbYifVPk",
+          "timestamp": "2023-11-01T23:49:21+00:00",
+          "link": "https://www.arweave.net/6Kc8f4GgBN6t2VX5AQ4fPed63oqP7za46SXNbYifVPk",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-11-01T23:49:21+00:00"
+          ]
+        },
+        {
+          "hash": "9VTDMD4WmW6i90v-3PAu4ntGVjBSoIaqc0laoxXDH8E",
+          "timestamp": "2025-04-19T19:11:34.309948+00:00",
+          "link": "https://www.arweave.net/9VTDMD4WmW6i90v-3PAu4ntGVjBSoIaqc0laoxXDH8E",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:34.309948+00:00"
+          ]
+        },
+        {
+          "hash": "HD_bwPL49DPPv7EGj3KQbpSC0E8yqzh0uhaA5dqY6Ls",
+          "timestamp": "2025-04-20T23:35:10.882458+00:00",
+          "link": "https://www.arweave.net/HD_bwPL49DPPv7EGj3KQbpSC0E8yqzh0uhaA5dqY6Ls",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-20T23:35:10.882458+00:00"
+          ]
+        },
+        {
+          "hash": "SKJf_LgOYefqazX8u4ugGC3cpj1xyj8NW9yFKGE5vIs",
+          "timestamp": "2025-04-29T15:41:09.630891+00:00",
+          "link": "https://www.arweave.net/SKJf_LgOYefqazX8u4ugGC3cpj1xyj8NW9yFKGE5vIs",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-29T15:41:09.630891+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "b537813f-7859-4bb0-929c-f7090375820e",
+      "title": "Trust and Trustlessness",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Trust and Trustlessness.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 7542,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.354Z",
+      "modified": "2025-06-15T00:38:59.760Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "coordination",
+        "governance",
+        "automatos"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "-mhdqD0HOi1GlWYQwygt_K85OKYlyZdNqSplU_GyWOM",
+          "timestamp": "2023-01-21T23:22:02+00:00",
+          "link": "https://www.arweave.net/-mhdqD0HOi1GlWYQwygt_K85OKYlyZdNqSplU_GyWOM",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-01-21T23:22:02+00:00"
+          ]
+        },
+        {
+          "hash": "L7No8uqhVhVRT55BjaF5gDeWj_fOF6lMdXdUxVIcWas",
+          "timestamp": "2025-04-19T19:11:38.360525+00:00",
+          "link": "https://www.arweave.net/L7No8uqhVhVRT55BjaF5gDeWj_fOF6lMdXdUxVIcWas",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:38.360525+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "26f1afd1-3d34-47db-be11-c68707fa13e4",
+      "title": "Role-Bound Multisigs",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Role-Bound Multisigs.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 6640,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.407Z",
+      "modified": "2025-06-15T03:56:28.338Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "digital-public-infra",
+        "onchain-org"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "gg2RXJ-jhjx5ylqmPYWZfhgpC-NjFc-XAvqanuDNzUo",
+          "timestamp": "2023-09-25T18:51:41+00:00",
+          "link": "https://www.arweave.net/gg2RXJ-jhjx5ylqmPYWZfhgpC-NjFc-XAvqanuDNzUo",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-09-25T18:51:41+00:00"
+          ]
+        },
+        {
+          "hash": "OBtU1yqsrVqRwqEDEBRs6OfLgnIFfHiaQM_qMOVw2Pg",
+          "timestamp": "2025-04-19T19:11:17.012696+00:00",
+          "link": "https://www.arweave.net/OBtU1yqsrVqRwqEDEBRs6OfLgnIFfHiaQM_qMOVw2Pg",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:17.012696+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "02cdabc6-8467-4962-96bd-8b68b38dbf8b",
+      "title": "Notes on Keynes, Hayek, and Fiscal Protocols",
+      "filePath": "/Users/gideon/Hub/public/website/content/zettelgarten/Notes on Keynes, Hayek, and Fiscal Protocols.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 8976,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.531Z",
+      "modified": "2025-06-15T00:46:23.183Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "notes"
+      ],
+      "metadata": {
+        "customFields": {},
+        "author": "Spencer Saar Cavanaugh"
+      },
+      "arweave_hashes": [
+        {
+          "hash": "uM0nTbf1nc5xmLjstGl6kxPBEhq5Rmsn2fgKILmL_CY",
+          "timestamp": "2024-10-06T20:36:33+00:00",
+          "link": "https://www.arweave.net/uM0nTbf1nc5xmLjstGl6kxPBEhq5Rmsn2fgKILmL_CY",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2024-10-06T20:36:33+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "4df08591-dc72-43d1-9236-853f6c43a3f4",
+      "title": "Notes on Methodology for Communities of Practice",
+      "filePath": "/Users/gideon/Hub/public/website/content/zettelgarten/Notes on Methodology for Communities of Practice.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 14000,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.759Z",
+      "modified": "2025-06-15T03:19:01.723Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "notes",
+        "community-of-practice"
+      ],
+      "metadata": {
+        "customFields": {},
+        "author": "Spencer Saar Cavanaugh"
+      },
+      "arweave_hashes": [
+        {
+          "hash": "9ZrAhEvc_H5d06n5A6PTreYjabMXv9bTGdF3xaE_3fU",
+          "timestamp": "2024-10-31T22:30:49+00:00",
+          "link": "https://www.arweave.net/9ZrAhEvc_H5d06n5A6PTreYjabMXv9bTGdF3xaE_3fU",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2024-10-31T22:30:49+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "2c052cbc-a0fe-4585-86d5-7d6477db9eac",
+      "title": "Prospectus of the Reconciliation of Individual Liberty and Collective Welfare",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Prospectus of the Reconciliation of Individual Liberty and Collective Welfare.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 43022,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.800Z",
+      "modified": "2025-06-15T00:39:35.300Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "essay",
+        "economics",
+        "political-philosophy",
+        "post-capitalism"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "fXBe4dKiAhhCieD2H4_vb3tZGms8CTwws-XeCRcb28Q",
+          "timestamp": "2024-05-23T17:44:35+00:00",
+          "link": "https://www.arweave.net/fXBe4dKiAhhCieD2H4_vb3tZGms8CTwws-XeCRcb28Q",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2024-05-23T17:44:35+00:00"
+          ]
+        },
+        {
+          "hash": "OqpJ5dLJXbHprshf_iCs_A_YTA2Gw-nRO3v63gMMFUg",
+          "timestamp": "2025-04-19T19:11:30.389762+00:00",
+          "link": "https://www.arweave.net/OqpJ5dLJXbHprshf_iCs_A_YTA2Gw-nRO3v63gMMFUg",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:30.389762+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "a017e199-2054-48ef-a637-568e69348c8c",
+      "title": "Slayer Cake, A Layered Membership Structure for DAOs",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Slayer Cake, A Layered Membership Structure for DAOs.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 15486,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.811Z",
+      "modified": "2025-06-15T00:39:43.594Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "onchain-org"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "adYCfiTpszM00-hYZwjX0h7AXOFDUTtbZf-dpLTf_jU",
+          "timestamp": "2023-03-26T21:38:29+00:00",
+          "link": "https://www.arweave.net/adYCfiTpszM00-hYZwjX0h7AXOFDUTtbZf-dpLTf_jU",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-03-26T21:38:29+00:00"
+          ]
+        },
+        {
+          "hash": "IfCyl9tg8HbXUi1GwoVId--O-sC2JTCUWRfNmg7231c",
+          "timestamp": "2025-04-19T19:11:19.818433+00:00",
+          "link": "https://www.arweave.net/IfCyl9tg8HbXUi1GwoVId--O-sC2JTCUWRfNmg7231c",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:19.818433+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "dc9a4759-964b-4ddd-8a38-ccd91e529eee",
+      "title": "Content as a Decentralized Service",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Content as a Decentralized Service.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 5989,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.818Z",
+      "modified": "2025-06-15T00:40:11.950Z",
+      "tags": [
+        "migrated",
+        "article",
+        "writing",
+        "onchain-org",
+        "automatos"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "_DJgldYi4gjB3_9XE47T4iwy0gmhF7ttCZ-T6lm2Trw",
+          "timestamp": "2023-01-21T20:24:17+00:00",
+          "link": "https://www.arweave.net/_DJgldYi4gjB3_9XE47T4iwy0gmhF7ttCZ-T6lm2Trw",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-01-21T20:24:17+00:00"
+          ]
+        },
+        {
+          "hash": "i0kJZl6gD7x8flmEbiX-PzbkEewuawCvSDkY-MmMgcY",
+          "timestamp": "2025-04-19T19:11:32.980977+00:00",
+          "link": "https://www.arweave.net/i0kJZl6gD7x8flmEbiX-PzbkEewuawCvSDkY-MmMgcY",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:32.980977+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "89cc2fdf-006b-456c-8349-dd9f8209d102",
+      "title": "What Are Onchain Organizations?",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/What Are Onchain Organizations?.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 22685,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.823Z",
+      "modified": "2025-06-15T00:40:24.691Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "onchain-org"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "GxrelcyAGMRd0lqR-uNZG9pcWGRaaqf1HaEtLy8nNvs",
+          "timestamp": "2023-12-10T17:03:58+00:00",
+          "link": "https://www.arweave.net/GxrelcyAGMRd0lqR-uNZG9pcWGRaaqf1HaEtLy8nNvs",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-12-10T17:03:58+00:00"
+          ]
+        },
+        {
+          "hash": "6LsndUgYtd_HWJIrO-qH-oDY_bMGgNLH7pmcMv-OdPA",
+          "timestamp": "2025-04-19T19:11:36.927365+00:00",
+          "link": "https://www.arweave.net/6LsndUgYtd_HWJIrO-qH-oDY_bMGgNLH7pmcMv-OdPA",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:36.927365+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "ca7f828d-9d36-4557-8e3b-7300001d25f0",
+      "title": "A Solarpunk Typography Expose",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/A Solarpunk Typography Expose.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 19513,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.828Z",
+      "modified": "2025-06-15T00:40:37.394Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "design",
+        "typography"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "Jb3VeB5IHdCy9l7jn_Wy3fZFM0fyH5OTGKRKS9eQdNE",
+          "timestamp": "2023-11-13T18:33:52+00:00",
+          "link": "https://www.arweave.net/Jb3VeB5IHdCy9l7jn_Wy3fZFM0fyH5OTGKRKS9eQdNE",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-11-13T18:33:52+00:00"
+          ]
+        },
+        {
+          "hash": "Jxj0WXlG9ig-hmUJW-slCI0fduuhjcKVMB2lqlA3-3I",
+          "timestamp": "2025-04-19T19:11:39.891613+00:00",
+          "link": "https://www.arweave.net/Jxj0WXlG9ig-hmUJW-slCI0fduuhjcKVMB2lqlA3-3I",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:39.891613+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "6a9687f8-9470-4497-ac00-813b164517bf",
+      "title": "A Sufficiently Decentralized Work Arrangement",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/A Sufficiently Decentralized Work Arrangement.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 6733,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.839Z",
+      "modified": "2025-06-15T00:40:41.616Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "onchain-org",
+        "automatos",
+        "post-capitalism"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "wXt1bW1sXe-ShxX0Pp_Jy06yrV4jvmppg_VS2x4nuJM",
+          "timestamp": "2023-01-21T23:19:55+00:00",
+          "link": "https://www.arweave.net/wXt1bW1sXe-ShxX0Pp_Jy06yrV4jvmppg_VS2x4nuJM",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-01-21T23:19:55+00:00"
+          ]
+        },
+        {
+          "hash": "JE4-iVO2CMlrySG0G8oV6pUnqhZtWGbIR3sneReuxYY",
+          "timestamp": "2025-04-19T19:11:15.941734+00:00",
+          "link": "https://www.arweave.net/JE4-iVO2CMlrySG0G8oV6pUnqhZtWGbIR3sneReuxYY",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:15.941734+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "cecbb51f-fb07-456f-835d-36d4300fb89f",
+      "title": "Notes on Experimental Zettelkasten Methodology (2)",
+      "filePath": "/Users/gideon/Hub/public/website/content/zettelgarten/Notes on Experimental Zettelkasten Methodology, Part 2.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 15697,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:14.843Z",
+      "modified": "2025-06-15T00:45:59.086Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "notes",
+        "zettelkasten",
+        "autodidacticism"
+      ],
+      "metadata": {
+        "customFields": {},
+        "author": "Spencer Saar Cavanaugh"
+      },
+      "arweave_hashes": [
+        {
+          "hash": "XGXJIK9bqziUAg4lDKHBrXVpVTNNVIIND0AaL04_PnM",
+          "timestamp": "2024-11-09T02:51:29+00:00",
+          "link": "https://www.arweave.net/XGXJIK9bqziUAg4lDKHBrXVpVTNNVIIND0AaL04_PnM",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2024-11-09T02:51:29+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "79a7882b-cdd3-4cdd-a9ca-b560e1b10441",
+      "title": "Notes on the Distinction between Theoretical and Applied Governance",
+      "filePath": "/Users/gideon/Hub/private/projects/Cosmo/dist-electron/mac-arm64/Cosmo.app/Contents/Resources/app.asar",
+      "contentHash": "sha256:b0ad70c111bef13e05821fdd18775979f7478d6deeb4e60cd24f5ee5551f8237",
+      "fileSize": 102077282,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T15:43:43.252Z",
+      "modified": "2025-06-14T15:43:46.874Z",
+      "tags": [
+        "writing",
+        "notes",
+        "governance"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "Y-rz2GxolvHqX_QQWUwozUvXRNtvB2aAnYZIq51BFQU",
+          "timestamp": "2024-09-09T01:28:14+00:00",
+          "link": "https://www.arweave.net/Y-rz2GxolvHqX_QQWUwozUvXRNtvB2aAnYZIq51BFQU",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2024-09-09T01:28:14+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "8166b4bc-4b46-4aba-be6d-e59607cc4aac",
+      "title": "Progressive Public Goods Funding",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Progressive Public Goods Funding.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 13445,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.654Z",
+      "modified": "2025-06-15T00:41:00.459Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "public-goods",
+        "digital-public-infra",
+        "post-capitalism"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "YwpUk7Vxn2c6YKPTGmODfyA5u1-n6VvrZHJXNDy1fBE",
+          "timestamp": "2024-04-05T20:19:02+00:00",
+          "link": "https://www.arweave.net/YwpUk7Vxn2c6YKPTGmODfyA5u1-n6VvrZHJXNDy1fBE",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2024-04-05T20:19:02+00:00"
+          ]
+        },
+        {
+          "hash": "hHgpsWOryjjj4ZsWBbz4Gn40mVpdVXCCXYzbLweCBOo",
+          "timestamp": "2025-04-19T19:11:21.189166+00:00",
+          "link": "https://www.arweave.net/hHgpsWOryjjj4ZsWBbz4Gn40mVpdVXCCXYzbLweCBOo",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:21.189166+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "707bafc0-4074-4ea1-98cd-ce7dd8e16961",
+      "title": "The Failsafe Committee",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/The Failsafe Committee.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 11433,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.659Z",
+      "modified": "2025-06-15T00:41:08.500Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "onchain-org",
+        "governance"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "5RFMa6GU3HIrm4Mh6FEjnkGNQNoAoh5aRlSxaAkGU7k",
+          "timestamp": "2023-09-25T19:14:11+00:00",
+          "link": "https://www.arweave.net/5RFMa6GU3HIrm4Mh6FEjnkGNQNoAoh5aRlSxaAkGU7k",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-09-25T19:14:11+00:00"
+          ]
+        },
+        {
+          "hash": "LZGOfEsq-cveoyeiObD54MtLDYvK9pfnGar4eSJ5X-I",
+          "timestamp": "2025-04-19T19:11:42.382765+00:00",
+          "link": "https://www.arweave.net/LZGOfEsq-cveoyeiObD54MtLDYvK9pfnGar4eSJ5X-I",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:42.382765+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "37c66fd7-dc8a-4baa-a266-ec28b3a23983",
+      "title": "Wu Wei, or Going with the Flow of Governance",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Wu Gwei, or Going with the Flow of Governance.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 15529,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.663Z",
+      "modified": "2025-06-15T00:41:13.984Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "essay",
+        "governance",
+        "mutualism",
+        "community-of-practice"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "2Yu2IpW_5BCSlokztrzgQKZScaDDVR71M39eX9gWLEs",
+          "timestamp": "2024-08-04T20:16:05+00:00",
+          "link": "https://www.arweave.net/2Yu2IpW_5BCSlokztrzgQKZScaDDVR71M39eX9gWLEs",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2024-08-04T20:16:05+00:00"
+          ]
+        },
+        {
+          "hash": "MHlIsB0802nDuNV-jVhh8x5Q90_3Vt6v922h_F-Dou4",
+          "timestamp": "2025-04-19T19:11:22.372686+00:00",
+          "link": "https://www.arweave.net/MHlIsB0802nDuNV-jVhh8x5Q90_3Vt6v922h_F-Dou4",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:22.372686+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "f287fa9c-c615-4f2c-97db-5103b6df1b07",
+      "title": "Notes on Experimental Zettelkasten Methodology",
+      "filePath": "/Users/gideon/Hub/public/website/content/zettelgarten/Notes on Experimental Zettelkasten Methodology.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 12702,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.667Z",
+      "modified": "2025-06-15T00:45:41.806Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "notes",
+        "zettelkasten",
+        "autodidacticism"
+      ],
+      "metadata": {
+        "customFields": {},
+        "author": "Spencer Saar Cavanaugh"
+      },
+      "arweave_hashes": [
+        {
+          "hash": "sSobq_FUVYtPWt6LONmPvf_ta7LJ6yQKwpUn5TSKXZo",
+          "timestamp": "2024-10-13T04:05:30+00:00",
+          "link": "https://www.arweave.net/sSobq_FUVYtPWt6LONmPvf_ta7LJ6yQKwpUn5TSKXZo",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2024-10-13T04:05:30+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "6bb44688-327e-4fad-b841-e1a8ce685969",
+      "title": "Notes on Active Discursive Efforts",
+      "filePath": "/Users/gideon/Hub/public/website/content/zettelgarten/Notes on Active Discursive Efforts.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 6128,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.672Z",
+      "modified": "2025-06-15T00:45:37.213Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "notes",
+        "auto-discourse"
+      ],
+      "metadata": {
+        "customFields": {},
+        "author": "Spencer Saar Cavanaugh"
+      },
+      "arweave_hashes": [
+        {
+          "hash": "5V_C2jsrTfSy7g05v7R7WIapntH4EagEvMkwGkCUzYE",
+          "timestamp": "2024-08-25T18:15:39+00:00",
+          "link": "https://www.arweave.net/5V_C2jsrTfSy7g05v7R7WIapntH4EagEvMkwGkCUzYE",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2024-08-25T18:15:39+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "245497b4-8ced-46b3-a841-d8e683c09373",
+      "title": "A Rhapsody on Neurodiversity",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/A Rhapsody on Neurodiversity.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 17024,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.676Z",
+      "modified": "2025-06-15T00:41:23.212Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "autodidacticism"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "A1BQ7QUEnQ5I6W-o-ot4GB0w832OkR0LbNAjtqPX_GQ",
+          "timestamp": "2023-01-17T21:08:26+00:00",
+          "link": "https://www.arweave.net/A1BQ7QUEnQ5I6W-o-ot4GB0w832OkR0LbNAjtqPX_GQ",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-01-17T21:08:26+00:00"
+          ]
+        },
+        {
+          "hash": "Mm0zZWtsnJvY-WidTaYmtvrC_jM2q5i6tB9J6RbKsXY",
+          "timestamp": "2025-04-18T20:15:09.584777+00:00",
+          "link": "https://www.arweave.net/Mm0zZWtsnJvY-WidTaYmtvrC_jM2q5i6tB9J6RbKsXY",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T20:15:09.584777+00:00"
+          ]
+        },
+        {
+          "hash": "G3elmZdjnCZ4yn5gFkmXA7NFeTvahDu2qDkzShmSWow",
+          "timestamp": "2025-04-19T19:11:24.759724+00:00",
+          "link": "https://www.arweave.net/G3elmZdjnCZ4yn5gFkmXA7NFeTvahDu2qDkzShmSWow",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:24.759724+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "3c20ac50-e3f4-4b7b-9304-7abed12298d7",
+      "title": "Containers for Consultants",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Containers for Consultants.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 7037,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.682Z",
+      "modified": "2025-06-15T00:41:52.797Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "onchain-org"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "IA2DIJUr9UBYqdvjUy49osBdrSqNGHVfe5nbL3vyd7c",
+          "timestamp": "2023-09-25T18:51:41+00:00",
+          "link": "https://www.arweave.net/IA2DIJUr9UBYqdvjUy49osBdrSqNGHVfe5nbL3vyd7c",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-09-25T18:51:41+00:00"
+          ]
+        },
+        {
+          "hash": "uBSRStuw-2SxsoRkFo-fmYINWClQjcyIy_9EXgTkSOY",
+          "timestamp": "2025-04-19T19:11:31.694247+00:00",
+          "link": "https://www.arweave.net/uBSRStuw-2SxsoRkFo-fmYINWClQjcyIy_9EXgTkSOY",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:31.694247+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "3e5a522f-7b32-4909-9559-fd07b6d038a1",
+      "title": "Notes on an Ethical Hermeneutics of Machiavelli",
+      "filePath": "/Users/gideon/Hub/public/website/content/zettelgarten/Notes on an Ethical Hermeneutics of Machiavelli.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 7562,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.687Z",
+      "modified": "2025-06-15T00:45:29.594Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "notes",
+        "micropolitics"
+      ],
+      "metadata": {
+        "customFields": {},
+        "author": "Spencer Saar Cavanaugh"
+      },
+      "arweave_hashes": [
+        {
+          "hash": "tk3EN2S9PGtVu6tUkl1RDN_1ke90w1fS6LJDU9TqSB0",
+          "timestamp": "2024-11-02T00:52:43+00:00",
+          "link": "https://www.arweave.net/tk3EN2S9PGtVu6tUkl1RDN_1ke90w1fS6LJDU9TqSB0",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2024-11-02T00:52:43+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "e49b28e8-2b0f-4fa4-ac9d-0f294aa3c78c",
+      "title": "Recuperate the Vanguard",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Recuperate the Vanguard.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 15608,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.707Z",
+      "modified": "2025-06-15T00:42:09.876Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "essay",
+        "political-philosophy",
+        "post-capitalism"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "X503ypfmKt998on0F6Ua9FaQggN0JNkjPRztXgCyfWM",
+          "timestamp": "2023-09-19T20:32:55+00:00",
+          "link": "https://www.arweave.net/X503ypfmKt998on0F6Ua9FaQggN0JNkjPRztXgCyfWM",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-09-19T20:32:55+00:00"
+          ]
+        },
+        {
+          "hash": "ygoNpIrumm3rmEWjJDYAzNOjycbELxpMoYBq4KloLPo",
+          "timestamp": "2025-04-19T19:11:18.301785+00:00",
+          "link": "https://www.arweave.net/ygoNpIrumm3rmEWjJDYAzNOjycbELxpMoYBq4KloLPo",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:18.301785+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "660f3943-8987-4bd3-9f49-dcd8b4cdee17",
+      "title": "Toward an Open-Access Service DAO",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Toward an Open-Access Service DAO.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 5786,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.712Z",
+      "modified": "2025-06-15T00:42:15.167Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "onchain-org",
+        "automatos"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "DF0fizqrXJXqIM-FQuWvRirzhfqQ-Ad4bY0J_Kkl9Ew",
+          "timestamp": "2023-01-21T20:23:35+00:00",
+          "link": "https://www.arweave.net/DF0fizqrXJXqIM-FQuWvRirzhfqQ-Ad4bY0J_Kkl9Ew",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-01-21T20:23:35+00:00"
+          ]
+        },
+        {
+          "hash": "4t7oYt10r1tNLoCRUFhdgeXgWrWSSL58-HkBcvjdc6k",
+          "timestamp": "2025-04-19T19:11:23.542195+00:00",
+          "link": "https://www.arweave.net/4t7oYt10r1tNLoCRUFhdgeXgWrWSSL58-HkBcvjdc6k",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:23.542195+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "53a6c4e0-8b75-4a4a-85ef-4e2b267e84a4",
+      "title": "Pre-Constitutional Governance",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Pre-Constitutional Governance.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 10747,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.717Z",
+      "modified": "2025-06-15T00:42:18.988Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "template",
+        "article",
+        "governance"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "cQ4md4i6ETIE249PYLItQQ9xLp5_hQPodtAdwNxVDlI",
+          "timestamp": "2023-11-24T15:34:08+00:00",
+          "link": "https://www.arweave.net/cQ4md4i6ETIE249PYLItQQ9xLp5_hQPodtAdwNxVDlI",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2023-11-24T15:34:08+00:00"
+          ]
+        },
+        {
+          "hash": "B6dsT4KQRql-aiUbxwbGOWQKc7MEC8Y5xGlgMQrEj2Q",
+          "timestamp": "2025-04-19T19:11:27.726133+00:00",
+          "link": "https://www.arweave.net/B6dsT4KQRql-aiUbxwbGOWQKc7MEC8Y5xGlgMQrEj2Q",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:27.726133+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "05c023e3-0469-4105-a39e-b1b65c4ac84f",
+      "title": "Cursor Rules Framework",
+      "filePath": "/Users/gideon/Hub/public/website/content/resources/specs/Cursor Rules Framework.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 5994,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.721Z",
+      "modified": "2025-06-15T01:14:15.506Z",
+      "tags": [
+        "migrated",
+        "spec"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "Y8otocnNAf5QZlgcq7hfTWGxkKGr7ZT1WCl0dGoaT2Q",
+          "timestamp": "2025-02-15T17:32:03.884173+00:00",
+          "link": "https://www.arweave.net/Y8otocnNAf5QZlgcq7hfTWGxkKGr7ZT1WCl0dGoaT2Q",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-02-15T17:32:03.884173+00:00"
+          ]
+        },
+        {
+          "hash": "0eowJyPyc-XiQccRcDigMULsevJePJdZXbIwvAvpSHI",
+          "timestamp": "2025-02-18T21:30:07.559584+00:00",
+          "link": "https://www.arweave.net/0eowJyPyc-XiQccRcDigMULsevJePJdZXbIwvAvpSHI",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-02-18T21:30:07.559584+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "34e0a0b9-b0be-406d-8eb3-402678309d8f",
+      "title": "Considerations on Delegate Agents",
+      "filePath": "/Users/gideon/Hub/public/website/content/zettelgarten/Considerations on Delegate Agents.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 7329,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.725Z",
+      "modified": "2025-06-15T00:44:37.511Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "notes",
+        "governance"
+      ],
+      "metadata": {
+        "customFields": {},
+        "author": "Spencer Saar Cavanaugh"
+      },
+      "arweave_hashes": [
+        {
+          "hash": "5zEpR__dnrhxGDmuBkJqfHsP1PwNBTk57sUZyBXx5Jw",
+          "timestamp": "2025-04-18T00:06:30.951501+00:00",
+          "link": "https://www.arweave.net/5zEpR__dnrhxGDmuBkJqfHsP1PwNBTk57sUZyBXx5Jw",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T00:06:30.951501+00:00"
+          ]
+        },
+        {
+          "hash": "Ble2ahmByqvAAl36N-B0Lh1knrQ9QXjjm0gOHcc-_ZM",
+          "timestamp": "2025-04-18T11:28:21.069965+00:00",
+          "link": "https://www.arweave.net/Ble2ahmByqvAAl36N-B0Lh1knrQ9QXjjm0gOHcc-_ZM",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T11:28:21.069965+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "b839b873-b32b-431c-9583-f8669ad41eac",
+      "title": "Intimations of a Post-Machiavellian Moral-Tactical Calculus",
+      "filePath": "/Users/gideon/Hub/public/website/content/zettelgarten/Intimations of a Post-Machiavellian Moral-Tactical Calculus.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 5407,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.729Z",
+      "modified": "2025-06-15T00:44:31.697Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "notes",
+        "micropolitics",
+        "political-philosophy"
+      ],
+      "metadata": {
+        "customFields": {},
+        "author": "Spencer Saar Cavanaugh"
+      },
+      "arweave_hashes": [
+        {
+          "hash": "nYtRGR01C1lMbie6R__XoMiX5ecUSdN9AiVUmqzxb1M",
+          "timestamp": "2025-04-18T00:06:30.959767+00:00",
+          "link": "https://www.arweave.net/nYtRGR01C1lMbie6R__XoMiX5ecUSdN9AiVUmqzxb1M",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T00:06:30.959767+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "6c728fb4-ba11-4980-9495-f4d0044bea7e",
+      "title": "Test Zettel",
+      "filePath": "[VIRTUAL] Test Zettel",
+      "contentHash": "virtual:unknown",
+      "fileSize": 0,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.733Z",
+      "modified": "2025-06-14T22:52:15.733Z",
+      "tags": [
+        "migrated"
+      ],
+      "metadata": {
+        "customFields": {
+          "isVirtual": true,
+          "migratedFrom": "reference-archive.json"
+        }
+      },
+      "arweave_hashes": [
+        {
+          "hash": "QNeFArNTyko4BZeedGa6z4vW1CF7KcPb24YVNkYynrc",
+          "timestamp": "2025-04-18T04:01:30.438438+00:00",
+          "link": "https://www.arweave.net/QNeFArNTyko4BZeedGa6z4vW1CF7KcPb24YVNkYynrc",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T04:01:30.438438+00:00"
+          ]
+        },
+        {
+          "hash": "J3Ura8mowmtWPx5NEwjelN6WV6gnXOMMefoZOjLJRZk",
+          "timestamp": "2025-04-18T04:06:03.512197+00:00",
+          "link": "https://www.arweave.net/J3Ura8mowmtWPx5NEwjelN6WV6gnXOMMefoZOjLJRZk",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T04:06:03.512197+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "e80a8775-ed2f-4667-b20e-23e6be85feef",
+      "title": "Test Zettel copy",
+      "filePath": "[VIRTUAL] Test Zettel copy",
+      "contentHash": "virtual:unknown",
+      "fileSize": 0,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.736Z",
+      "modified": "2025-06-14T22:52:15.736Z",
+      "tags": [
+        "migrated"
+      ],
+      "metadata": {
+        "customFields": {
+          "isVirtual": true,
+          "migratedFrom": "reference-archive.json"
+        }
+      },
+      "arweave_hashes": [
+        {
+          "hash": "mR7N2vsdWMcRaNvenTdw6ovXI0XXna3XEgUbXTGztQk",
+          "timestamp": "2025-04-18T04:05:19.702350+00:00",
+          "link": "https://www.arweave.net/mR7N2vsdWMcRaNvenTdw6ovXI0XXna3XEgUbXTGztQk",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T04:05:19.702350+00:00"
+          ]
+        },
+        {
+          "hash": "ak0FTEpAK2eXaok9GZTvjI9oFUwDrDvy-P9eurnmPvY",
+          "timestamp": "2025-04-18T04:06:04.639995+00:00",
+          "link": "https://www.arweave.net/ak0FTEpAK2eXaok9GZTvjI9oFUwDrDvy-P9eurnmPvY",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T04:06:04.639995+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "c8db6f64-e5cf-42fc-9f50-7c80a74e921b",
+      "title": "Gallery",
+      "filePath": "/Users/gideon/Hub/public/website/content/gallery.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 4869,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.740Z",
+      "modified": "2025-06-15T00:44:04.656Z",
+      "tags": [
+        "migrated",
+        "site-page",
+        "design"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "UrVyEerL0oqh1rKwB4E5sG7YMn-qKkC2_FPdmuyFpXQ",
+          "timestamp": "2025-04-18T21:24:02.228412+00:00",
+          "link": "https://www.arweave.net/UrVyEerL0oqh1rKwB4E5sG7YMn-qKkC2_FPdmuyFpXQ",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T21:24:02.228412+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "6cd21083-2abf-46a4-b23a-37c4a38cd73e",
+      "title": "Zettelgarten",
+      "filePath": "/Users/gideon/Hub/public/website/content/zettelgarten.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 19548,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.744Z",
+      "modified": "2025-06-15T00:44:00.271Z",
+      "tags": [
+        "migrated",
+        "site-page",
+        "zettelkasten"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "C59rW8Q7KSch-NRz2OCp4fm3ryvXcZSPotWS76XlCd0",
+          "timestamp": "2025-04-18T21:24:03.498985+00:00",
+          "link": "https://www.arweave.net/C59rW8Q7KSch-NRz2OCp4fm3ryvXcZSPotWS76XlCd0",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T21:24:03.498985+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "873bfe4a-840c-4234-9906-82581fb5c39a",
+      "title": "Typography",
+      "filePath": "/Users/gideon/Hub/public/website/content/typography.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 7216,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.749Z",
+      "modified": "2025-06-15T00:43:56.911Z",
+      "tags": [
+        "migrated",
+        "site-page",
+        "typography",
+        "design"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "oSnsjrIlTxFte-2GiFZlpyg7lF8BeLhBIC5ERqhhFSo",
+          "timestamp": "2025-04-18T21:24:04.697697+00:00",
+          "link": "https://www.arweave.net/oSnsjrIlTxFte-2GiFZlpyg7lF8BeLhBIC5ERqhhFSo",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T21:24:04.697697+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "e7b6f568-23a0-4f0e-8a3f-308bc03ccb50",
+      "title": "Services",
+      "filePath": "/Users/gideon/Hub/public/website/content/services.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 19071,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.753Z",
+      "modified": "2025-06-15T00:43:52.296Z",
+      "tags": [
+        "migrated",
+        "site-page"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "GiJaSQmGIikuQ99pEo3Rh6JsQZxtjOCbBf6QnCBs44M",
+          "timestamp": "2025-04-18T21:24:05.845720+00:00",
+          "link": "https://www.arweave.net/GiJaSQmGIikuQ99pEo3Rh6JsQZxtjOCbBf6QnCBs44M",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T21:24:05.845720+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "58957e64-d496-4fd1-a5ee-b0b383734fdc",
+      "title": "About",
+      "filePath": "/Users/gideon/Hub/public/website/content/about.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 7471,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.756Z",
+      "modified": "2025-06-15T00:43:47.706Z",
+      "tags": [
+        "migrated",
+        "site-page"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "mB2IZm6aDNNiCP2Ln9j3Od7VtAz9WGiL-X91lVMRBQ0",
+          "timestamp": "2025-04-18T21:24:07.452961+00:00",
+          "link": "https://www.arweave.net/mB2IZm6aDNNiCP2Ln9j3Od7VtAz9WGiL-X91lVMRBQ0",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T21:24:07.452961+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "6f1b19c8-a1ab-43ff-8408-317cc9a598f8",
+      "title": "Clinamenic LLC",
+      "filePath": "/Users/gideon/Hub/public/website/content/index.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 33013,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.760Z",
+      "modified": "2025-06-15T00:43:37.430Z",
+      "tags": [
+        "migrated",
+        "site-page"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "MQeJ-ZBubNhvdLuzi-YUKwe1Taibfk-uqk3hSYoZnIM",
+          "timestamp": "2025-04-18T21:24:08.847994+00:00",
+          "link": "https://www.arweave.net/MQeJ-ZBubNhvdLuzi-YUKwe1Taibfk-uqk3hSYoZnIM",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T21:24:08.847994+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "bf82f849-e253-426f-8c18-a69446f10b32",
+      "title": "Design Portfolio",
+      "filePath": "/Users/gideon/Hub/public/website/content/design.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 13581,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.764Z",
+      "modified": "2025-06-15T00:43:27.891Z",
+      "tags": [
+        "migrated",
+        "site-page",
+        "design"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "y6-3HG7F9U5F_CaKX6BCQBeCYXON66S5i9R1z5glNjY",
+          "timestamp": "2025-04-18T21:24:10.179856+00:00",
+          "link": "https://www.arweave.net/y6-3HG7F9U5F_CaKX6BCQBeCYXON66S5i9R1z5glNjY",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T21:24:10.179856+00:00"
+          ]
+        },
+        {
+          "hash": "V12RvGsGLbtKVUFCDAsKTMszG-3r7dndThVyrvv20Rk",
+          "timestamp": "2025-04-19T17:36:16.216804+00:00",
+          "link": "https://www.arweave.net/V12RvGsGLbtKVUFCDAsKTMszG-3r7dndThVyrvv20Rk",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T17:36:16.216804+00:00"
+          ]
+        },
+        {
+          "hash": "3WYldcQ7wlBpAVFvIZHTUMOMN52DXl2BrqrvcAD-FM0",
+          "timestamp": "2025-04-19T17:39:54.722271+00:00",
+          "link": "https://www.arweave.net/3WYldcQ7wlBpAVFvIZHTUMOMN52DXl2BrqrvcAD-FM0",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T17:39:54.722271+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "e88e77b1-ddda-4696-b32d-0e3b5d51b2c0",
+      "title": "Writing Portfolio",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 4390,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.768Z",
+      "modified": "2025-06-15T00:43:13.497Z",
+      "tags": [
+        "migrated",
+        "site-page",
+        "writing"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "MGaIMbIZzv4NODH4R0fmybbaavRnD-iT58mNQTQ0oPw",
+          "timestamp": "2025-04-18T21:24:11.331183+00:00",
+          "link": "https://www.arweave.net/MGaIMbIZzv4NODH4R0fmybbaavRnD-iT58mNQTQ0oPw",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-18T21:24:11.331183+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "98b0c624-84a8-4a8c-8c1b-ee9b2451aeb9",
+      "title": "Survey on Methodology for Onchain Ecosystem Funding and Impact Assessment",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Survey on Methodology for Onchain Ecosystem Funding and Impact Assessment.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 68331,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.772Z",
+      "modified": "2025-06-15T03:58:41.589Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "report",
+        "onchain-org",
+        "public-goods",
+        "digital-public-infra",
+        "post-capitalism",
+        "economics"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "9zttemQXR7nd7WNGpuiPWbU7kPkr7roYeyrusQ3_XIk",
+          "timestamp": "2025-04-19T19:11:29.152325+00:00",
+          "link": "https://www.arweave.net/9zttemQXR7nd7WNGpuiPWbU7kPkr7roYeyrusQ3_XIk",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:29.152325+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "b8c00fa6-b092-42ea-84a2-01b96b6453e2",
+      "title": "Malattunement before Malice",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Malattunement before Malice.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 12402,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.776Z",
+      "modified": "2025-06-15T00:42:50.282Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "essay",
+        "governance",
+        "community-of-practice"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "rsODgkmZLvl2rYsbSOcUw4Li7NyGtA-4n7FLISqou6A",
+          "timestamp": "2025-04-19T19:11:35.621353+00:00",
+          "link": "https://www.arweave.net/rsODgkmZLvl2rYsbSOcUw4Li7NyGtA-4n7FLISqou6A",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:35.621353+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "624ee2b1-089c-4818-9365-65efbf2472db",
+      "title": "What is to Be Done Differently?",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/What is to Be Done Differently?.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 7209,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.781Z",
+      "modified": "2025-06-15T00:42:54.524Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "political-philosophy",
+        "post-capitalism"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "fBkmpU6XAqdEzLHCiUq0B-mrKjXVuvVemEePtnFv5Os",
+          "timestamp": "2025-04-19T19:11:41.281698+00:00",
+          "link": "https://www.arweave.net/fBkmpU6XAqdEzLHCiUq0B-mrKjXVuvVemEePtnFv5Os",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:41.281698+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "ae848434-8df1-4ffe-aa79-14e32ddd0878",
+      "title": "A Primer on Auto-Discourse",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/A Primer on Auto-Discourse.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 6456,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.785Z",
+      "modified": "2025-06-15T00:42:58.583Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "auto-discourse"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "V3cZ0VWdtjJX8uss49CvozuBSk8EOGocbovxcTmbBiU",
+          "timestamp": "2025-04-19T19:11:43.478558+00:00",
+          "link": "https://www.arweave.net/V3cZ0VWdtjJX8uss49CvozuBSk8EOGocbovxcTmbBiU",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:43.478558+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "5fc7d78a-8fd7-4b08-85bd-bf34e2e853aa",
+      "title": "Modular Generalist Program",
+      "filePath": "/Users/gideon/Hub/public/website/content/writing/Modular Generalist Program.md",
+      "contentHash": "virtual:unknown",
+      "fileSize": 7382,
+      "mimeType": "text/markdown",
+      "created": "2025-06-14T22:52:15.789Z",
+      "modified": "2025-06-15T00:43:02.950Z",
+      "tags": [
+        "migrated",
+        "writing",
+        "article",
+        "autodidacticism"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "ZgaACn66vRx36G9gMPcu1sIrXqrDiJ7bdTlP_GnDOP8",
+          "timestamp": "2025-04-19T19:11:44.940333+00:00",
+          "link": "https://www.arweave.net/ZgaACn66vRx36G9gMPcu1sIrXqrDiJ7bdTlP_GnDOP8",
+          "tags": [
+            "uuid:migrated",
+            "timestamp:2025-04-19T19:11:44.940333+00:00"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "5c602d41-ba0a-4deb-8559-55c0c06704e7",
+      "title": "Lgyia Clark, Untitled, 1954",
+      "filePath": "/Users/gideon/Desktop/Lgyia Clark, Untitled, 1954.jpg",
+      "contentHash": "sha256:5c602d41ba0a0debe55955c0c06704e77bbd32a6cec567af8537532a1dd2d968",
+      "fileSize": 553157,
+      "mimeType": "image/jpeg",
+      "created": "2025-06-08T16:06:45.890Z",
+      "modified": "2025-06-08T16:06:45.891Z",
+      "tags": [
+        "image",
+        "gallery/lygia-clark"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "0IdLzyoRVytPW66egKd-zH57ZWbmUMUX44wM4_luZcc",
+          "timestamp": "2025-06-20T17:18:22.116Z",
+          "link": "https://www.arweave.net/0IdLzyoRVytPW66egKd-zH57ZWbmUMUX44wM4_luZcc",
+          "tags": [
+            "uuid:5c602d41-ba0a-4deb-8559-55c0c06704e7",
+            "title:Lgyia Clark, Untitled, 1954",
+            "content-type:image/jpeg",
+            "file-size:553157",
+            "content-hash:sha256:5c602d41ba0a0debe55955c0c06704e77bbd32a6cec567af8537532a1dd2d968",
+            "upload-timestamp:2025-06-20T17:18:19.157Z"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "d22acae9-0ffa-4cae-8f16-2c5a10412083",
+      "title": "Untitled, 1952",
+      "filePath": "/Users/gideon/Desktop/Untitled, 1952.jpg",
+      "contentHash": "sha256:d22acae90ffa4cae5f162c5a10412083231acfb11c22213e2b2eccc256212f09",
+      "fileSize": 420414,
+      "mimeType": "image/jpeg",
+      "created": "2025-06-08T16:07:31.269Z",
+      "modified": "2025-06-08T16:07:31.269Z",
+      "tags": [
+        "image",
+        "gallery/lygia-clark"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "4hakJ6ZKRC7qIWH3sbZihkNlJu10aBJ6uv2XPGzjzwc",
+          "timestamp": "2025-06-27T00:41:04.824Z",
+          "link": "https://www.arweave.net/4hakJ6ZKRC7qIWH3sbZihkNlJu10aBJ6uv2XPGzjzwc",
+          "tags": [
+            "uuid:d22acae9-0ffa-4cae-8f16-2c5a10412083",
+            "title:Untitled, 1952",
+            "content-type:image/jpeg",
+            "file-size:420414",
+            "content-hash:sha256:d22acae90ffa4cae5f162c5a10412083231acfb11c22213e2b2eccc256212f09",
+            "upload-timestamp:2025-06-27T00:41:01.816Z"
+          ]
+        }
+      ]
+    },
+    {
+      "uuid": "38b644f7-1ae3-4a44-86ff-4960d49e83cb",
+      "title": "Untitled, 1954",
+      "filePath": "/Users/gideon/Desktop/Untitled, 1954.jpg",
+      "contentHash": "sha256:38b644f71ae38a4466ff4960d49e83cb939be71806efea188da9c9cce2afa0dc",
+      "fileSize": 550597,
+      "mimeType": "image/jpeg",
+      "created": "2025-06-08T16:06:06.155Z",
+      "modified": "2025-06-08T16:06:06.155Z",
+      "tags": [
+        "image",
+        "gallery/lygia-clark"
+      ],
+      "metadata": {
+        "customFields": {}
+      },
+      "arweave_hashes": [
+        {
+          "hash": "9GTAs6A4-y8olXJWCqbZkeRJ5kMic-gsDuhZifi-4A8",
+          "timestamp": "2025-06-27T00:41:30.807Z",
+          "link": "https://www.arweave.net/9GTAs6A4-y8olXJWCqbZkeRJ5kMic-gsDuhZifi-4A8",
+          "tags": [
+            "uuid:38b644f7-1ae3-4a44-86ff-4960d49e83cb",
+            "title:Untitled, 1954",
+            "content-type:image/jpeg",
+            "file-size:550597",
+            "content-hash:sha256:38b644f71ae38a4466ff4960d49e83cb939be71806efea188da9c9cce2afa0dc",
+            "upload-timestamp:2025-06-27T00:41:28.271Z"
+          ]
+        }
+      ]
+    }
+  ],
+  "version": "2.0"
+}

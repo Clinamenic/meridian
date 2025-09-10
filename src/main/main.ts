@@ -19,8 +19,8 @@ import { UnifiedDatabaseManager } from './unified-database-manager';
 import { SiteTemplateManager } from './site-template-manager';
 import { SiteTemplateCloner } from './site-template-cloner';
 import { SiteTemplateValidator } from './site-template-validator';
-import { 
-  UnifiedResource 
+import {
+  UnifiedResource
 } from '../types';
 import { TemplateSource, TemplateCloneResult } from '../types/site-template-types';
 
@@ -79,11 +79,11 @@ class MeridianApp {
   private setupApp(): void {
     // Set security policies
     app.setAsDefaultProtocolClient('meridian');
-    
+
     // Ready event
     app.whenReady().then(() => {
       this.createWindow();
-      
+
       app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
           this.createWindow();
@@ -97,7 +97,7 @@ class MeridianApp {
       // The app will be explicitly quit when the user closes the window
     });
 
-        // App quit - cleanup database connections
+    // App quit - cleanup database connections
     app.on('before-quit', async () => {
       try {
         await this.unifiedDatabaseManager.close();
@@ -179,12 +179,12 @@ class MeridianApp {
         await this.dataManager.setWorkspace(workspacePath);
         await this.credentialManager.setWorkspace(workspacePath);
         this.deployManager.setWorkspace(workspacePath);
-        
+
         // Initialize unified database for the workspace
         try {
           await this.unifiedDatabaseManager.initialize(workspacePath);
           console.log('[Main] Unified database initialized successfully');
-          
+
           // Check if there's existing JSON data to migrate
           try {
             const existingData = await this.dataManager.loadUnifiedData();
@@ -199,10 +199,10 @@ class MeridianApp {
         } catch (error) {
           console.error('[Main] Failed to initialize unified database:', error);
         }
-        
+
         // Initialize centralized account state detection
         await this.accountStateManager.initializeForWorkspace(workspacePath);
-        
+
         return workspacePath;
       }
 
@@ -217,31 +217,31 @@ class MeridianApp {
     ipcMain.handle('transitionToMainApp', async () => {
       try {
         console.log('[Main] Transitioning from landing page to main app');
-        
+
         if (!this.mainWindow) {
           throw new Error('No main window available');
         }
-        
+
         console.log('[Main] Updating window properties for main app...');
-        
+
         // Update window properties for main app
         this.mainWindow.setSize(900, 800);
         this.mainWindow.setMinimumSize(500, 500);
         this.mainWindow.setMaximumSize(0, 0); // Remove max size constraint
         this.mainWindow.setResizable(true);
         this.mainWindow.setMaximizable(true);
-        
+
         console.log('[Main] Loading main app content...');
-        
+
         // Load the main app content in the same window
         if (process.env.NODE_ENV === 'development') {
           await this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/index.html'));
         } else {
           await this.mainWindow.loadFile(path.join(__dirname, '../../src/renderer/index.html'));
         }
-        
+
         console.log('[Main] Main app content loaded successfully');
-        
+
         return { success: true };
       } catch (error) {
         console.error('[Main] Error transitioning to main app:', error);
@@ -676,7 +676,7 @@ class MeridianApp {
     ipcMain.handle('template:getDefault', async () => {
       return await this.siteTemplateManager.getDefaultTemplate();
     });
-    
+
     ipcMain.handle('template:getClinamenic', async () => {
       return await this.siteTemplateManager.getClinamenicTemplate();
     });
@@ -833,7 +833,7 @@ class MeridianApp {
     ipcMain.handle('get-file-stats', async (_, filePath) => {
       const fs = require('fs');
       const path = require('path');
-      
+
       try {
         const stats = fs.statSync(filePath);
         return {
@@ -847,7 +847,7 @@ class MeridianApp {
 
     ipcMain.handle('file-exists', async (_, filePath) => {
       const fs = require('fs');
-      
+
       try {
         return fs.existsSync(filePath);
       } catch (error) {
@@ -857,7 +857,7 @@ class MeridianApp {
 
     ipcMain.handle('read-file', async (_, filePath) => {
       const fs = require('fs');
-      
+
       try {
         const content = await fs.promises.readFile(filePath, 'utf-8');
         return content;

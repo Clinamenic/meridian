@@ -339,7 +339,7 @@
 .resource-item {
   padding: var(--spacing-sm) var(--spacing-md) 0 var(--spacing-md) ;
   border: 1px solid var(--surface-border);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-lg);
   background-color: var(--surface-bg-elevated);
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease;
@@ -364,6 +364,8 @@
   align-items: flex-start;
   gap: var(--spacing-sm);
   margin-right: calc(var(--spacing-sm) * -1);
+  overflow: visible;
+  position: relative;
 }
   
 .resource-info {
@@ -376,13 +378,17 @@
   
   /* Resource Actions */
 .resource-actions {
-  margin-left: auto;
-  position: relative;
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin-right: calc(var(--spacing-sm) * -1);
+  margin-top: calc(var(--spacing-xs) * -1);
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-xs);
   opacity: 0;
   transition: opacity 0.2s ease;
+  z-index: 10;
 }
 
 .resource-item:hover .resource-actions {
@@ -392,7 +398,7 @@
 .resource-action-btn {
   box-sizing: border-box;
   padding: var(--spacing-xs);
-  border: 0px solid var(--surface-border);
+  border: 1px solid var(--surface-border);
   border-radius: 50%;
   background-color: var(--surface-bg-elevated);
   cursor: pointer;
@@ -910,9 +916,9 @@
 /* Individual Resource Collapse Button */
 .resource-collapse-btn {
   padding: var(--spacing-xs);
-  border: none;
+  border: 1px solid var(--surface-border);
   border-radius: 50%;
-  background-color: transparent;
+  background-color: var(--surface-bg-elevated);
   cursor: pointer;
   font-size: 14px;
   line-height: 1;

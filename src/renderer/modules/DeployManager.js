@@ -39,11 +39,36 @@ export class DeployManager extends ModuleBase {
     // Setup header collapse functionality
     this.setupHeaderCollapse();
     
+    // Setup GitHub Pages toggle
+    this.setupGitHubPagesToggle();
+    
     // Subtab navigation is handled by setupDeploySubtabs()
     
     // Optional: Add any future header actions here
     // Example: Settings button, help button, etc.
   }
+
+  /**
+   * Setup GitHub Pages toggle functionality
+   */
+  setupGitHubPagesToggle() {
+    // Use event delegation since the toggle might not exist when this runs
+    document.addEventListener('change', (e) => {
+      if (e.target && e.target.id === 'github-pages-enabled') {
+        this.handleGitHubPagesToggleChange(e.target.checked);
+      }
+    });
+  }
+
+  /**
+   * Handle GitHub Pages toggle change (UI only)
+   */
+  handleGitHubPagesToggleChange(enabled) {
+    // Just update the UI state - actual file operations will happen on Apply Changes
+    console.log(`GitHub Pages toggle changed to: ${enabled}`);
+    // The toggle state will be processed when Apply Changes is clicked
+  }
+
 
   /**
    * Setup header collapse/expand functionality
@@ -256,35 +281,47 @@ export class DeployManager extends ModuleBase {
             </div>
             <div class="section-content">
               <div class="template-options">
-                <label class="radio-option">
-                  <input type="radio" name="template" value="vanilla" ${currentTemplate.id === 'vanilla-quartz' ? 'checked' : ''}>
-                  <div class="radio-content">
-                    <strong>Vanilla Quartz</strong>
-                    <p>Default Meridian-Quartz template with clean styling</p>
+                <div class="form-group form-group-enhanced">
+                  <div class="form-group-header">
+                    <label>Template Selection</label>
+                    <button class="form-help-btn" title="Choose the Quartz template for your site. Vanilla is the default, Clinamenic has enhanced features, or use a custom template from GitHub.">?</button>
                   </div>
-                </label>
-                
-                <label class="radio-option">
-                  <input type="radio" name="template" value="clinamenic" ${currentTemplate.id === 'clinamenic-quartz' ? 'checked' : ''}>
-                  <div class="radio-content">
-                    <strong>Clinamenic Quartz</strong>
-                    <p>Enhanced Meridian-Quartz template with advanced features and optimizations</p>
+                  <div class="form-group-control">
+                    <label class="radio-option">
+                      <input type="radio" name="template" value="vanilla" ${currentTemplate.id === 'vanilla-quartz' ? 'checked' : ''}>
+                      <div class="radio-content">
+                        <strong>Vanilla Quartz</strong>
+                        <p>Default Meridian-Quartz template with clean styling</p>
+                      </div>
+                    </label>
+                    
+                    <label class="radio-option">
+                      <input type="radio" name="template" value="clinamenic" ${currentTemplate.id === 'clinamenic-quartz' ? 'checked' : ''}>
+                      <div class="radio-content">
+                        <strong>Clinamenic Quartz</strong>
+                        <p>Enhanced Meridian-Quartz template with advanced features and optimizations</p>
+                      </div>
+                    </label>
+                    
+                    <label class="radio-option">
+                      <input type="radio" name="template" value="custom" ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'checked' : ''}>
+                      <div class="radio-content">
+                        <strong>Custom Template</strong>
+                        <p>Use a custom Quartz template from GitHub or other source</p>
+                      </div>
+                    </label>
                   </div>
-                </label>
-                
-                <label class="radio-option">
-                  <input type="radio" name="template" value="custom" ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'checked' : ''}>
-                  <div class="radio-content">
-                    <strong>Custom Template</strong>
-                    <p>Use a custom Quartz template from GitHub or other source</p>
-                  </div>
-                </label>
+                </div>
               </div>
               
-              <div class="form-group" id="custom-template-group" style="display: ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'block' : 'none'};">
-                <label for="custom-template-url">Custom Template URL:</label>
-                <input type="text" id="custom-template-url" placeholder="https://github.com/username/repo" value="${currentTemplate.url || ''}">
-                <small>Enter the GitHub repository URL for your custom template</small>
+              <div class="form-group form-group-enhanced" id="custom-template-group" style="display: ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'block' : 'none'};">
+                <div class="form-group-header">
+                  <label for="custom-template-url">Custom Template URL</label>
+                  <button class="form-help-btn" title="Enter the full GitHub repository URL for your custom Quartz template. The repository should contain a valid Quartz configuration.">?</button>
+                </div>
+                <div class="form-group-control">
+                  <input type="text" id="custom-template-url" placeholder="https://github.com/username/repo" value="${currentTemplate.url || ''}">
+                </div>
               </div>
             </div>
           </div>
@@ -300,26 +337,48 @@ export class DeployManager extends ModuleBase {
               </button>
             </div>
             <div class="section-content">
-              <div class="form-group">
-                <label for="site-title">Site Title:</label>
-                <input type="text" id="site-title" value="${currentSettings.site?.title || ''}" maxlength="100">
-                <div class="character-count">
-                  <span id="title-count">0</span>/100
+              <div class="form-group form-group-enhanced">
+                <div class="form-group-header">
+                  <label for="site-title">Site Title</label>
+                  <button class="form-help-btn" title="The main title displayed on your site and in browser tabs. This appears in search results and social media previews.">?</button>
+                </div>
+                <div class="form-group-control">
+                  <input type="text" id="site-title" value="${currentSettings.site?.title || ''}" maxlength="100">
+                  <div class="character-count">
+                    <span id="title-count">0</span>/100
+                  </div>
                 </div>
               </div>
               
-              <div class="form-group">
-                <label for="site-description">Site Description:</label>
-                <textarea id="site-description" rows="3" maxlength="300">${currentSettings.site?.description || ''}</textarea>
-                <div class="character-count">
-                  <span id="description-count">0</span>/300
+              <div class="form-group form-group-enhanced">
+                <div class="form-group-header">
+                  <label for="site-description">Site Description</label>
+                  <button class="form-help-btn" title="A brief description of your site used in metadata and search engines. This helps people understand what your site is about.">?</button>
+                </div>
+                <div class="form-group-control">
+                  <textarea id="site-description" rows="3" maxlength="300">${currentSettings.site?.description || ''}</textarea>
+                  <div class="character-count">
+                    <span id="description-count">0</span>/300
+                  </div>
                 </div>
               </div>
               
-              <div class="form-group">
-                <label for="base-url">Base URL:</label>
-                <input type="text" id="base-url" placeholder="https://example.com" value="${currentSettings.site?.baseUrl || ''}">
-                <small>Your site's public URL (e.g., https://example.com)</small>
+              <div class="form-group form-group-enhanced">
+                <div class="form-group-header">
+                  <label for="base-url">Base URL</label>
+                  <button class="form-help-btn" title="The full URL where your site will be accessible. This is used for generating absolute links and social media previews. Include the protocol (https://).">?</button>
+                </div>
+                <div class="form-group-control">
+                  <input type="text" id="base-url" placeholder="https://example.com" value="${currentSettings.site?.baseUrl || ''}">
+                </div>
+              </div>
+              
+              <div class="form-group checkbox-group checkbox-group-enhanced">
+                <div class="form-group-control">
+                  <input type="checkbox" id="github-pages-enabled" ${currentSettings.deployment?.githubPages ? 'checked' : ''}>
+                  <label for="github-pages-enabled" class="checkbox-label">GitHub Pages Deployment</label>
+                  <button class="form-help-btn" title="Enables automatic deployment to GitHub Pages using GitHub Actions. Creates a workflow file that builds and deploys your site when you push changes to your repository.">?</button>
+                </div>
               </div>
             </div>
           </div>
@@ -335,10 +394,14 @@ export class DeployManager extends ModuleBase {
               </button>
             </div>
             <div class="section-content">
-              <div class="form-group">
-                <label for="custom-ignore-patterns">Additional Ignore Patterns:</label>
-                <textarea id="custom-ignore-patterns" rows="4" placeholder="*.tmp&#10;private/**&#10;drafts/&#10;.env">${currentSettings.site?.ignorePatterns?.custom?.join('\n') || ''}</textarea>
-                <small>One pattern per line. These will be added to the default Quartz ignore patterns.</small>
+              <div class="form-group form-group-enhanced">
+                <div class="form-group-header">
+                  <label for="custom-ignore-patterns">Additional Ignore Patterns</label>
+                  <button class="form-help-btn" title="File patterns to exclude from your site build using glob syntax (*, **, etc.). One pattern per line. These will be added to the default Quartz ignore patterns.">?</button>
+                </div>
+                <div class="form-group-control">
+                  <textarea id="custom-ignore-patterns" rows="4" placeholder="*.tmp&#10;private/**&#10;drafts/&#10;.env">${currentSettings.site?.ignorePatterns?.custom?.join('\n') || ''}</textarea>
+                </div>
               </div>
             </div>
           </div>
@@ -433,9 +496,29 @@ export class DeployManager extends ModuleBase {
    * Generate deployment form content (extracted from modal)
    */
   generateDeploymentFormContent(githubAccounts) {
-    if (githubAccounts.length === 0) {
+    // Always show deployment options, even without GitHub accounts
+    // since Arweave deployment doesn't require GitHub
+
+    const accountOptions = githubAccounts.map(account => 
+      `<option value="${account.id}" data-username="${account.username}" data-token-type="${account.tokenType}">
+        ${account.nickname} (@${account.username}) ${account.tokenType === 'classic' ? '⚠️' : '🔒'}
+      </option>`
+    ).join('');
+
       return `
         <div class="deploy-main-content">
+        <!-- GitHub Pages Deployment Section -->
+        <div class="collapsible-section" id="github-pages-section">
+          <div class="section-header" data-section="github-pages">
+            <h4>GitHub Pages Deployment</h4>
+            <button type="button" class="expand-btn" aria-label="Toggle GitHub Pages section">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="section-content">
+            ${githubAccounts.length === 0 ? `
           <div class="no-accounts-message">
             <div class="message-icon">🔗</div>
             <h4>No GitHub Accounts Connected</h4>
@@ -453,19 +536,8 @@ export class DeployManager extends ModuleBase {
               Set Up GitHub Account
             </button>
           </div>
-        </div>
-      `;
-    }
-
-    const accountOptions = githubAccounts.map(account => 
-      `<option value="${account.id}" data-username="${account.username}" data-token-type="${account.tokenType}">
-        ${account.nickname} (@${account.username}) ${account.tokenType === 'classic' ? '⚠️' : '🔒'}
-      </option>`
-    ).join('');
-
-    return `
-      <div class="deploy-main-content">
-        <form id="deploy-config-form">
+            ` : `
+              <form id="github-deploy-form">
           <div class="form-group">
             <label for="github-account">GitHub Account</label>
             <select id="github-account" required>
@@ -492,7 +564,7 @@ export class DeployManager extends ModuleBase {
           </div>
           
           <div class="deployment-options">
-            <h4>Deployment Options</h4>
+                  <h5>Deployment Options</h5>
             <div class="option-group">
               <label class="checkbox-label">
                 <input type="checkbox" id="auto-create-repo" checked>
@@ -509,14 +581,139 @@ export class DeployManager extends ModuleBase {
             </div>
           </div>
 
-          <!-- Form Actions -->
           <div class="form-actions">
-            <button type="submit" class="primary-btn">
+                  <button type="submit" class="primary-btn" id="github-deploy-btn">
               <span class="btn-icon">🚀</span>
               Deploy to GitHub Pages
             </button>
           </div>
         </form>
+            `}
+          </div>
+        </div>
+
+        <!-- Arweave Deployment Section -->
+        <div class="collapsible-section" id="arweave-section">
+          <div class="section-header" data-section="arweave">
+            <h4>Arweave Deployment</h4>
+            <button type="button" class="expand-btn" aria-label="Toggle Arweave section">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="section-content">
+            <div class="wallet-status" id="arweave-wallet-status">
+              <div class="wallet-status-loading">Checking wallet status...</div>
+            </div>
+            
+            <form id="arweave-deploy-form">
+              <div class="form-group">
+                <label for="arweave-site-id">Site ID</label>
+                <input type="text" id="arweave-site-id" placeholder="my-site-arweave" required>
+                <small>Unique identifier for your Arweave deployment</small>
+              </div>
+              
+              <div class="form-group">
+                <label for="arweave-deployment-strategy">Deployment Strategy</label>
+                <select id="arweave-deployment-strategy">
+                  <option value="full">Full Deployment</option>
+                  <option value="incremental">Incremental (if available)</option>
+                </select>
+                <small>Choose how to deploy your site</small>
+              </div>
+
+              <div class="cost-estimate" id="arweave-cost-estimate" style="display: none;">
+                <h5>Estimated Cost</h5>
+                <div class="cost-breakdown">
+                  <div class="cost-item">
+                    <span class="cost-label">Total Size:</span>
+                    <span class="cost-value" id="arweave-total-size">Calculating...</span>
+                  </div>
+                  <div class="cost-item">
+                    <span class="cost-label">AR Cost:</span>
+                    <span class="cost-value" id="arweave-ar-cost">Calculating...</span>
+                  </div>
+                  <div class="cost-item">
+                    <span class="cost-label">USD Cost:</span>
+                    <span class="cost-value" id="arweave-usd-cost">Calculating...</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="primary-btn" id="arweave-deploy-btn">
+                  <span class="btn-icon">🌐</span>
+                  Deploy to Arweave
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Hybrid Deployment Section -->
+        <div class="collapsible-section" id="hybrid-section">
+          <div class="section-header" data-section="hybrid">
+            <h4>Hybrid Deployment (Both Platforms)</h4>
+            <button type="button" class="expand-btn" aria-label="Toggle Hybrid section">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div class="section-content">
+            <div class="hybrid-info">
+              <p>Deploy your site to both GitHub Pages and Arweave simultaneously for maximum reliability and permanence.</p>
+              <div class="hybrid-benefits">
+                <h5>Benefits:</h5>
+                <ul>
+                  <li><strong>GitHub Pages:</strong> Traditional hosting with Git integration and easy updates</li>
+                  <li><strong>Arweave:</strong> Permanent decentralized storage that never goes down</li>
+                  <li><strong>Redundancy:</strong> Your site is available even if one platform is unavailable</li>
+                </ul>
+              </div>
+            </div>
+            
+            ${githubAccounts.length === 0 ? `
+              <div class="no-accounts-message">
+                <p>To use hybrid deployment, you'll need to connect a GitHub account first.</p>
+                <button type="button" class="primary-btn" id="setup-github-hybrid-btn">
+                  <span class="btn-icon">⚙️</span>
+                  Set Up GitHub Account
+                </button>
+              </div>
+            ` : `
+              <form id="hybrid-deploy-form">
+                <div class="form-group">
+                  <label for="hybrid-site-id">Arweave Site ID</label>
+                  <input type="text" id="hybrid-site-id" placeholder="my-site-hybrid" required>
+                  <small>Unique identifier for your Arweave deployment</small>
+                </div>
+                
+                <div class="form-group">
+                  <label for="hybrid-github-account">GitHub Account</label>
+                  <select id="hybrid-github-account" required>
+                    <option value="">Select GitHub account...</option>
+                    ${accountOptions}
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="hybrid-repository-name">Repository Name</label>
+                  <input type="text" id="hybrid-repository-name" placeholder="my-site" required>
+                  <small>Will create: <span id="hybrid-repo-preview">username/my-site</span></small>
+                </div>
+
+                <div class="form-actions">
+                  <button type="submit" class="primary-btn" id="hybrid-deploy-btn">
+                    <span class="btn-icon">🔄</span>
+                    Deploy to Both Platforms
+                  </button>
+                </div>
+              </form>
+            `}
+          </div>
+        </div>
       </div>
     `;
   }
@@ -660,13 +857,321 @@ export class DeployManager extends ModuleBase {
    * Setup deployment form events
    */
   setupDeploymentFormEvents() {
-    // Add deployment form event handlers here
-    const form = document.getElementById('deploy-config-form');
-    if (form) {
-      form.addEventListener('submit', async (e) => {
+    // Setup GitHub Pages deployment form
+    const githubForm = document.getElementById('github-deploy-form');
+    if (githubForm) {
+      githubForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await this.handleDeploySubmit();
+        await this.handleGitHubDeploySubmit();
       });
+    }
+
+    // Setup Arweave deployment form
+    const arweaveForm = document.getElementById('arweave-deploy-form');
+    if (arweaveForm) {
+      arweaveForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleArweaveDeploySubmit();
+      });
+    }
+
+    // Setup Hybrid deployment form
+    const hybridForm = document.getElementById('hybrid-deploy-form');
+    if (hybridForm) {
+      hybridForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleHybridDeploySubmit();
+      });
+    }
+
+    // Setup GitHub account setup buttons
+    const setupGithubBtn = document.getElementById('setup-github-btn');
+    if (setupGithubBtn) {
+      setupGithubBtn.addEventListener('click', () => {
+        this.app.closeModal();
+        const accountManager = this.app.getModule('accountManager');
+        if (accountManager) {
+          accountManager.openGitHubAccountsModal();
+        } else {
+          console.error('AccountManager not available');
+        }
+      });
+    }
+
+    const setupGithubHybridBtn = document.getElementById('setup-github-hybrid-btn');
+    if (setupGithubHybridBtn) {
+      setupGithubHybridBtn.addEventListener('click', () => {
+        this.app.closeModal();
+        const accountManager = this.app.getModule('accountManager');
+        if (accountManager) {
+          accountManager.openGitHubAccountsModal();
+        } else {
+          console.error('AccountManager not available');
+        }
+      });
+    }
+
+    // Setup Arweave configuration events
+    this.setupArweaveConfigEvents();
+    
+    // Setup GitHub account change events
+    this.setupGitHubAccountEvents();
+    
+    // Check Arweave wallet status
+    this.checkArweaveWalletStatus();
+  }
+
+
+
+  /**
+   * Setup Arweave configuration events
+   */
+  setupArweaveConfigEvents() {
+    const siteIdInput = document.getElementById('arweave-site-id');
+    if (siteIdInput) {
+      siteIdInput.addEventListener('input', () => {
+        this.updateArweaveCostEstimate();
+      });
+    }
+
+    const strategySelect = document.getElementById('arweave-deployment-strategy');
+    if (strategySelect) {
+      strategySelect.addEventListener('change', () => {
+        this.updateArweaveCostEstimate();
+      });
+    }
+  }
+
+  /**
+   * Setup GitHub account events
+   */
+  setupGitHubAccountEvents() {
+    const githubAccount = document.getElementById('github-account');
+    if (githubAccount) {
+      githubAccount.addEventListener('change', async (e) => {
+        await this.onDeploymentAccountChange(e.target.value);
+      });
+    }
+
+    const hybridGithubAccount = document.getElementById('hybrid-github-account');
+    if (hybridGithubAccount) {
+      hybridGithubAccount.addEventListener('change', async (e) => {
+        await this.onHybridDeploymentAccountChange(e.target.value);
+      });
+    }
+
+    const repositoryName = document.getElementById('repository-name');
+    if (repositoryName) {
+      repositoryName.addEventListener('input', (e) => {
+        this.updateRepositoryPreview();
+      });
+    }
+
+    const hybridRepositoryName = document.getElementById('hybrid-repository-name');
+    if (hybridRepositoryName) {
+      hybridRepositoryName.addEventListener('input', (e) => {
+        this.updateHybridRepositoryPreview();
+      });
+    }
+
+    const addGithubAccountBtn = document.getElementById('add-github-account-btn');
+    if (addGithubAccountBtn) {
+      addGithubAccountBtn.addEventListener('click', () => {
+        this.app.closeModal();
+        const accountManager = this.app.getModule('accountManager');
+        if (accountManager) {
+          accountManager.openGitHubAccountsModal();
+        } else {
+          console.error('AccountManager not available');
+        }
+      });
+    }
+  }
+
+  /**
+   * Check and display Arweave wallet status
+   */
+  async checkArweaveWalletStatus() {
+    const walletStatus = document.getElementById('arweave-wallet-status');
+    if (!walletStatus) return;
+
+    try {
+      const isConfigured = await window.electronAPI.archive.isWalletConfigured();
+      
+      if (isConfigured) {
+        // Get wallet info to show address
+        const walletInfo = await window.electronAPI.archive.getWalletInfo();
+        const activeAccount = await window.electronAPI.archive.getActiveAccount();
+        
+        let lastDeploymentHtml = '';
+        if (this.lastArweaveDeployment) {
+          const deploymentDate = new Date(this.lastArweaveDeployment.timestamp).toLocaleString();
+          
+          // Create file list HTML
+          let filesHtml = '';
+          if (this.lastArweaveDeployment.uploadedFiles && this.lastArweaveDeployment.uploadedFiles.length > 0) {
+            filesHtml = `
+              <div class="deployment-files">
+                <div class="deployment-files-title">Uploaded Files (${this.lastArweaveDeployment.uploadedFiles.length}):</div>
+                <div class="deployment-files-list">
+                  ${this.lastArweaveDeployment.uploadedFiles.map(file => `
+                    <div class="deployment-file-item">
+                      <span class="file-path">${file.path}</span>
+                      <span class="file-size">${this.formatFileSize(file.size)}</span>
+                      <button type="button" class="link-btn small" onclick="window.electronAPI.openExternal('${file.url}')">
+                        View
+                      </button>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }
+          
+          lastDeploymentHtml = `
+            <div class="last-deployment-info">
+              <div class="last-deployment-title">Last Deployment</div>
+              <div class="last-deployment-details">
+                <div>Date: ${deploymentDate}</div>
+                <div>Cost: ${this.lastArweaveDeployment.cost} AR</div>
+                <div>Files: ${this.lastArweaveDeployment.fileCount}</div>
+                <div>Size: ${this.formatFileSize(this.lastArweaveDeployment.totalSize)}</div>
+              </div>
+              <div class="deployment-actions">
+                <button type="button" class="link-btn" id="view-last-deployment-btn">
+                  View Site
+                </button>
+                ${this.lastArweaveDeployment.indexFile ? `
+                  <button type="button" class="link-btn secondary" id="view-index-file-btn">
+                    View Index.html
+                  </button>
+                ` : ''}
+                ${this.lastArweaveDeployment.manifestUrl ? `
+                  <button type="button" class="link-btn secondary" id="view-manifest-btn">
+                    View Manifest
+                  </button>
+                ` : ''}
+              </div>
+              ${filesHtml}
+            </div>
+          `;
+        }
+        
+        walletStatus.innerHTML = `
+          <div class="wallet-status-connected">
+            <div class="wallet-status-icon">✅</div>
+            <div class="wallet-status-info">
+              <div class="wallet-status-title">Arweave Wallet Connected</div>
+              <div class="wallet-status-details">
+                ${activeAccount ? `Account: ${activeAccount.nickname} (${activeAccount.address})` : 'Wallet ready for deployment'}
+              </div>
+            </div>
+          </div>
+          ${lastDeploymentHtml}
+        `;
+        
+        // Add event listeners for deployment action buttons
+        const viewBtn = document.getElementById('view-last-deployment-btn');
+        if (viewBtn) {
+          viewBtn.addEventListener('click', () => {
+            if (this.lastArweaveDeployment) {
+              window.electronAPI.openExternal(this.lastArweaveDeployment.url);
+            }
+          });
+        }
+        
+        const viewIndexBtn = document.getElementById('view-index-file-btn');
+        if (viewIndexBtn && this.lastArweaveDeployment?.indexFile) {
+          viewIndexBtn.addEventListener('click', () => {
+            window.electronAPI.openExternal(this.lastArweaveDeployment.indexFile.url);
+          });
+        }
+        
+        const viewManifestBtn = document.getElementById('view-manifest-btn');
+        if (viewManifestBtn && this.lastArweaveDeployment?.manifestUrl) {
+          viewManifestBtn.addEventListener('click', () => {
+            window.electronAPI.openExternal(this.lastArweaveDeployment.manifestUrl);
+          });
+        }
+      } else {
+        walletStatus.innerHTML = `
+          <div class="wallet-status-disconnected">
+            <div class="wallet-status-icon">⚠️</div>
+            <div class="wallet-status-info">
+              <div class="wallet-status-title">Arweave Wallet Required</div>
+              <div class="wallet-status-details">You need to set up an Arweave wallet to deploy your site</div>
+            </div>
+            <button type="button" class="secondary-btn" id="setup-arweave-wallet-btn">
+              Set Up Wallet
+            </button>
+          </div>
+        `;
+        
+        // Add event listener for setup button
+        const setupBtn = document.getElementById('setup-arweave-wallet-btn');
+        if (setupBtn) {
+          setupBtn.addEventListener('click', () => {
+            this.app.closeModal();
+            this.app.openArweaveAccountsModal();
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check Arweave wallet status:', error);
+      walletStatus.innerHTML = `
+        <div class="wallet-status-error">
+          <div class="wallet-status-icon">❌</div>
+          <div class="wallet-status-info">
+            <div class="wallet-status-title">Error Checking Wallet</div>
+            <div class="wallet-status-details">Unable to verify wallet status</div>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  /**
+   * Update Arweave cost estimate
+   */
+  async updateArweaveCostEstimate() {
+    const costEstimate = document.getElementById('arweave-cost-estimate');
+    const totalSize = document.getElementById('arweave-total-size');
+    const arCost = document.getElementById('arweave-ar-cost');
+    const usdCost = document.getElementById('arweave-usd-cost');
+    const siteIdInput = document.getElementById('arweave-site-id');
+
+    if (!costEstimate || !totalSize || !arCost || !usdCost || !siteIdInput) {
+      return;
+    }
+
+    const siteId = siteIdInput.value.trim();
+    if (!siteId) {
+      costEstimate.style.display = 'none';
+      return;
+    }
+
+    try {
+      // Show loading state
+      costEstimate.style.display = 'block';
+      totalSize.textContent = 'Calculating...';
+      arCost.textContent = 'Calculating...';
+      usdCost.textContent = 'Calculating...';
+
+      // Call backend to estimate cost
+      const estimate = await window.electronAPI.deploy.arweaveCostEstimate({
+        workspacePath: this.getApp().workspacePath,
+        siteId: siteId,
+        costEstimate: true
+      });
+
+      // Update UI with cost estimate
+      totalSize.textContent = this.formatFileSize(estimate.totalSize);
+      arCost.textContent = `${estimate.arCost} AR`;
+      usdCost.textContent = estimate.usdCost ? `~$${estimate.usdCost}` : 'N/A';
+
+    } catch (error) {
+      console.error('Failed to estimate Arweave cost:', error);
+      costEstimate.style.display = 'none';
     }
   }
 
@@ -909,18 +1414,32 @@ export class DeployManager extends ModuleBase {
                   <!-- Site Information -->
                   <div class="form-subsection">
                     <h5>Site Information</h5>
-                    <div class="form-group">
-                      <label for="site-title">Site Title</label>
-                      <input type="text" id="site-title" value="${this.escapeHtml(currentSettings.site?.title || 'My Digital Garden')}" maxlength="100" required>
-                      <small>The main title for your site (1-100 characters)</small>
-                      <div class="character-count" id="title-char-count"></div>
+                    <div class="form-group form-group-enhanced">
+                      <div class="form-group-header">
+                        <label for="site-title">Site Title</label>
+                        <button class="form-help-btn" title="The main title displayed on your site and in browser tabs. This appears in search results and social media previews.">?</button>
+                      </div>
+                      <div class="form-group-control">
+                        <input type="text" id="site-title" value="${this.escapeHtml(currentSettings.site?.title || 'My Digital Garden')}" maxlength="100" required>
+                        <div class="character-count" id="title-char-count"></div>
+                      </div>
+                      <div class="form-group-help">
+                        <small>The main title for your site (1-100 characters)</small>
+                      </div>
                     </div>
                     
-                    <div class="form-group">
-                      <label for="site-description">Site Description</label>
-                      <textarea id="site-description" placeholder="A brief description of your digital garden" maxlength="500">${this.escapeHtml(currentSettings.site?.description || '')}</textarea>
-                      <small>A brief description of your site (optional, max 500 characters)</small>
-                      <div class="character-count" id="description-char-count"></div>
+                    <div class="form-group form-group-enhanced">
+                      <div class="form-group-header">
+                        <label for="site-description">Site Description</label>
+                        <button class="form-help-btn" title="A brief description of your site used in metadata and search engines. This helps people understand what your site is about.">?</button>
+                      </div>
+                      <div class="form-group-control">
+                        <textarea id="site-description" placeholder="A brief description of your digital garden" maxlength="500">${this.escapeHtml(currentSettings.site?.description || '')}</textarea>
+                        <div class="character-count" id="description-char-count"></div>
+                      </div>
+                      <div class="form-group-help">
+                        <small>A brief description of your site (optional, max 500 characters)</small>
+                      </div>
                     </div>
                     
                     <div class="form-group">
@@ -934,20 +1453,35 @@ export class DeployManager extends ModuleBase {
                   <!-- Domain Configuration -->
                   <div class="form-subsection">
                     <h5>Domain Configuration</h5>
-                    <div class="form-group">
-                      <label for="site-base-url">Base URL</label>
-                      <input type="url" id="site-base-url" value="${this.escapeHtml(currentSettings.site?.baseUrl || '')}" placeholder="https://yourdomain.com">
-                      <small>The full URL where your site will be accessible</small>
-                      <div class="url-validation" id="base-url-validation" style="display: none;"></div>
-                      <div class="domain-preview" id="domain-preview">
-                        ${currentSettings.site?.baseUrl ? this.extractDomainFromUrl(currentSettings.site.baseUrl) : 'No domain specified'}
+                    <div class="form-group form-group-enhanced">
+                      <div class="form-group-header">
+                        <label for="site-base-url">Base URL</label>
+                        <button class="form-help-btn" title="The full URL where your site will be accessible. This is used for generating absolute links and social media previews. Include the protocol (https://).">?</button>
+                      </div>
+                      <div class="form-group-control">
+                        <input type="url" id="site-base-url" value="${this.escapeHtml(currentSettings.site?.baseUrl || '')}" placeholder="https://yourdomain.com">
+                        <div class="url-validation" id="base-url-validation" style="display: none;"></div>
+                        <div class="domain-preview" id="domain-preview">
+                          ${currentSettings.site?.baseUrl ? this.extractDomainFromUrl(currentSettings.site.baseUrl) : 'No domain specified'}
+                        </div>
+                      </div>
+                      <div class="form-group-help">
+                        <small>The full URL where your site will be accessible</small>
                       </div>
                     </div>
                     
-                    <div class="form-group checkbox-group">
-                      <input type="checkbox" id="custom-cname" ${currentSettings.deployment?.customCNAME ? 'checked' : ''}>
-                      <label for="custom-cname">Generate CNAME file for custom domain</label>
-                      <small>Automatically creates a CNAME file when a custom domain is detected</small>
+                    <div class="form-group checkbox-group checkbox-group-enhanced">
+                      <div class="form-group-header">
+                        <label for="custom-cname">Generate CNAME file for custom domain</label>
+                        <button class="form-help-btn" title="Automatically creates a CNAME file when a custom domain is detected. This is required for custom domains to work with GitHub Pages.">?</button>
+                      </div>
+                      <div class="form-group-control">
+                        <input type="checkbox" id="custom-cname" ${currentSettings.deployment?.customCNAME ? 'checked' : ''}>
+                        <label for="custom-cname" class="checkbox-label">Generate CNAME file for custom domain</label>
+                      </div>
+                      <div class="form-group-help">
+                        <small>Automatically creates a CNAME file when a custom domain is detected</small>
+                      </div>
                     </div>
                   </div>
 
@@ -973,16 +1507,32 @@ export class DeployManager extends ModuleBase {
                       <small>Choose how the theme adapts to user preferences</small>
                     </div>
                     
-                    <div class="form-group checkbox-group">
-                      <input type="checkbox" id="enable-spa" ${currentSettings.quartz?.enableSPA !== false ? 'checked' : ''}>
-                      <label for="enable-spa">Enable Single Page Application</label>
-                      <small>Faster navigation between pages (recommended)</small>
+                    <div class="form-group checkbox-group checkbox-group-enhanced">
+                      <div class="form-group-header">
+                        <label for="enable-spa">Enable Single Page Application</label>
+                        <button class="form-help-btn" title="Enables client-side routing for faster navigation between pages without full page reloads. This provides a smoother user experience but may not work with all hosting providers.">?</button>
+                      </div>
+                      <div class="form-group-control">
+                        <input type="checkbox" id="enable-spa" ${currentSettings.quartz?.enableSPA !== false ? 'checked' : ''}>
+                        <label for="enable-spa" class="checkbox-label">Enable Single Page Application</label>
+                      </div>
+                      <div class="form-group-help">
+                        <small>Faster navigation between pages (recommended)</small>
+                      </div>
                     </div>
                     
-                    <div class="form-group checkbox-group">
-                      <input type="checkbox" id="enable-popovers" ${currentSettings.quartz?.enablePopovers !== false ? 'checked' : ''}>
-                      <label for="enable-popovers">Enable Link Popovers</label>
-                      <small>Show preview popups when hovering over internal links</small>
+                    <div class="form-group checkbox-group checkbox-group-enhanced">
+                      <div class="form-group-header">
+                        <label for="enable-popovers">Enable Link Popovers</label>
+                        <button class="form-help-btn" title="Shows preview popups when hovering over internal links to other pages in your site. This helps users navigate your content more easily.">?</button>
+                      </div>
+                      <div class="form-group-control">
+                        <input type="checkbox" id="enable-popovers" ${currentSettings.quartz?.enablePopovers !== false ? 'checked' : ''}>
+                        <label for="enable-popovers" class="checkbox-label">Enable Link Popovers</label>
+                      </div>
+                      <div class="form-group-help">
+                        <small>Show preview popups when hovering over internal links</small>
+                      </div>
                     </div>
                   </div>
 
@@ -995,10 +1545,18 @@ export class DeployManager extends ModuleBase {
                       <small>File patterns to exclude from build (one per line). Uses glob syntax: *, **, etc.</small>
                     </div>
                     
-                    <div class="form-group checkbox-group">
-                      <input type="checkbox" id="enable-ignore-patterns" ${currentSettings.site?.ignorePatterns?.enabled !== false ? 'checked' : ''}>
-                      <label for="enable-ignore-patterns">Enable custom ignore patterns</label>
-                      <small>Apply the custom patterns above to exclude files from your site</small>
+                    <div class="form-group checkbox-group checkbox-group-enhanced">
+                      <div class="form-group-header">
+                        <label for="enable-ignore-patterns">Enable custom ignore patterns</label>
+                        <button class="form-help-btn" title="Apply the custom patterns above to exclude files from your site build. This is useful for excluding drafts, private files, or temporary files from your published site.">?</button>
+                      </div>
+                      <div class="form-group-control">
+                        <input type="checkbox" id="enable-ignore-patterns" ${currentSettings.site?.ignorePatterns?.enabled !== false ? 'checked' : ''}>
+                        <label for="enable-ignore-patterns" class="checkbox-label">Enable custom ignore patterns</label>
+                      </div>
+                      <div class="form-group-help">
+                        <small>Apply the custom patterns above to exclude files from your site</small>
+                      </div>
                     </div>
                     
                     <div class="ignore-patterns-help">
@@ -1250,7 +1808,10 @@ export class DeployManager extends ModuleBase {
       const selectedTemplate = formData.template;
       const templateChanged = this.hasTemplateChanged(currentTemplate, selectedTemplate);
       
+      console.log('[DeployManager] isInitialized:', isInitialized, 'templateChanged:', templateChanged);
+      
       if (isInitialized && templateChanged) {
+        console.log('[DeployManager] Taking reinitialize path');
         // Show reinitialization warning
         const confirmed = await this.showReinitializationWarning();
         if (!confirmed) {
@@ -1261,9 +1822,11 @@ export class DeployManager extends ModuleBase {
         // Reinitialize with new template
         await this.reinitializeWithTemplate(formData);
       } else if (!isInitialized) {
+        console.log('[DeployManager] Taking initialization path');
         // First-time initialization
         await this.initializeWithConfiguration(formData);
       } else {
+        console.log('[DeployManager] Taking safe configuration changes path');
         // Safe configuration changes only
         await this.applySafeConfigurationChanges(formData);
       }
@@ -1454,8 +2017,101 @@ export class DeployManager extends ModuleBase {
   }
 
   async applySafeConfigurationChanges(configData) {
-    // Save settings that don't require reinitialization
-    await this.saveSiteSettings(configData);
+    try {
+      console.log('[DeployManager] applySafeConfigurationChanges called');
+      // Save settings that don't require reinitialization
+      await this.saveSiteSettings(configData);
+      
+      // Handle GitHub Pages workflow changes
+      console.log('[DeployManager] About to call handleGitHubPagesWorkflowChanges');
+      await this.handleGitHubPagesWorkflowChanges();
+      console.log('[DeployManager] handleGitHubPagesWorkflowChanges completed');
+    } catch (error) {
+      console.error('[DeployManager] Error in applySafeConfigurationChanges:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if GitHub workflow file exists
+   */
+  async checkWorkflowFileExists() {
+    try {
+      const result = await window.electronAPI.deploy.checkWorkflowFileExists();
+      return result.exists;
+    } catch (error) {
+      console.error('[DeployManager] Error checking workflow file existence:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle GitHub Pages workflow changes based on current toggle state
+   */
+  async handleGitHubPagesWorkflowChanges() {
+    try {
+      console.log('[DeployManager] handleGitHubPagesWorkflowChanges called');
+      const toggle = document.getElementById('github-pages-enabled');
+      if (!toggle) {
+        console.log('[DeployManager] GitHub Pages toggle not found');
+        return;
+      }
+
+      const enabled = toggle.checked;
+      console.log('[DeployManager] Toggle state:', enabled);
+      const currentSettings = await window.electronAPI.config.loadSiteSettings(this.app.workspacePath);
+      const wasEnabled = currentSettings.deployment?.githubPages || false;
+      console.log('[DeployManager] Previous state:', wasEnabled);
+
+      // Check if workflow file actually exists
+      const workflowExists = await this.checkWorkflowFileExists();
+      console.log('[DeployManager] Workflow file exists:', workflowExists);
+
+      // Make changes if:
+      // 1. Toggle state changed, OR
+      // 2. Toggle is enabled but workflow doesn't exist, OR  
+      // 3. Toggle is disabled but workflow exists
+      const shouldCreateWorkflow = enabled && !workflowExists;
+      const shouldRemoveWorkflow = !enabled && workflowExists;
+      const stateChanged = enabled !== wasEnabled;
+
+      if (stateChanged || shouldCreateWorkflow || shouldRemoveWorkflow) {
+        console.log('[DeployManager] State changed, processing workflow changes...');
+        if (enabled) {
+          // Generate GitHub Actions workflow
+          this.app.updateFooterStatus('Generating GitHub Actions workflow...', false);
+          const result = await window.electronAPI.deploy.generateGitHubWorkflow();
+          
+          if (result.success) {
+            this.app.showSuccess('GitHub Actions workflow created successfully!');
+          } else {
+            this.app.showError(`Failed to create GitHub Actions workflow: ${result.error}`);
+            // Revert the toggle if it failed
+            toggle.checked = false;
+            return;
+          }
+        } else {
+          // Remove GitHub Actions workflow
+          this.app.updateFooterStatus('Removing GitHub Actions workflow...', false);
+          const result = await window.electronAPI.deploy.removeGitHubWorkflow();
+          
+          if (result.success) {
+            this.app.showSuccess('GitHub Actions workflow removed successfully!');
+          } else {
+            this.app.showError(`Failed to remove GitHub Actions workflow: ${result.error}`);
+            // Revert the toggle if it failed
+            toggle.checked = true;
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[DeployManager] Failed to handle GitHub Pages workflow changes:', error);
+      this.app.showError(`Failed to update GitHub Pages settings: ${error.message}`);
+      throw error; // Re-throw to be caught by parent method
+    } finally {
+      this.app.updateFooterStatus('Ready', true);
+    }
   }
 
   async saveSiteSettings(configData) {
@@ -1483,6 +2139,7 @@ export class DeployManager extends ModuleBase {
         deployment: {
           branch: 'main',
           customCNAME: configData.deployment.customCNAME,
+          githubPages: document.getElementById('github-pages-enabled')?.checked || false,
         },
         metadata: {
           createdAt: new Date().toISOString(),
@@ -1762,7 +2419,12 @@ export class DeployManager extends ModuleBase {
         // Setup GitHub account button
         document.getElementById('setup-github-btn').addEventListener('click', () => {
           this.app.closeModal();
-          this.app.openGitHubAccountsModal();
+          const accountManager = this.app.getModule('accountManager');
+          if (accountManager) {
+            accountManager.openGitHubAccountsModal();
+          } else {
+            console.error('AccountManager not available');
+          }
         });
         
         return;
@@ -1871,7 +2533,12 @@ export class DeployManager extends ModuleBase {
     // Add GitHub account button
     document.getElementById('add-github-account-btn').addEventListener('click', () => {
       this.app.closeModal();
-      this.app.openGitHubAccountsModal();
+      const accountManager = this.app.getModule('accountManager');
+      if (accountManager) {
+        accountManager.openGitHubAccountsModal();
+      } else {
+        console.error('AccountManager not available');
+      }
     });
     
     // Form submission
@@ -1883,8 +2550,10 @@ export class DeployManager extends ModuleBase {
 
   async onDeploymentAccountChange(accountId) {
     if (!accountId) {
-      document.getElementById('security-info').style.display = 'none';
-      document.getElementById('repo-preview').textContent = 'username/repository-name';
+      const securityInfo = document.getElementById('security-info');
+      const repoPreview = document.getElementById('repo-preview');
+      if (securityInfo) securityInfo.style.display = 'none';
+      if (repoPreview) repoPreview.textContent = 'username/repository-name';
       return;
     }
     
@@ -1897,6 +2566,25 @@ export class DeployManager extends ModuleBase {
       
       // Update security panel
       this.updateDeploymentSecurityPanel(account);
+      
+    } catch (error) {
+      console.error('Failed to load account details:', error);
+    }
+  }
+
+  async onHybridDeploymentAccountChange(accountId) {
+    if (!accountId) {
+      const hybridRepoPreview = document.getElementById('hybrid-repo-preview');
+      if (hybridRepoPreview) hybridRepoPreview.textContent = 'username/repository-name';
+      return;
+    }
+    
+    try {
+      const account = await window.electronAPI.deploy.getGitHubAccount(accountId);
+      if (!account) return;
+      
+      // Update hybrid repository preview
+      this.updateHybridRepositoryPreview();
       
     } catch (error) {
       console.error('Failed to load account details:', error);
@@ -1917,65 +2605,35 @@ export class DeployManager extends ModuleBase {
     }
   }
 
+  updateHybridRepositoryPreview() {
+    const accountSelect = document.getElementById('hybrid-github-account');
+    const repoNameInput = document.getElementById('hybrid-repository-name');
+    const repoPreview = document.getElementById('hybrid-repo-preview');
+    
+    if (accountSelect && repoNameInput && repoPreview) {
+      const selectedOption = accountSelect.selectedOptions[0];
+      const username = selectedOption ? selectedOption.dataset.username : '';
+      const repoName = repoNameInput.value.trim() || 'my-site';
+      
+      repoPreview.textContent = username ? `${username}/${repoName}` : 'username/repository-name';
+    }
+  }
+
   updateDeploymentSecurityPanel(account) {
+    // Security panel no longer needed for manual GitHub deployment
     const securityInfo = document.getElementById('security-info');
-    if (!securityInfo) return;
-    
-    const tokenType = account.tokenType;
-    const isClassic = tokenType === 'classic';
-    
-    securityInfo.innerHTML = `
-      <div class="security-header">
-        <h5>🔒 Security Information</h5>
-        <span class="token-type ${isClassic ? 'warning' : 'secure'}">
-          ${isClassic ? '⚠️ Classic Token' : '🔒 Fine-grained Token'}
-        </span>
-      </div>
-      <div class="security-details">
-        <div class="security-item">
-          <span class="security-label">Token Type:</span>
-          <span class="security-value">${tokenType === 'classic' ? 'Classic Personal Access Token' : 'Fine-grained Personal Access Token'}</span>
-        </div>
-        <div class="security-item">
-          <span class="security-label">Account:</span>
-          <span class="security-value">@${account.username}</span>
-        </div>
-        <div class="security-item">
-          <span class="security-label">Permissions:</span>
-          <span class="security-value">${this.getTokenPermissionsText(account)}</span>
-        </div>
-      </div>
-      ${isClassic ? `
-        <div class="security-warning">
-          <p><strong>⚠️ Classic Token Detected</strong></p>
-          <p>Classic tokens have broad permissions. Consider using a fine-grained token for better security.</p>
-          <button type="button" class="link-btn" id="show-security-guide-btn">Learn More</button>
-        </div>
-      ` : ''}
-    `;
-    
-    securityInfo.style.display = 'block';
-    
-    // Add event listener for security guide
-    const showSecurityGuideBtn = document.getElementById('show-security-guide-btn');
-    if (showSecurityGuideBtn) {
-      showSecurityGuideBtn.addEventListener('click', () => {
-        this.app.showSecurityGuide();
-      });
+    if (securityInfo) {
+      securityInfo.style.display = 'none';
     }
   }
 
-  getTokenPermissionsText(account) {
-    if (account.tokenType === 'fine-grained') {
-      return 'Repository-specific permissions';
-    } else {
-      return 'Full repository access';
-    }
-  }
 
-  async handleDeploySubmit() {
+  /**
+   * Handle GitHub Pages deployment
+   */
+  async handleGitHubDeploySubmit() {
     try {
-      const form = document.getElementById('deploy-config-form');
+      const form = document.getElementById('github-deploy-form');
       const formData = new FormData(form);
       
       const accountId = formData.get('github-account') || document.getElementById('github-account').value;
@@ -1989,7 +2647,7 @@ export class DeployManager extends ModuleBase {
         return;
       }
       
-      this.app.updateFooterStatus('Deploying site...', false);
+      this.app.updateFooterStatus('Deploying to GitHub Pages...', false);
       
       const deployResult = await window.electronAPI.deploy.deployToGitHub({
         workspacePath: this.app.workspacePath,
@@ -1999,20 +2657,166 @@ export class DeployManager extends ModuleBase {
         autoCreateRepo
       });
       
-      if (deployResult.status === 'success') {
-        this.app.showSuccess(`Site deployed successfully! Available at ${deployResult.url}`);
-        this.app.closeModal();
+      if (deployResult.success) {
+        this.app.showSuccess(`Site deployed to GitHub Pages successfully! Available at ${deployResult.url}`);
       } else {
-        this.app.showError(`Deployment failed: ${deployResult.error || 'Unknown error'}`);
+        this.app.showError(`GitHub Pages deployment failed: ${deployResult.error || 'Unknown error'}`);
       }
       
       this.app.updateFooterStatus('Ready', false);
       
     } catch (error) {
-      console.error('Deployment failed:', error);
-      this.app.showError(`Deployment failed: ${error.message}`);
+      console.error('GitHub Pages deployment failed:', error);
+      this.app.showError(`GitHub Pages deployment failed: ${error.message}`);
       this.app.updateFooterStatus('Ready', false);
     }
+  }
+
+  /**
+   * Handle Arweave deployment
+   */
+  async handleArweaveDeploySubmit() {
+    try {
+      const form = document.getElementById('arweave-deploy-form');
+      const formData = new FormData(form);
+      
+      const siteId = formData.get('arweave-site-id') || document.getElementById('arweave-site-id').value;
+      const deploymentStrategy = document.getElementById('arweave-deployment-strategy').value || 'full';
+      
+      if (!siteId) {
+        this.app.showError('Please enter a Site ID for Arweave deployment');
+        return;
+      }
+      
+      // Check if Arweave wallet is configured first
+      const isWalletConfigured = await window.electronAPI.archive.isWalletConfigured();
+      if (!isWalletConfigured) {
+        this.app.showError('Arweave wallet not configured. Please set up your Arweave wallet first.', {
+          action: 'Set Up Wallet',
+          onAction: () => {
+        this.app.closeModal();
+            this.app.openArweaveAccountsModal();
+          }
+        });
+        return;
+      }
+      
+      this.app.updateFooterStatus('Deploying to Arweave...', false);
+      
+      const deployResult = await window.electronAPI.deploy.arweaveDeploy({
+        workspacePath: this.app.workspacePath,
+        siteId: siteId,
+        incremental: deploymentStrategy === 'incremental'
+      });
+      
+      if (deployResult.success) {
+        const successMessage = `Site deployed to Arweave successfully!\n\nURL: ${deployResult.url}\nTransaction ID: ${deployResult.manifestHash}\nCost: ${deployResult.totalCost.ar} AR\nFiles: ${deployResult.fileCount}`;
+        this.app.showSuccess(successMessage);
+        
+        // Store the detailed deployment information for display
+        this.lastArweaveDeployment = {
+          url: deployResult.url,
+          manifestUrl: deployResult.manifestUrl,
+          transactionId: deployResult.manifestHash,
+          timestamp: new Date().toISOString(),
+          cost: deployResult.totalCost.ar,
+          fileCount: deployResult.fileCount,
+          totalSize: deployResult.totalSize,
+          uploadedFiles: deployResult.uploadedFiles || [],
+          indexFile: deployResult.indexFile
+        };
+        
+        // Update the wallet status display to show the new deployment details
+        await this.checkArweaveWalletStatus();
+      } else {
+        this.app.showError(`Arweave deployment failed: ${deployResult.error || 'Unknown error'}`);
+      }
+      
+      this.app.updateFooterStatus('Ready', false);
+      
+    } catch (error) {
+      console.error('Arweave deployment failed:', error);
+      this.app.showError(`Arweave deployment failed: ${error.message}`);
+      this.app.updateFooterStatus('Ready', false);
+    }
+  }
+
+  /**
+   * Handle Hybrid deployment
+   */
+  async handleHybridDeploySubmit() {
+    try {
+      const form = document.getElementById('hybrid-deploy-form');
+      const formData = new FormData(form);
+      
+      const siteId = formData.get('hybrid-site-id') || document.getElementById('hybrid-site-id').value;
+      const accountId = formData.get('hybrid-github-account') || document.getElementById('hybrid-github-account').value;
+      const repositoryName = formData.get('hybrid-repository-name') || document.getElementById('hybrid-repository-name').value;
+      
+      if (!accountId || !repositoryName || !siteId) {
+        this.app.showError('Please fill in all required fields for hybrid deployment');
+        return;
+      }
+      
+      // Check if Arweave wallet is configured first
+      const isWalletConfigured = await window.electronAPI.archive.isWalletConfigured();
+      if (!isWalletConfigured) {
+        this.app.showError('Arweave wallet not configured. Please set up your Arweave wallet first.', {
+          action: 'Set Up Wallet',
+          onAction: () => {
+            this.app.closeModal();
+            this.app.openArweaveAccountsModal();
+          }
+        });
+        return;
+      }
+      
+      this.app.updateFooterStatus('Deploying to both platforms...', false);
+      
+      const deployResult = await window.electronAPI.deploy.hybridDeploy({
+        githubPages: {
+          workspacePath: this.app.workspacePath,
+          accountId,
+          repositoryName
+        },
+        arweave: {
+          workspacePath: this.app.workspacePath,
+          siteId: siteId,
+          incremental: false
+        },
+        syncStrategy: 'sequential',
+        crossReference: true
+      });
+      
+      if (deployResult.githubPages.success && deployResult.arweave.success) {
+        const successMessage = `Site deployed to both platforms successfully!\nGitHub Pages: ${deployResult.githubPages.url}\nArweave: ${deployResult.arweave.url}`;
+        this.app.showSuccess(successMessage);
+      } else {
+        let errorMessage = 'Hybrid deployment failed:';
+        if (!deployResult.githubPages.success) {
+          errorMessage += `\nGitHub Pages: ${deployResult.githubPages.error}`;
+        }
+        if (!deployResult.arweave.success) {
+          errorMessage += `\nArweave: ${deployResult.arweave.error}`;
+        }
+        this.app.showError(errorMessage);
+      }
+      
+      this.app.updateFooterStatus('Ready', false);
+      
+    } catch (error) {
+      console.error('Hybrid deployment failed:', error);
+      this.app.showError(`Hybrid deployment failed: ${error.message}`);
+      this.app.updateFooterStatus('Ready', false);
+    }
+  }
+
+  /**
+   * Handle deployment submit (legacy method - kept for compatibility)
+   */
+  async handleDeploySubmit() {
+    // Redirect to GitHub deployment for backward compatibility
+    await this.handleGitHubDeploySubmit();
   }
 
   // Utility methods for formatting

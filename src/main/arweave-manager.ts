@@ -5,7 +5,19 @@ import * as path from 'path';
 import { tmpdir } from 'os';
 import { randomUUID } from 'crypto';
 import { createHash } from 'crypto';
-import { ArweaveUpload, UploadStatus, ArweaveAccount, FileRegistryEntry, ArweaveUploadRecord, UnifiedResource } from '../types';
+import { 
+  ArweaveUpload, 
+  UploadStatus, 
+  ArweaveAccount, 
+  FileRegistryEntry, 
+  ArweaveUploadRecord, 
+  UnifiedResource,
+  ArweaveDeployManifest,
+  ArweaveDeployFile,
+  ArweaveDeployResult,
+  DeploymentCostEstimate,
+  DeploymentVerification
+} from '../types';
 import { CredentialManager } from './credential-manager';
 import { DataManager } from './data-manager';
 import { UnifiedDatabaseManager } from './unified-database-manager';
@@ -569,6 +581,111 @@ export class ArweaveManager {
   }
 
   /**
+   * Upload a file to Arweave using arkb with direct tag format
+   */
+  public async uploadFileDirect(filePath: string, tagPairs: string[] = []): Promise<UploadResult> {
+    try {
+      // Validate file exists
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`File not found: ${filePath}`);
+      }
+
+      // Get file stats
+      const stats = fs.statSync(filePath);
+      const fileSize = stats.size;
+
+      // Estimate cost before upload
+      const costEstimate = await this.estimateUploadCost(fileSize);
+      
+      // Get wallet file for command
+      const walletJWK = await this.getActiveWalletJWK();
+      if (!walletJWK) {
+        throw new Error('No Arweave wallet configured. Please set up your wallet first.');
+      }
+
+      const walletPath = await this.createTempWalletFile(walletJWK);
+
+      // Build arkb command arguments array
+      const args = ['deploy', filePath, '--wallet', walletPath];
+      
+      // Add tag pairs using --tag-name/--tag-value format
+      for (let i = 0; i < tagPairs.length; i += 2) {
+        const key = tagPairs[i];
+        const value = tagPairs[i + 1];
+        if (key && value !== undefined) {
+          args.push('--tag-name', key, '--tag-value', value);
+        }
+      }
+      
+      // Add final flags for direct file upload 
+      args.push('--bundle', '--force', '--auto-confirm');
+
+      console.log(`Executing arkb command: ${this.arkbPath} ${args.join(' ')}`);
+
+      // Execute upload using spawn for better argument handling
+      const { spawn } = require('child_process');
+      const spawnResult = await new Promise<{ stdout: string; stderr: string; }>((resolve, reject) => {
+        const process = spawn(this.arkbPath, args, { timeout: 300000 });
+        let stdout = '';
+        let stderr = '';
+
+        process.stdout.on('data', (data: Buffer) => {
+          stdout += data.toString();
+        });
+
+        process.stderr.on('data', (data: Buffer) => {
+          stderr += data.toString();
+        });
+
+        process.on('close', (code: number) => {
+          if (code === 0) {
+            resolve({ stdout, stderr });
+          } else {
+            reject(new Error(`arkb process exited with code ${code}: ${stderr}`));
+          }
+        });
+
+        process.on('error', (error: Error) => {
+          reject(error);
+        });
+      });
+
+      const { stdout, stderr } = spawnResult;
+
+      if (stderr) {
+        console.warn('arkb stderr:', stderr);
+      }
+
+      // Parse arkb output
+      const parseResult = this.parseArkbOutput(stdout);
+      
+      // Clean up temp wallet file
+      await this.cleanupTempWallet();
+      
+      if (parseResult.transactionId) {
+        return {
+          success: true,
+          transactionId: parseResult.transactionId,
+          cost: costEstimate
+        };
+      } else {
+        return {
+          success: false,
+          error: 'Failed to parse transaction ID from arkb output'
+        };
+      }
+      
+    } catch (error) {
+      await this.cleanupTempWallet();
+      console.error('Failed to upload file to Arweave:', error);
+      return {
+        success: false,
+        error: `Failed to upload file to Arweave: ${(error as Error).message}`
+      };
+    }
+  }
+
+  /**
    * Upload a file to Arweave using arkb
    */
   public async uploadFile(filePath: string, tags: string[] = []): Promise<UploadResult> {
@@ -717,7 +834,7 @@ export class ArweaveManager {
       const costEstimate = await this.estimateUploadCost(totalSize);
 
       // Get wallet file for command
-      const walletJWK = await this.credentialManager.getCredential('arweave', 'walletJWK');
+      const walletJWK = await this.getActiveWalletJWK();
       if (!walletJWK) {
         throw new Error('No Arweave wallet configured. Please set up your wallet first.');
       }
@@ -1064,8 +1181,8 @@ export class ArweaveManager {
       tags.push(`author:${registryEntry.metadata.author}`);
     }
     
-    // Add content type tag
-    tags.push(`content-type:${registryEntry.mimeType}`);
+    // Add content type tag (Arweave requires exact "Content-Type" format)
+    tags.push(`Content-Type:${registryEntry.mimeType}`);
     
     // Add file size tag
     tags.push(`file-size:${registryEntry.fileSize}`);
@@ -1409,16 +1526,27 @@ export class ArweaveManager {
   private getMimeType(filePath: string): string {
     const ext = path.extname(filePath).toLowerCase();
     const mimeTypes: { [key: string]: string } = {
-      '.md': 'text/markdown',
-      '.txt': 'text/plain',
       '.html': 'text/html',
-      '.pdf': 'application/pdf',
+      '.htm': 'text/html',
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.mjs': 'application/javascript',
       '.json': 'application/json',
+      '.xml': 'application/xml',
+      '.txt': 'text/plain',
+      '.md': 'text/markdown',
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg',
       '.png': 'image/png',
       '.gif': 'image/gif',
-      '.svg': 'image/svg+xml'
+      '.svg': 'image/svg+xml',
+      '.webp': 'image/webp',
+      '.ico': 'image/x-icon',
+      '.woff': 'font/woff',
+      '.woff2': 'font/woff2',
+      '.ttf': 'font/ttf',
+      '.otf': 'font/otf',
+      '.eot': 'application/vnd.ms-fontobject'
     };
     
     return mimeTypes[ext] || 'application/octet-stream';
@@ -1450,6 +1578,425 @@ export class ArweaveManager {
     } catch (error) {
       console.error('Error validating file for upload:', error);
       return { canUpload: false, reason: 'Validation error: ' + (error as Error).message };
+    }
+  }
+
+  // ===== SITE DEPLOYMENT METHODS =====
+
+  /**
+   * Create Arweave path manifest from uploaded files
+   */
+  private createArweavePathManifest(
+    uploadedFiles: ArweaveDeployFile[],
+    manifest: ArweaveDeployManifest
+  ): any {
+    // Create Arweave path manifest according to the official schema
+    const pathManifest: {
+      manifest: string;
+      version: string;
+      index: { path: string };
+      paths: { [key: string]: { id: string; contentType: string } };
+    } = {
+      manifest: "arweave/paths",
+      version: "0.1.0",
+      index: {
+        path: "index.html"  // Entry point
+      },
+      paths: {}
+    };
+
+    // Map each uploaded file to the paths object
+    uploadedFiles.forEach(file => {
+      pathManifest.paths[file.path] = {
+        id: file.hash,
+        contentType: file.contentType
+      };
+    });
+
+    // Add metadata as custom fields (not part of official schema but useful)
+    (pathManifest as any).metadata = {
+      siteId: manifest.siteId,
+      version: manifest.version,
+      timestamp: manifest.timestamp,
+      generator: "Meridian Quartz",
+      fileCount: uploadedFiles.length,
+      totalSize: uploadedFiles.reduce((sum, file) => sum + file.size, 0)
+    };
+
+    return pathManifest;
+  }
+
+  /**
+   * Upload an Arweave path manifest
+   */
+  public async uploadArweavePathManifest(
+    pathManifest: any
+  ): Promise<UploadResult> {
+    try {
+      // Create temporary manifest file
+      const tempManifestPath = path.join(tmpdir(), `arweave-manifest-${Date.now()}.json`);
+      await fs.promises.writeFile(tempManifestPath, JSON.stringify(pathManifest, null, 2));
+
+      // Prepare tags for manifest - use standard Arweave tags
+      const tags = [
+        'Content-Type', 'application/json',
+        'App-Name', 'Meridian',
+        'App-Version', '1.0.0'
+      ];
+
+      // Upload manifest using direct upload
+      const result = await this.uploadFileDirect(tempManifestPath, tags);
+
+      // Clean up temp file
+      await fs.promises.unlink(tempManifestPath).catch(() => {});
+
+      return result;
+    } catch (error) {
+      console.error('Failed to upload Arweave path manifest:', error);
+      return {
+        success: false,
+        error: `Failed to upload Arweave path manifest: ${(error as Error).message}`
+      };
+    }
+  }
+
+  /**
+   * Upload a site deployment manifest to Arweave (legacy method - kept for compatibility)
+   */
+  public async uploadSiteManifest(
+    manifest: ArweaveDeployManifest
+  ): Promise<UploadResult> {
+    try {
+      // Create temporary manifest file
+      const tempManifestPath = path.join(tmpdir(), `manifest-${Date.now()}.json`);
+      await fs.promises.writeFile(tempManifestPath, JSON.stringify(manifest, null, 2));
+
+      // Prepare tags for manifest
+      const tags = [
+        'Content-Type', 'application/json',
+        'meridian:type', 'site-manifest',
+        'meridian:site-id', manifest.siteId,
+        'meridian:version', manifest.version,
+        'meridian:timestamp', manifest.timestamp,
+        'meridian:generator', 'Meridian Quartz'
+      ];
+
+      // Upload manifest using direct upload
+      const result = await this.uploadFileDirect(tempManifestPath, tags);
+
+      // Clean up temp file
+      await fs.promises.unlink(tempManifestPath).catch(() => {});
+
+      return result;
+    } catch (error) {
+      console.error('Failed to upload site manifest:', error);
+      return {
+        success: false,
+        error: `Failed to upload site manifest: ${(error as Error).message}`
+      };
+    }
+  }
+
+  /**
+   * Upload a complete site bundle to Arweave
+   */
+  public async uploadSiteBundle(
+    buildPath: string,
+    manifest: ArweaveDeployManifest
+  ): Promise<ArweaveDeployResult> {
+    try {
+      // Get all files from build directory
+      const filePaths: string[] = [];
+      await this.collectBuildFiles(buildPath, filePaths);
+
+      if (filePaths.length === 0) {
+        return {
+          success: false,
+          error: 'No files found in build directory',
+          manifestHash: '',
+          totalCost: { ar: '0' },
+          fileCount: 0,
+          totalSize: 0
+        } as ArweaveDeployResult;
+      }
+
+      // Upload each file individually with proper MIME types
+      const uploadResults: UploadResult[] = [];
+      const uploadedFiles: ArweaveDeployFile[] = [];
+
+      for (const filePath of filePaths) {
+        try {
+          // Get relative path from build directory
+          const relativePath = path.relative(buildPath, filePath);
+          const mimeType = this.getMimeType(filePath);
+          
+          // Prepare file-specific tags - use direct tag format for arkb
+          const fileTags = [
+            'Content-Type', mimeType,
+            'meridian:type', 'site-file',
+            'meridian:site-id', manifest.siteId,
+            'meridian:version', manifest.version,
+            'meridian:timestamp', manifest.timestamp,
+            'meridian:file-path', relativePath,
+            'meridian:generator', 'Meridian Quartz'
+          ];
+
+          console.log(`Uploading file: ${relativePath} (${mimeType})`);
+          
+          // Upload individual file with direct tag format
+          const result = await this.uploadFileDirect(filePath, fileTags);
+          
+          if (result.success && result.transactionId) {
+            const stats = fs.statSync(filePath);
+            
+            // Convert tag pairs to Record<string, string>
+            const tagsRecord: Record<string, string> = {};
+            for (let i = 0; i < fileTags.length; i += 2) {
+              const key = fileTags[i];
+              const value = fileTags[i + 1];
+              if (key && value !== undefined) {
+                tagsRecord[key] = value;
+              }
+            }
+
+            uploadedFiles.push({
+              path: relativePath,
+              hash: result.transactionId,
+              size: stats.size,
+              contentType: mimeType,
+              tags: tagsRecord
+            });
+          }
+          
+          uploadResults.push(result);
+        } catch (fileError) {
+          console.error(`Failed to upload file ${filePath}:`, fileError);
+          uploadResults.push({
+            success: false,
+            error: `Failed to upload ${path.relative(buildPath, filePath)}: ${(fileError as Error).message}`
+          });
+        }
+      }
+
+      // Check if all uploads succeeded
+      const failedUploads = uploadResults.filter(r => !r.success);
+      if (failedUploads.length > 0) {
+        return {
+          success: false,
+          error: `Failed to upload ${failedUploads.length} files. First error: ${failedUploads[0]?.error || 'Unknown error'}`,
+          manifestHash: '',
+          totalCost: { ar: '0' },
+          fileCount: 0,
+          totalSize: 0
+        } as ArweaveDeployResult;
+      }
+
+      // Create Arweave path manifest for proper routing
+      const pathManifest = this.createArweavePathManifest(uploadedFiles, manifest);
+      const manifestResult = await this.uploadArweavePathManifest(pathManifest);
+
+      if (!manifestResult.success) {
+        return {
+          success: false,
+          error: manifestResult.error || 'Failed to upload manifest',
+          manifestHash: '',
+          totalCost: { ar: '0' },
+          fileCount: 0,
+          totalSize: 0
+        } as ArweaveDeployResult;
+      }
+
+      // Find the index.html file for special display
+      const indexFile = uploadedFiles.find(file => file.path === 'index.html');
+      
+      // Return success with detailed information
+      const manifestHash = manifestResult.transactionId;
+      
+      // Create detailed file information with URLs
+      const detailedFiles = uploadedFiles.map(file => ({
+        path: file.path,
+        hash: file.hash,
+        url: `https://arweave.net/${file.hash}`, // Direct file access
+        size: file.size,
+        contentType: file.contentType
+      }));
+      
+      return {
+        success: true,
+        transactionId: manifestHash,
+        manifestHash: manifestHash,
+        manifestUrl: `https://arweave.net/${manifestHash}`,
+        url: indexFile ? `https://arweave.net/${indexFile.hash}` : `https://arweave.net/${manifestHash}`, // Main site URL (points to index.html)
+        totalCost: manifestResult.cost || { ar: '0' },
+        fileCount: uploadedFiles.length,
+        totalSize: uploadedFiles.reduce((sum, file) => sum + file.size, 0),
+        uploadedFiles: detailedFiles,
+        indexFile: indexFile ? {
+          path: indexFile.path,
+          hash: indexFile.hash,
+          url: `https://arweave.net/${indexFile.hash}` // Direct access to index file
+        } : undefined
+      } as ArweaveDeployResult;
+
+    } catch (error) {
+      console.error('Failed to upload site bundle:', error);
+      return {
+        success: false,
+        error: `Failed to upload site bundle: ${(error as Error).message}`,
+        manifestHash: '',
+        totalCost: { ar: '0' },
+        fileCount: 0,
+        totalSize: 0
+      } as ArweaveDeployResult;
+    }
+  }
+
+  /**
+   * Estimate deployment cost for a site manifest
+   */
+  public async estimateSiteDeploymentCost(
+    manifest: ArweaveDeployManifest
+  ): Promise<DeploymentCostEstimate> {
+    try {
+      let totalSize = 0;
+      const breakdown = {
+        html: 0,
+        css: 0,
+        js: 0,
+        images: 0,
+        other: 0
+      };
+
+      // Calculate sizes for each file
+      for (const file of manifest.files) {
+        totalSize += file.size;
+        
+        const ext = path.extname(file.path).toLowerCase();
+        if (ext === '.html' || ext === '.htm') {
+          breakdown.html += file.size;
+        } else if (ext === '.css') {
+          breakdown.css += file.size;
+        } else if (ext === '.js') {
+          breakdown.js += file.size;
+        } else if (['.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp'].includes(ext)) {
+          breakdown.images += file.size;
+        } else {
+          breakdown.other += file.size;
+        }
+      }
+
+      // Estimate cost using existing cost estimation
+      const costEstimate = await this.estimateUploadCost(totalSize);
+
+      return {
+        totalSize,
+        arCost: costEstimate.ar,
+        usdCost: costEstimate.usd,
+        breakdown
+      };
+    } catch (error) {
+      console.error('Failed to estimate deployment cost:', error);
+      return {
+        totalSize: 0,
+        arCost: '0',
+        breakdown: {
+          html: 0,
+          css: 0,
+          js: 0,
+          images: 0,
+          other: 0
+        }
+      };
+    }
+  }
+
+  /**
+   * Collect all files from build directory recursively
+   */
+  private async collectBuildFiles(dirPath: string, filePaths: string[]): Promise<void> {
+    try {
+      const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dirPath, entry.name);
+        
+        if (entry.isDirectory()) {
+          // Skip hidden directories and node_modules
+          if (!entry.name.startsWith('.') && entry.name !== 'node_modules') {
+            await this.collectBuildFiles(fullPath, filePaths);
+          }
+        } else if (entry.isFile()) {
+          // Skip hidden files and temporary files
+          if (!entry.name.startsWith('.') && !entry.name.endsWith('.tmp')) {
+            filePaths.push(fullPath);
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to collect files from ${dirPath}:`, error);
+    }
+  }
+
+  /**
+   * Verify a site deployment by checking manifest and files
+   */
+  public async verifySiteDeployment(
+    manifestHash: string
+  ): Promise<DeploymentVerification> {
+    try {
+      const errors: string[] = [];
+      let verifiedFiles = 0;
+      let totalFiles = 0;
+
+      // Check if manifest is accessible
+      const manifestUrl = `https://arweave.net/${manifestHash}`;
+      const manifestResponse = await fetch(manifestUrl);
+      
+      if (!manifestResponse.ok) {
+        return {
+          isValid: false,
+          errors: [`Manifest not accessible: ${manifestResponse.statusText}`],
+          verifiedFiles: 0,
+          totalFiles: 0,
+          manifestAccessible: false
+        };
+      }
+
+      const manifest: ArweaveDeployManifest = await manifestResponse.json();
+      totalFiles = manifest.files.length;
+
+      // Verify each file in the manifest
+      for (const file of manifest.files) {
+        try {
+          const fileUrl = `https://arweave.net/${file.hash}`;
+          const fileResponse = await fetch(fileUrl);
+          
+          if (fileResponse.ok) {
+            verifiedFiles++;
+          } else {
+            errors.push(`File ${file.path} not accessible: ${fileResponse.statusText}`);
+          }
+        } catch (error) {
+          errors.push(`Failed to verify file ${file.path}: ${(error as Error).message}`);
+        }
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+        verifiedFiles,
+        totalFiles,
+        manifestAccessible: true
+      };
+    } catch (error) {
+      console.error('Failed to verify site deployment:', error);
+      return {
+        isValid: false,
+        errors: [`Verification failed: ${(error as Error).message}`],
+        verifiedFiles: 0,
+        totalFiles: 0,
+        manifestAccessible: false
+      };
     }
   }
 } 

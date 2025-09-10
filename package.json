@@ -1,6 +1,6 @@
 {
   "name": "meridian",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "description": "Local-first multi-tool interface for knowledge management and social coordination",
   "main": "dist/main/main.js",
   "scripts": {

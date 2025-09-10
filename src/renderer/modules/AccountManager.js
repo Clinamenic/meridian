@@ -17,13 +17,13 @@ export class AccountManager extends ModuleBase {
    */
   async onInit() {
     console.log('[AccountManager] Initializing account management...');
-    
+
     // Setup event listeners for all platforms
     this.setupAccountManagementEvents();
     this.setupATProtoAccountManagementEvents();
     this.setupXAccountManagementEvents();
     this.setupGitHubAccountManagementEvents();
-    
+
     console.log('[AccountManager] Account management initialized successfully');
   }
 
@@ -161,7 +161,7 @@ export class AccountManager extends ModuleBase {
    */
   renderActiveAccount(activeAccount) {
     const activeAccountDisplay = document.getElementById('active-account-display');
-    
+
     if (activeAccount) {
       activeAccountDisplay.innerHTML = `
         <div class="active-account-info">
@@ -170,7 +170,7 @@ export class AccountManager extends ModuleBase {
           <div class="account-balance">Loading balance...</div>
         </div>
       `;
-      
+
       // Load balance for active account
       this.loadAccountBalance(activeAccount.address);
     } else {
@@ -204,7 +204,7 @@ export class AccountManager extends ModuleBase {
    */
   renderAccountsList(accounts, activeAccount) {
     const accountsList = document.getElementById('accounts-list');
-    
+
     if (accounts.length === 0) {
       accountsList.innerHTML = '<div class="loading-state">No accounts found. Add your first account below.</div>';
       return;
@@ -213,7 +213,7 @@ export class AccountManager extends ModuleBase {
     const accountsHTML = accounts.map(account => {
       const isActive = activeAccount && activeAccount.id === account.id;
       const shortAddress = `${account.address.substring(0, 6)}...${account.address.substring(account.address.length - 4)}`;
-      
+
       return `
         <div class="account-item ${isActive ? 'active' : ''}" data-account-id="${account.id}">
           <div class="account-status-indicator"></div>
@@ -240,7 +240,7 @@ export class AccountManager extends ModuleBase {
     try {
       const nickname = document.getElementById('account-nickname').value.trim();
       const walletJWK = document.getElementById('account-jwk').value.trim();
-      
+
       if (!nickname) {
         this.showError('Please enter an account nickname');
         return;
@@ -250,20 +250,20 @@ export class AccountManager extends ModuleBase {
         this.showError('Please enter your wallet JWK');
         return;
       }
-      
+
       this.showSuccess('Adding account...');
-      
+
       const account = await window.electronAPI.archive.addAccount(walletJWK, nickname);
       this.showSuccess(`Account "${account.nickname}" added successfully!`);
-      
+
       // Clear form
       document.getElementById('account-nickname').value = '';
       document.getElementById('account-jwk').value = '';
-      
+
       // Reload accounts
       await this.loadAndRenderAccounts();
       await this.updateWalletDisplay();
-      
+
     } catch (error) {
       console.error('Failed to add account:', error);
       this.showError(`Failed to add account: ${error.message}`);
@@ -276,15 +276,15 @@ export class AccountManager extends ModuleBase {
   async switchAccount(accountId) {
     try {
       this.showSuccess('Switching account...');
-      
+
       // Use centralized account switching
       await window.electronAPI.accountState.handleSwitch('arweave', accountId);
-      
+
       this.showSuccess('Account switched successfully!');
-      
+
       // Reload accounts and update displays
       await this.loadAndRenderAccounts();
-      
+
     } catch (error) {
       console.error('Failed to switch account:', error);
       this.showError(`Failed to switch account: ${error.message}`);
@@ -297,14 +297,14 @@ export class AccountManager extends ModuleBase {
   async editAccountNickname(accountId, currentNickname) {
     // Store the account ID for the modal form
     this.renameAccountData.set('arweave', { accountId, currentNickname });
-    
+
     // Set the current nickname in the input field
     const nicknameInput = document.getElementById('rename-account-nickname');
     nicknameInput.value = currentNickname;
-    
+
     // Open the rename modal
     this.getApp().openModal('rename-account-modal');
-    
+
     // Focus the input field and select all text
     setTimeout(() => {
       nicknameInput.focus();
@@ -317,29 +317,29 @@ export class AccountManager extends ModuleBase {
    */
   async handleRenameAccountSubmit(e) {
     e.preventDefault();
-    
+
     const renameData = this.renameAccountData.get('arweave');
     if (!renameData) {
       this.showError('No account selected for renaming');
       return;
     }
-    
+
     const newNickname = document.getElementById('rename-account-nickname').value.trim();
-    
+
     if (!newNickname || newNickname === renameData.currentNickname) {
-        this.getApp().closeModal();
+      this.getApp().closeModal();
       return;
     }
-    
+
     try {
       await window.electronAPI.archive.updateAccountNickname(renameData.accountId, newNickname);
       this.showSuccess('Account nickname updated successfully!');
-      
+
       // Reload accounts
       await this.loadAndRenderAccounts();
       this.getApp().closeModal();
-      
-      } catch (error) {
+
+    } catch (error) {
       console.error('Failed to update account nickname:', error);
       this.showError(`Failed to update nickname: ${error.message}`);
     } finally {
@@ -355,15 +355,15 @@ export class AccountManager extends ModuleBase {
     if (!confirm('Are you sure you want to remove this account? This will delete the wallet from this application but will not affect your actual wallet.')) {
       return;
     }
-    
+
     try {
       await window.electronAPI.archive.removeAccount(accountId);
       this.showSuccess('Account removed successfully!');
-      
+
       // Reload accounts and update displays
       await this.loadAndRenderAccounts();
       await this.updateWalletDisplay();
-      
+
     } catch (error) {
       console.error('Failed to remove account:', error);
       this.showError(`Failed to remove account: ${error.message}`);
@@ -399,7 +399,7 @@ export class AccountManager extends ModuleBase {
 
       await this.loadAndRenderATProtoAccounts();
       this.getApp().openModal('atproto-accounts-modal');
-      
+
       // Force refresh status when modal is opened to ensure UI is in sync
       setTimeout(async () => {
         await this.forceRefreshATProtoStatus();
@@ -434,7 +434,7 @@ export class AccountManager extends ModuleBase {
    */
   renderActiveATProtoAccount(activeAccount) {
     const activeAccountDisplay = document.getElementById('atproto-active-account-display');
-    
+
     if (activeAccount) {
       activeAccountDisplay.innerHTML = `
         <div class="active-account-info">
@@ -453,7 +453,7 @@ export class AccountManager extends ModuleBase {
    */
   renderATProtoAccountsList(accounts, activeAccount) {
     const accountsList = document.getElementById('atproto-accounts-list');
-    
+
     if (accounts.length === 0) {
       accountsList.innerHTML = '<div class="loading-state">No accounts found. Add your first account below.</div>';
       return;
@@ -461,7 +461,7 @@ export class AccountManager extends ModuleBase {
 
     const accountsHTML = accounts.map(account => {
       const isActive = activeAccount && activeAccount.id === account.id;
-      
+
       return `
         <div class="account-item ${isActive ? 'active' : ''}" data-account-id="${account.id}">
           <div class="account-status-indicator"></div>
@@ -489,40 +489,40 @@ export class AccountManager extends ModuleBase {
       const nickname = document.getElementById('atproto-account-nickname').value.trim();
       const handle = document.getElementById('atproto-account-handle').value.trim();
       const password = document.getElementById('atproto-account-password').value.trim();
-      
+
       if (!nickname) {
         this.showError('Please enter an account nickname');
         return;
       }
-      
+
       if (!handle) {
         this.showError('Please enter your Bluesky handle');
         return;
       }
-      
+
       if (!password) {
         this.showError('Please enter your app password');
         return;
       }
-      
+
       this.showSuccess('Adding account...');
-      
+
       const account = await window.electronAPI.atproto.addAccount(handle, password, nickname);
       this.showSuccess(`Account "${account.nickname}" added successfully!`);
-      
+
       // Clear form
       document.getElementById('atproto-account-nickname').value = '';
       document.getElementById('atproto-account-handle').value = '';
       document.getElementById('atproto-account-password').value = '';
-      
+
       // Reload accounts and update status
       await this.loadAndRenderATProtoAccounts();
-      
+
       // Force refresh status to ensure UI is updated
       setTimeout(async () => {
         await this.forceRefreshATProtoStatus();
       }, 100);
-      
+
     } catch (error) {
       console.error('Failed to add AT Protocol account:', error);
       this.showError(`Failed to add account: ${error.message}`);
@@ -535,15 +535,15 @@ export class AccountManager extends ModuleBase {
   async switchATProtoAccount(accountId) {
     try {
       this.showSuccess('Switching account...');
-      
+
       // Use centralized account switching
       await window.electronAPI.accountState.handleSwitch('atproto', accountId);
-      
+
       this.showSuccess('Account switched successfully!');
-      
+
       // Reload accounts
       await this.loadAndRenderATProtoAccounts();
-      
+
     } catch (error) {
       console.error('Failed to switch AT Protocol account:', error);
       this.showError(`Failed to switch account: ${error.message}`);
@@ -556,14 +556,14 @@ export class AccountManager extends ModuleBase {
   async editATProtoAccountNickname(accountId, currentNickname) {
     // Store the account ID for the modal form
     this.renameAccountData.set('atproto', { accountId, currentNickname });
-    
+
     // Set the current nickname in the input field
     const nicknameInput = document.getElementById('atproto-rename-account-nickname');
     nicknameInput.value = currentNickname;
-    
+
     // Open the rename modal
     this.getApp().openModal('atproto-rename-account-modal');
-    
+
     // Focus the input field and select all text
     setTimeout(() => {
       nicknameInput.focus();
@@ -576,28 +576,28 @@ export class AccountManager extends ModuleBase {
    */
   async handleRenameATProtoAccountSubmit(e) {
     e.preventDefault();
-    
+
     const renameData = this.renameAccountData.get('atproto');
     if (!renameData) {
       this.showError('No account selected for renaming');
       return;
     }
-    
+
     const newNickname = document.getElementById('atproto-rename-account-nickname').value.trim();
-    
+
     if (!newNickname || newNickname === renameData.currentNickname) {
       this.getApp().closeModal();
       return;
     }
-    
+
     try {
       await window.electronAPI.atproto.updateAccountNickname(renameData.accountId, newNickname);
       this.showSuccess('Account nickname updated successfully!');
-      
+
       // Reload accounts
       await this.loadAndRenderATProtoAccounts();
       this.getApp().closeModal();
-      
+
     } catch (error) {
       console.error('Failed to update AT Protocol account nickname:', error);
       this.showError(`Failed to update nickname: ${error.message}`);
@@ -614,19 +614,19 @@ export class AccountManager extends ModuleBase {
     if (!confirm('Are you sure you want to remove this Bluesky account? This will delete the account from this application but will not affect your actual Bluesky account.')) {
       return;
     }
-    
+
     try {
       await window.electronAPI.atproto.removeAccount(accountId);
       this.showSuccess('Account removed successfully!');
-      
+
       // Reload accounts and update displays
       await this.loadAndRenderATProtoAccounts();
-      
+
       // Force refresh status to ensure UI is updated
       setTimeout(async () => {
         await this.forceRefreshATProtoStatus();
       }, 100);
-      
+
     } catch (error) {
       console.error('Failed to remove AT Protocol account:', error);
       this.showError(`Failed to remove account: ${error.message}`);
@@ -638,41 +638,41 @@ export class AccountManager extends ModuleBase {
    */
   async updateATProtoStatus(forceRefresh = false) {
     console.log('[ATProto] Updating AT Protocol status...', forceRefresh ? '(forced refresh)' : '');
-    
+
     try {
       // Clear any cached agents if forcing refresh
       if (forceRefresh) {
         console.log('[ATProto] Forcing refresh - clearing cached state');
       }
-      
+
       const activeAccount = await window.electronAPI.atproto.getActiveAccount();
-      
+
       if (activeAccount) {
         console.log('[ATProto] Active account found:', activeAccount.nickname);
-        
+
         // Update UI with account state
         const atprotoState = {
           isConnected: true,
           username: activeAccount.handle,
           nickname: activeAccount.nickname
         };
-        
+
         this.getApp().updateATProtoUI(atprotoState);
       } else {
         console.log('[ATProto] No active account found');
-        
+
         // Update UI with disconnected state
         const atprotoState = {
           isConnected: false,
           username: null,
           nickname: null
         };
-        
+
         this.getApp().updateATProtoUI(atprotoState);
       }
     } catch (error) {
       console.error('[ATProto] Failed to update status:', error);
-      
+
       // Update UI with error state
       const atprotoState = {
         isConnected: false,
@@ -680,7 +680,7 @@ export class AccountManager extends ModuleBase {
         nickname: null,
         error: error.message
       };
-      
+
       this.getApp().updateATProtoUI(atprotoState);
     }
   }
@@ -708,7 +708,7 @@ export class AccountManager extends ModuleBase {
 
       await this.loadAndRenderXAccounts();
       this.getApp().openModal('x-accounts-modal');
-      
+
       // Force refresh status when modal is opened to ensure UI is in sync
       setTimeout(async () => {
         await this.forceRefreshXStatus();
@@ -743,7 +743,7 @@ export class AccountManager extends ModuleBase {
    */
   renderActiveXAccount(activeAccount) {
     const activeAccountDisplay = document.getElementById('x-active-account-display');
-    
+
     if (activeAccount) {
       activeAccountDisplay.innerHTML = `
         <div class="active-account-info">
@@ -762,7 +762,7 @@ export class AccountManager extends ModuleBase {
    */
   renderXAccountsList(accounts, activeAccount) {
     const accountsList = document.getElementById('x-accounts-list');
-    
+
     if (accounts.length === 0) {
       accountsList.innerHTML = '<div class="loading-state">No accounts found. Add your first account below.</div>';
       return;
@@ -770,7 +770,7 @@ export class AccountManager extends ModuleBase {
 
     const accountsHTML = accounts.map(account => {
       const isActive = activeAccount && activeAccount.id === account.id;
-      
+
       return `
         <div class="account-item ${isActive ? 'active' : ''}" data-account-id="${account.id}">
           <div class="account-status-indicator"></div>
@@ -800,37 +800,37 @@ export class AccountManager extends ModuleBase {
       const apiSecret = document.getElementById('x-account-api-secret').value.trim();
       const accessToken = document.getElementById('x-account-access-token').value.trim();
       const accessTokenSecret = document.getElementById('x-account-access-token-secret').value.trim();
-      
+
       if (!nickname) {
         this.showError('Please enter an account nickname');
         return;
       }
-      
+
       if (!apiKey || !apiSecret || !accessToken || !accessTokenSecret) {
         this.showError('Please enter all four X API credentials');
         return;
       }
-      
+
       this.showSuccess('Adding account...');
-      
+
       const account = await window.electronAPI.x.addAccount(apiKey, apiSecret, accessToken, accessTokenSecret, nickname);
       this.showSuccess(`Account "${account.nickname}" added successfully!`);
-      
+
       // Clear form
       document.getElementById('x-account-nickname').value = '';
       document.getElementById('x-account-api-key').value = '';
       document.getElementById('x-account-api-secret').value = '';
       document.getElementById('x-account-access-token').value = '';
       document.getElementById('x-account-access-token-secret').value = '';
-      
+
       // Reload accounts and update status
       await this.loadAndRenderXAccounts();
-      
+
       // Force refresh status to ensure UI is updated
       setTimeout(async () => {
         await this.forceRefreshXStatus();
       }, 100);
-      
+
     } catch (error) {
       console.error('Failed to add X account:', error);
       this.showError(`Failed to add account: ${error.message}`);
@@ -843,15 +843,15 @@ export class AccountManager extends ModuleBase {
   async switchXAccount(accountId) {
     try {
       this.showSuccess('Switching account...');
-      
+
       // Use centralized account switching
       await window.electronAPI.accountState.handleSwitch('x', accountId);
-      
+
       this.showSuccess('Account switched successfully!');
-      
+
       // Reload accounts
       await this.loadAndRenderXAccounts();
-      
+
     } catch (error) {
       console.error('Failed to switch X account:', error);
       this.showError(`Failed to switch account: ${error.message}`);
@@ -864,14 +864,14 @@ export class AccountManager extends ModuleBase {
   async editXAccountNickname(accountId, currentNickname) {
     // Store the account ID for the modal form
     this.renameAccountData.set('x', { accountId, currentNickname });
-    
+
     // Set the current nickname in the input field
     const nicknameInput = document.getElementById('x-rename-account-nickname');
     nicknameInput.value = currentNickname;
-    
+
     // Open the rename modal
     this.getApp().openModal('x-rename-account-modal');
-    
+
     // Focus the input field and select all text
     setTimeout(() => {
       nicknameInput.focus();
@@ -884,28 +884,28 @@ export class AccountManager extends ModuleBase {
    */
   async handleRenameXAccountSubmit(e) {
     e.preventDefault();
-    
+
     const renameData = this.renameAccountData.get('x');
     if (!renameData) {
       this.showError('No account selected for renaming');
       return;
     }
-    
+
     const newNickname = document.getElementById('x-rename-account-nickname').value.trim();
-    
+
     if (!newNickname || newNickname === renameData.currentNickname) {
       this.getApp().closeModal();
       return;
     }
-    
+
     try {
       await window.electronAPI.x.updateAccountNickname(renameData.accountId, newNickname);
       this.showSuccess('Account nickname updated successfully!');
-      
+
       // Reload accounts
       await this.loadAndRenderXAccounts();
       this.getApp().closeModal();
-      
+
     } catch (error) {
       console.error('Failed to update X account nickname:', error);
       this.showError(`Failed to update nickname: ${error.message}`);
@@ -922,19 +922,19 @@ export class AccountManager extends ModuleBase {
     if (!confirm('Are you sure you want to remove this X account? This will delete the account from this application but will not affect your actual X account.')) {
       return;
     }
-    
+
     try {
       await window.electronAPI.x.removeAccount(accountId);
       this.showSuccess('Account removed successfully!');
-      
+
       // Reload accounts and update displays
       await this.loadAndRenderXAccounts();
-      
+
       // Force refresh status to ensure UI is updated
       setTimeout(async () => {
         await this.forceRefreshXStatus();
       }, 100);
-      
+
     } catch (error) {
       console.error('Failed to remove X account:', error);
       this.showError(`Failed to remove account: ${error.message}`);
@@ -946,41 +946,41 @@ export class AccountManager extends ModuleBase {
    */
   async updateXStatus(forceRefresh = false) {
     console.log('[X] Updating X status...', forceRefresh ? '(forced refresh)' : '');
-    
+
     try {
       // Clear any cached agents if forcing refresh
       if (forceRefresh) {
         console.log('[X] Forcing refresh - clearing cached state');
       }
-      
+
       const activeAccount = await window.electronAPI.x.getActiveAccount();
-      
+
       if (activeAccount) {
         console.log('[X] Active account found:', activeAccount.nickname);
-        
+
         // Update UI with account state
         const xState = {
           isConnected: true,
           username: activeAccount.username,
           nickname: activeAccount.nickname
         };
-        
+
         this.getApp().updateXUI(xState);
       } else {
         console.log('[X] No active account found');
-        
+
         // Update UI with disconnected state
         const xState = {
           isConnected: false,
           username: null,
           nickname: null
         };
-        
+
         this.getApp().updateXUI(xState);
       }
     } catch (error) {
       console.error('[X] Failed to update status:', error);
-      
+
       // Update UI with error state
       const xState = {
         isConnected: false,
@@ -988,7 +988,7 @@ export class AccountManager extends ModuleBase {
         nickname: null,
         error: error.message
       };
-      
+
       this.getApp().updateXUI(xState);
     }
   }
@@ -1006,9 +1006,9 @@ export class AccountManager extends ModuleBase {
   async checkXPermissions() {
     try {
       this.showSuccess('Checking X permissions...');
-      
+
       const permissions = await window.electronAPI.x.checkPermissions();
-      
+
       if (permissions.isValid) {
         this.showSuccess('X permissions are valid!');
       } else {
@@ -1035,7 +1035,7 @@ export class AccountManager extends ModuleBase {
       }
 
       const addButtonSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>';
-      
+
       // Create the modal element if it doesn't exist
       let modalElement = document.getElementById('github-accounts-modal');
       if (!modalElement) {
@@ -1096,7 +1096,7 @@ export class AccountManager extends ModuleBase {
     try {
       const accounts = await window.electronAPI.deploy.getGitHubAccounts();
       const accountsList = document.getElementById('github-accounts-list');
-      
+
       if (!accounts || accounts.length === 0) {
         accountsList.innerHTML = `
           <div class="loading-state">
@@ -1279,24 +1279,24 @@ export class AccountManager extends ModuleBase {
     try {
       const token = document.getElementById('github-token').value.trim();
       const nickname = document.getElementById('account-nickname').value.trim();
-      
+
       if (!token) {
         this.showError('Please enter your GitHub token');
         return;
       }
-      
+
       this.showSuccess('Adding GitHub account...');
-      
+
       const account = await window.electronAPI.deploy.addGitHubAccount(token, nickname);
       this.showSuccess(`GitHub account "${account.nickname || account.username}" added successfully!`);
-      
+
       // Close modal and refresh accounts list
       this.getApp().closeModal();
       await this.loadGitHubAccounts();
-      
+
       // Refresh the main GitHub accounts modal
       await this.openGitHubAccountsModal(); // Refresh the accounts list
-      
+
     } catch (error) {
       console.error('Failed to add GitHub account:', error);
       this.showError(`Failed to add GitHub account: ${error.message}`);
@@ -1309,14 +1309,14 @@ export class AccountManager extends ModuleBase {
   async editGitHubAccountNickname(accountId, currentNickname) {
     // Store the account ID for the modal form
     this.renameAccountData.set('github', { accountId, currentNickname });
-    
+
     // Set the current nickname in the input field
     const nicknameInput = document.getElementById('github-rename-account-nickname');
     nicknameInput.value = currentNickname;
-    
+
     // Open the rename modal
     this.getApp().openModal('github-rename-account-modal');
-    
+
     // Focus the input field and select all text
     setTimeout(() => {
       nicknameInput.focus();
@@ -1331,14 +1331,14 @@ export class AccountManager extends ModuleBase {
     if (!confirm('Are you sure you want to remove this GitHub account? This will delete the account from this application but will not affect your actual GitHub account.')) {
       return;
     }
-    
+
     try {
       await window.electronAPI.deploy.removeGitHubAccount(accountId);
       this.showSuccess('GitHub account removed successfully!');
-      
+
       // Reload accounts
       await this.loadGitHubAccounts();
-      
+
     } catch (error) {
       console.error('Failed to remove GitHub account:', error);
       this.showError(`Failed to remove GitHub account: ${error.message}`);

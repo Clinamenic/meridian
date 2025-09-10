@@ -86,12 +86,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getGitHubAccount: (accountId: string) => ipcRenderer.invoke('deploy:get-github-account', accountId),
     removeGitHubAccount: (accountId: string) => ipcRenderer.invoke('deploy:remove-github-account', accountId),
     deployToGitHubPages: (config: any) => ipcRenderer.invoke('deploy:deploy-to-github-pages', config),
+    generateTokenRequestUrl: (repositoryName?: string) => ipcRenderer.invoke('deploy:generate-token-request-url', repositoryName),
+            generateGitHubWorkflow: () => ipcRenderer.invoke('deploy:generate-github-workflow'),
+        removeGitHubWorkflow: () => ipcRenderer.invoke('deploy:remove-github-workflow'),
+        checkWorkflowFileExists: () => ipcRenderer.invoke('deploy:check-workflow-file-exists'),
     startGitHubAccountAddition: (repoName?: string) => 
       ipcRenderer.invoke('deploy:start-github-account-addition', repoName),
     generateGitHubTokenUrl: (repoName?: string) => 
       ipcRenderer.invoke('deploy:generate-github-token-url', repoName),
     getGitHubAccounts: () => 
       ipcRenderer.invoke('deploy:github-accounts'),
+    
+    // Arweave deployment APIs
+    arweaveDeploy: (config: any) => ipcRenderer.invoke('deploy:arweave-deploy', config),
+    arweaveCostEstimate: (config: any) => ipcRenderer.invoke('deploy:arweave-cost-estimate', config),
+    hybridDeploy: (config: any) => ipcRenderer.invoke('deploy:hybrid-deploy', config),
+    deployToGitHub: (config: any) => ipcRenderer.invoke('deploy:deploy-to-github', config),
   },
 
   // Site template APIs
@@ -285,9 +295,19 @@ export interface ElectronAPI {
     getGitHubAccount: (accountId: string) => Promise<any>;
     removeGitHubAccount: (accountId: string) => Promise<void>;
     deployToGitHubPages: (config: any) => Promise<any>;
+    generateTokenRequestUrl: (repositoryName?: string) => Promise<string>;
+    generateGitHubWorkflow: () => Promise<{success: boolean, error?: string}>;
+    removeGitHubWorkflow: () => Promise<{success: boolean, error?: string}>;
+    checkWorkflowFileExists: () => Promise<{exists: boolean, error?: string}>;
     startGitHubAccountAddition: (repoName?: string) => Promise<void>;
     generateGitHubTokenUrl: (repoName?: string) => Promise<string>;
     getGitHubAccounts: () => Promise<any[]>;
+    
+    // Arweave deployment APIs
+    arweaveDeploy: (config: any) => Promise<any>;
+    arweaveCostEstimate: (config: any) => Promise<any>;
+    hybridDeploy: (config: any) => Promise<any>;
+    deployToGitHub: (config: any) => Promise<any>;
   };
 
   template: {

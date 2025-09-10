@@ -299,6 +299,8 @@ export class ResourceManager extends ModuleBase {
       const isCollapsed = this.state.collapse.collapsedItems.has(resource.id);
       const arweaveHashes = resource.properties["meridian:arweave_hashes"] || [];
       
+
+      
       return `
         <div class="resource-item ${isCollapsed ? 'collapsed' : ''}" data-id="${resource.id}">
           <div class="resource-header">
@@ -3580,6 +3582,8 @@ export class ResourceManager extends ModuleBase {
 
       // Load resource data from backend - this will create resources.json if it doesn't exist
       const resourceData = await window.electronAPI.resource.loadData();
+      
+
       
       // Update state
       this.updateState({

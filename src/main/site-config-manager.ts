@@ -79,7 +79,7 @@ class ConfigManager {
       await this.syncWithQuartz(workspacePath, settings);
 
       // Handle CNAME file
-      if (settings.deployment.customCNAME && settings.site.baseUrl) {
+      if (settings.deployment?.customCNAME && settings.site.baseUrl) {
         const domain = this.extractDomain(settings.site.baseUrl);
         if (domain) {
           await this.generateCNAME(workspacePath, domain);

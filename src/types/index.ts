@@ -328,6 +328,13 @@ export interface SiteSettings {
       enabled: boolean;
     };
   };
+  deployment?: {
+    githubPages?: boolean;
+    provider?: string | null;
+    repository?: string | null;
+    branch?: string;
+    customCNAME?: boolean;
+  };
   quartz: {
     enableSPA: boolean;
     enablePopovers: boolean;
@@ -336,12 +343,6 @@ export interface SiteSettings {
       primaryColor?: string;
     };
     template?: import('./site-template-types').TemplateSource;
-  };
-  deployment: {
-    provider?: string | null;
-    repository?: string | null;
-    branch: string;
-    customCNAME: boolean;
   };
   metadata: {
     createdAt: string;
@@ -442,4 +443,110 @@ export interface UnifiedData {
   tags: { [tag: string]: number }; // tag usage count
   lastModified: string;
   version: string;
+}
+
+// ===== ARWEAVE DEPLOYMENT TYPES =====
+
+export interface ArweaveDeployFile {
+  path: string;
+  hash: string;
+  size: number;
+  contentType: string;
+  tags: Record<string, string>;
+}
+
+export interface ArweaveDeployManifest {
+  version: string;
+  timestamp: string;
+  siteId: string;
+  baseUrl: string;
+  files: ArweaveDeployFile[];
+  metadata: {
+    title: string;
+    description: string;
+    tags: string[];
+    generator: string;
+    deployTimestamp: string;
+  };
+}
+
+export interface ArweaveDeployConfig {
+  workspacePath: string;
+  siteId: string;
+  manifestOnly?: boolean;
+  incremental?: boolean;
+  costEstimate?: boolean;
+}
+
+export interface ArweaveDeployResult extends DeployResult {
+  manifestHash: string;
+  manifestUrl: string;
+  totalCost: { ar: string; usd?: string };
+  fileCount: number;
+  totalSize: number;
+  uploadedFiles: {
+    path: string;
+    hash: string;
+    url: string;
+    size: number;
+    contentType: string;
+  }[];
+  indexFile?: {
+    path: string;
+    hash: string;
+    url: string;
+  };
+}
+
+export interface ArweaveDeployRecord {
+  timestamp: string;
+  manifestHash: string;
+  filesAdded: string[];
+  filesModified: string[];
+  filesRemoved: string[];
+  totalCost: string;
+}
+
+export interface ArweaveDeployState {
+  lastDeployHash: string;
+  deployedFiles: Map<string, ArweaveDeployFile>;
+  siteManifestHash: string;
+  deploymentHistory: ArweaveDeployRecord[];
+}
+
+export interface DeploymentCostEstimate {
+  totalSize: number;
+  arCost: string;
+  usdCost?: string;
+  breakdown: {
+    html: number;
+    css: number;
+    js: number;
+    images: number;
+    other: number;
+  };
+}
+
+export interface DeploymentVerification {
+  isValid: boolean;
+  errors: string[];
+  verifiedFiles: number;
+  totalFiles: number;
+  manifestAccessible: boolean;
+}
+
+export interface HybridDeployConfig {
+  githubPages: GitHubDeployConfig;
+  arweave: ArweaveDeployConfig;
+  syncStrategy: "parallel" | "sequential" | "fallback";
+  crossReference: boolean;
+}
+
+export interface HybridDeployResult {
+  githubPages: DeployResult;
+  arweave: ArweaveDeployResult;
+  crossReferences: {
+    githubUrl: string;
+    arweaveUrl: string;
+  };
 } 

@@ -1,0 +1,1176 @@
+<html lang="en">
+  <head>
+    <script src="/assets/js/anchor.min.js"></script>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <script>
+      // For large screens, set viewport to device-width.
+      function adjustViewport() {
+        if (screen.width > 700) {
+          const viewport = document.querySelector("meta[name=viewport]");
+          viewport.parentNode.removeChild(viewport);
+
+          const newViewport = document.createElement("meta");
+          newViewport.setAttribute("name", "viewport");
+          newViewport.setAttribute(
+            "content",
+            "width=device-width, initial-scale=1"
+          );
+          document.head.appendChild(newViewport);
+        }
+      }
+      adjustViewport();
+      window.addEventListener("load", adjustViewport);
+      window.addEventListener("resize", adjustViewport);
+    </script>
+    <!-- Begin Jekyll SEO tag v2.6.1 -->
+    <title>Digital Marbling | Amanda Ghassaei</title>
+    <meta name="generator" content="Jekyll v4.0.0" />
+    <meta property="og:title" content="Digital Marbling" />
+    <meta name="author" content="Amanda Ghassaei" />
+    <meta property="og:locale" content="en_US" />
+    <meta
+      name="description"
+      content="I’ve been working on a physics-based marbling simulation to explore the ways that the traditional craft of paper marbling can be augmented digitally. Paper marbling is a centuries-old craft that uses the movement of water to create swirling patterns of inks and paints on paper (and sometimes fabric). The earliest accounts of marbling date back to the 12th century in Japan, where it is known as “suminagashi.” Inks were floated on top of water and manipulated into delicate, flowing shapes using breath, fans, and other utensils. Later, paper marbling traditions emerged in the Middle East and Europe, making use of more viscous media and fine-toothed combs to create repeating patterns with greater regularity and control."
+    />
+    <meta
+      property="og:description"
+      content="I’ve been working on a physics-based marbling simulation to explore the ways that the traditional craft of paper marbling can be augmented digitally. Paper marbling is a centuries-old craft that uses the movement of water to create swirling patterns of inks and paints on paper (and sometimes fabric). The earliest accounts of marbling date back to the 12th century in Japan, where it is known as “suminagashi.” Inks were floated on top of water and manipulated into delicate, flowing shapes using breath, fans, and other utensils. Later, paper marbling traditions emerged in the Middle East and Europe, making use of more viscous media and fine-toothed combs to create repeating patterns with greater regularity and control."
+    />
+    <link
+      rel="canonical"
+      href="https://blog.amandaghassaei.com/2022/10/25/digital-marbling/"
+    />
+    <meta
+      property="og:url"
+      content="https://blog.amandaghassaei.com/2022/10/25/digital-marbling/"
+    />
+    <meta property="og:site_name" content="Amanda Ghassaei" />
+    <meta
+      property="og:image"
+      content="https://blog.amandaghassaei.com/2022/10/25/digital-marbling/large_teal_pink_birdwing_scalloped.jpg"
+    />
+    <meta property="og:type" content="article" />
+    <meta
+      property="article:published_time"
+      content="2022-10-25T07:00:00+00:00"
+    />
+    <script type="application/ld+json">
+      {
+        "url": "https://blog.amandaghassaei.com/2022/10/25/digital-marbling/",
+        "headline": "Digital Marbling",
+        "dateModified": "2022-10-25T07:00:00+00:00",
+        "datePublished": "2022-10-25T07:00:00+00:00",
+        "image": "https://blog.amandaghassaei.com/2022/10/25/digital-marbling/large_teal_pink_birdwing_scalloped.jpg",
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "https://blog.amandaghassaei.com/2022/10/25/digital-marbling/"
+        },
+        "author": { "@type": "Person", "name": "Amanda Ghassaei" },
+        "description": "I’ve been working on a physics-based marbling simulation to explore the ways that the traditional craft of paper marbling can be augmented digitally. Paper marbling is a centuries-old craft that uses the movement of water to create swirling patterns of inks and paints on paper (and sometimes fabric). The earliest accounts of marbling date back to the 12th century in Japan, where it is known as “suminagashi.” Inks were floated on top of water and manipulated into delicate, flowing shapes using breath, fans, and other utensils. Later, paper marbling traditions emerged in the Middle East and Europe, making use of more viscous media and fine-toothed combs to create repeating patterns with greater regularity and control.",
+        "@type": "BlogPosting",
+        "@context": "https://schema.org"
+      }
+    </script>
+    <!-- End Jekyll SEO tag -->
+    <style class="anchorjs"></style>
+    <link rel="stylesheet" href="/assets/css/main.css" />
+    <link
+      type="application/atom+xml"
+      rel="alternate"
+      href="https://blog.amandaghassaei.com/feed.xml"
+      title="Amanda Ghassaei"
+    />
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+      async=""
+      src="https://www.googletagmanager.com/gtag/js?id=G-YFHFGSXNYC"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-YFHFGSXNYC");
+    </script>
+    <script
+      type="text/javascript"
+      src="/assets/js/jquery-3.5.0.min.js"
+    ></script>
+    <meta name="twitter:site" content="@amandaghassaei" />
+    <meta name="twitter:creator" content="Amanda Ghassaei" />
+    <meta name="twitter:title" content="Digital Marbling" />
+    <meta
+      name="twitter:description"
+      content="Exploring the art of paper marbling through a digital simulation"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:image"
+      content="https://blog.amandaghassaei.com/2022/10/25/digital-marbling/large_teal_pink_birdwing_scalloped.jpg"
+    />
+    <link rel="stylesheet" href="/assets/css/post.css" />
+    <script
+      type="text/javascript"
+      src="/assets/js/table-of-contents.js"
+    ></script>
+    <script type="text/javascript" src="/assets/js/post.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <!-- Twitter cards -->
+
+  <!-- end of Twitter cards -->
+
+  <body>
+    <div class="top-menu-wrapper">
+      <ul id="top-menu" class="knockout">
+        <li><a class="menuLink" href="https://amandaghassaei.com">HOME</a></li>
+        <li class="spacer"></li>
+        <li>
+          <a class="menuLink" href="https://amandaghassaei.com/apps/">APPS</a>
+        </li>
+        <li class="spacer"></li>
+        <li>
+          <a class="menuLink" href="https://amandaghassaei.com/projects/"
+            >PROJECTS</a
+          >
+        </li>
+        <li class="spacer"></li>
+        <li><a class="menuLink" href="/">BLOG</a></li>
+        <li class="spacer"></li>
+        <li>
+          <a class="menuLink" href="https://amandaghassaei.com/about/">ABOUT</a>
+        </li>
+      </ul>
+    </div>
+    <img
+      id="top-menu-shadow"
+      class="banner-shadow"
+      src="/assets/imgs/shadow.png"
+    />
+    <main class="page-content" aria-label="Content">
+      <div class="side-menu">
+        <div class="hidden-scroll-bar">
+          <div class="toc-wrapper">
+            <span class="title">Contents:</span>
+            <ul>
+              <li><a href="#" class="highlighted">Intro</a></li>
+              <li>
+                <a href="#marbling-simulation" class="">Marbling Simulation</a>
+              </li>
+              <li>
+                <a href="#pattern-exploration" class="">Pattern Exploration</a>
+              </li>
+              <li>
+                <a href="#ink-drop-simulation" class="">Ink Drop Simulation</a>
+              </li>
+              <li><a href="#challenges" class="">Challenges</a></li>
+              <li><a href="#future-work" class="">Future Work</a></li>
+              <li><a href="#further-reading">Further Reading</a></li>
+            </ul>
+
+            <div class="extraSpace"></div>
+          </div>
+        </div>
+      </div>
+      <div id="scrolling-content" class="content">
+        <div class="wrapper">
+          <article
+            class="post h-entry"
+            itemscope=""
+            itemtype="http://schema.org/BlogPosting"
+          >
+            <header class="post-header">
+              <h1 class="post-title p-name" itemprop="name headline">
+                Digital Marbling
+              </h1>
+              <!-- <p class="post-meta">
+						By Amanda Ghassaei
+					</p> -->
+              <p class="post-meta">
+                <time
+                  class="dt-published"
+                  datetime="2022-10-25T07:00:00+00:00"
+                  itemprop="datePublished"
+                  >Oct 25, 2022<!-- subtract a day --> </time
+                >&nbsp;&nbsp;
+              </p>
+              <ul class="social-media-list">
+                <li>
+                  <a
+                    href="https://www.twitter.com/amandaghassaei"
+                    target="_blank"
+                    ><svg class="svg-icon">
+                      <use
+                        xlink:href="/assets/imgs/minima-social-icons.svg#twitter"
+                      ></use></svg
+                  ></a>
+                </li>
+                <li>
+                  <a href="https://github.com/amandaghassaei" target="_blank"
+                    ><svg class="svg-icon">
+                      <use
+                        xlink:href="/assets/imgs/minima-social-icons.svg#github"
+                      ></use></svg
+                  ></a>
+                </li>
+                <li>
+                  <a href="https://instagram.com/amandaghassaei" target="_blank"
+                    ><svg class="svg-icon">
+                      <use
+                        xlink:href="/assets/imgs/minima-social-icons.svg#instagram"
+                      ></use></svg
+                  ></a>
+                </li>
+                <!---->
+                <!---->
+                <li>
+                  <a href="/feed.xml"
+                    ><svg class="svg-icon">
+                      <use
+                        xlink:href="/assets/imgs/minima-social-icons.svg#rss"
+                      ></use></svg
+                  ></a>
+                </li>
+              </ul>
+              <p></p>
+            </header>
+
+            <div class="post-content e-content" itemprop="articleBody">
+              <p>
+                I’ve been working on a physics-based marbling simulation to
+                explore the ways that the traditional craft of paper marbling
+                can be augmented digitally. Paper marbling is a centuries-old
+                craft that uses the movement of water to create swirling
+                patterns of inks and paints on paper (and sometimes fabric). The
+                earliest accounts of marbling date back to the 12th century in
+                Japan, where it is known as “suminagashi.” Inks were floated on
+                top of water and manipulated into delicate, flowing shapes using
+                breath, fans, and other utensils. Later, paper marbling
+                traditions emerged in the Middle East and Europe, making use of
+                more
+                <a
+                  href="https://www.youtube.com/watch?v=Vyga8VMWXKg"
+                  target="_blank"
+                  >viscous media and fine-toothed combs</a
+                >
+                to create repeating patterns with greater regularity and
+                control.
+              </p>
+
+              <figure class="image">
+                <img
+                  src="uw_examples.jpg"
+                  width=""
+                  height=""
+                  alt='Examples of combed marbling from the <a href="https://digitalcollections.lib.washington.edu/digital/collection/dp/search">University of Washington Digital Collections</a>.  Marbled paper was traditionally used in bookbinding as a decorative endpaper.'
+                />
+                <figcaption>
+                  Examples of combed marbling from the
+                  <a
+                    href="https://digitalcollections.lib.washington.edu/digital/collection/dp/search"
+                    target="_blank"
+                    >University of Washington Digital Collections</a
+                  >. Marbled paper was traditionally used in bookbinding as a
+                  decorative endpaper.
+                </figcaption>
+              </figure>
+
+              <p>
+                I built an early prototype of a marbling-inspired fluid
+                simulation back in 2017 when I was first learning to write
+                physics simulations with WebGL, interactive demo below:
+              </p>
+
+              <div style="padding: 56.25% 0 0 0; position: relative">
+                <iframe
+                  src="https://apps.amandaghassaei.com/marbling-experiment/"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: #cccccc;
+                  "
+                  frameborder="0"
+                ></iframe>
+              </div>
+
+              <p>
+                Over the past year I’ve been revisiting this work and exploring
+                computational methods to more accurately simulate the marbling
+                process. Recently, I even had the opportunity to collaborate
+                with Jessica and Jesse at
+                <a href="https://n-e-r-v-o-u-s.com/" target="_blank"
+                  >Nervous System</a
+                >
+                (whose work I am a huge admirer of) on a series of
+                <a
+                  href="https://n-e-r-v-o-u-s.com/shop/search_tags.php?search=marbling"
+                  target="_blank"
+                  >marbling infinity puzzles</a
+                >:
+              </p>
+
+              <div style="padding: 56.25% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/762296510?h=4bdd9f5885&amp;title=0&amp;byline=0&amp;portrait=0"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <p>
+                I’ve learned a lot in the process of building this simulation,
+                and I wanted to use this post to compile some of the main ideas
+                in one place. You can find additional info about how the
+                marbling puzzles were designed in Nervous System’s
+                <a href="https://n-e-r-v-o-u-s.com/blog/?p=9225" target="_blank"
+                  >blog post</a
+                >. This collaboration was also featured in the
+                <a
+                  href="https://www.nytimes.com/2022/12/09/science/puzzles-jigsaw-math.html"
+                  target="_blank"
+                  >New York Times</a
+                >.
+              </p>
+
+              <h2 id="marbling-simulation">
+                Marbling Simulation<a
+                  class="anchorjs-link"
+                  aria-label="Anchor"
+                  data-anchorjs-icon=""
+                  href="#marbling-simulation"
+                  style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em"
+                ></a>
+              </h2>
+
+              <p>
+                In order to create a marbling simulation, you need to model the
+                motion of fluids. Typically, this is achieved by running a
+                physics-based fluid solver and iteratively moving virtual inks
+                along the flow. Combing actions and other manipulations are
+                modeled as forces applied to the fluid’s velocity field. Due to
+                the high viscosity of the fluid media (called “size”), the
+                colored inks of a marbling pattern tend to warp and stretch
+                rather than diffuse and mix with each other in a turbulent
+                manner; this behavior helps to differentiate a marbling
+                simulation from other types of fluid simulations (e.g. smoke
+                simulations). Also, because the underlying fluids are
+                “incompressible”, the inks move in ways that preserve their
+                surface area.
+              </p>
+
+              <p>
+                To start I read up on work by
+                <a
+                  href="https://people.csail.mit.edu/jaffer/Marbling/"
+                  target="_blank"
+                  >Aubrey Jaffer</a
+                >, including the paper
+                <a
+                  href="https://www.cad.zju.edu.cn/home/jin/cga2012/mmarbling.pdf"
+                  target="_blank"
+                  >Mathematical Marbling</a
+                >
+                (Lu, Jaffer <em>et al.</em> 2012). The main idea behind
+                Mathematical Marbling is that the combing actions in paper
+                marbling can be modeled by closed-form mathematical
+                transformations; in other words, they argue that you don’t
+                actually <em>need</em> to run a full-blown fluid solver to
+                accurately simulate a marbled pattern. They show some nice
+                results in their paper, which they’re able to compute extremely
+                quickly because their method is direct rather than iterative.
+              </p>
+
+              <p>
+                After implementing Mathematical Marbling in WebGL, I decided to
+                go with a hybrid approach that uses some of the Mathematical
+                Marbling transformations, but ultimately lets a fluid solver
+                kick in to create more dynamic and life-like results. This
+                allowed me to experiment with freeform patterns that were made
+                using a combination of combing and
+                <a
+                  href="https://www.cs.ubc.ca/~rbridson/docs/bridson-siggraph2007-curlnoise.pdf"
+                  target="_blank"
+                  >curl-noise</a
+                >
+                (Bridson <em>et al.</em> 2007), giving the appearance of
+                turbulent air blowing across the surface of the pattern:
+              </p>
+
+              <div style="padding: 73.96% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/763259068?h=d6a6272841&amp;loop=1&amp;title=0&amp;byline=0&amp;portrait=0"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <div style="padding: 73.96% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/766735673?h=8abfe2a736&amp;title=0&amp;byline=0&amp;portrait=0"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <figure class="image">
+                <img
+                  src="marbling10.jpg"
+                  width=""
+                  height=""
+                  alt="Noisy bouquet pattern in shades of blue.  By adding noise to the underlying fluid simulation, it's possible to create irregular patterns that have undergone some distortion due to fluid motions."
+                />
+                <figcaption>
+                  Noisy bouquet pattern in shades of blue. By adding noise to
+                  the underlying fluid simulation, it's possible to create
+                  irregular patterns that have undergone some distortion due to
+                  fluid motions.
+                </figcaption>
+              </figure>
+
+              <p>
+                I like the playfulness that interacting directly with the
+                underlying physics simulation allows. It’s fun to watch patterns
+                warp and stretch as the dynamics of the fluid take over:
+              </p>
+
+              <div style="padding: 75% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/763460226?h=010ae1ed8d&amp;loop=1&amp;title=0&amp;byline=0&amp;portrait=0"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <h2 id="pattern-exploration">
+                Pattern Exploration<a
+                  class="anchorjs-link"
+                  aria-label="Anchor"
+                  data-anchorjs-icon=""
+                  href="#pattern-exploration"
+                  style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em"
+                ></a>
+              </h2>
+
+              <!-- <figure class="image">
+	<img src="medium_multicolor_noise_spiked.jpg" 
+		width=""
+		height=""
+		alt=""
+		></figure> -->
+              <p>
+                Even though marbling techniques have been around for centuries,
+                there is still plenty to explore when it comes to pattern
+                generation. I’ve really only just started to scratch the surface
+                here. My marbling simulation allows me to line up combs very
+                precisely and apply multiple combs at once, so it’s possible to
+                experiment with patterns that would be impractical to recreate
+                in real life. Several of the combing patterns we used for the
+                infinity puzzles are brand new (as far as I know) variations on
+                traditional marbling techniques, such as
+                <a
+                  href="http://marbleart.us/Peacock-Bouquet.htm"
+                  target="_blank"
+                  >bouquet</a
+                >,
+                <a href="http://marbleart.us/BirdWing.htm" target="_blank"
+                  >birdwing</a
+                >, and
+                <a href="http://marbleart.us/Thistle.htm" target="_blank"
+                  >thistle</a
+                >. The pattern I’m most excited about at the moment is a
+                “two-way” variation on the popular bouquet pattern:
+              </p>
+
+              <div style="padding: 75% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/763463120?h=8b8b98114e&amp;loop=1&amp;title=0&amp;byline=0&amp;portrait=0"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <figure class="image">
+                <img
+                  src="bouquet2way.jpg"
+                  width=""
+                  height=""
+                  alt='The two-way bouquet pattern uses opposing sets of combs to form a bi-directional variation on the classic bouquet pattern.  Unlike classic bouquet, there is no clear "up" direction to this pattern.'
+                />
+                <figcaption>
+                  The two-way bouquet pattern uses opposing sets of combs to
+                  form a bi-directional variation on the classic bouquet
+                  pattern. Unlike classic bouquet, there is no clear "up"
+                  direction to this pattern.
+                </figcaption>
+              </figure>
+
+              <p>
+                Similarly, the two-way birdwing pattern contains scalloped edges
+                in both directions. The version below contains additional
+                vertical combing to sharpen the peaks of the larger-scale
+                features in the design:
+              </p>
+
+              <figure class="image">
+                <img
+                  src="large_teal_pink_birdwing_scalloped.jpg"
+                  width=""
+                  height=""
+                  alt=""
+                />
+              </figure>
+
+              <p>
+                The dovetail pattern is a simple variation on bouquet that uses
+                vertical combs to enhance alternating features of the pattern.
+                The resulting shape reminds me of Islamic architecture:
+              </p>
+
+              <div style="padding: 73.96% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/763303590?h=80acb25271&amp;loop=1&amp;title=0&amp;byline=0&amp;portrait=0"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <!-- <figure class="image">
+	<img src="large_jeweltone_dovetail.jpg" 
+		width=""
+		height=""
+		alt="A simple variation on bouquet that uses soft vertical combing to "
+		><figcaption>A simple variation on bouquet that uses soft vertical combing to </figcaption></figure> -->
+
+              <p>
+                A unique property of digital marbling that we leveraged in the
+                design of the infinity puzzles is the ability to create patterns
+                that tile perfectly in space. The resulting puzzles have no
+                edges, and the pieces fit together in a multitude of
+                configurations. It would be interesting to merge marbling with
+                other ideas around tilings (e.g.
+                <a
+                  href="https://en.wikipedia.org/wiki/Truchet_tiles"
+                  target="_blank"
+                  >Truchet tilings</a
+                >,
+                <a
+                  href="https://en.wikipedia.org/wiki/Uniform_tilings_in_hyperbolic_plane"
+                  target="_blank"
+                  >hyperbolic tilings</a
+                >) to generate novel combing patterns as well.
+                <!-- Additionally, most (all?) of the traditional marbling patterns are based on orthogonal combing in x and y, but there may be interesting patterns created by triaxial combing. -->
+              </p>
+
+              <figure class="image">
+                <img
+                  src="small_greens_blues_noise_spiked.jpg"
+                  width=""
+                  height=""
+                  alt="A 2x2 tiling of a spiked marbling pattern."
+                />
+                <figcaption>
+                  A 2x2 tiling of a spiked marbling pattern.
+                </figcaption>
+              </figure>
+              <!-- <figure class="image">
+	<img src="small_spring_dovetail_2way.jpg" 
+		width=""
+		height=""
+		alt="A 2x2 tiling of a bouquet two-way variation."
+		><figcaption>A 2x2 tiling of a bouquet two-way variation.</figcaption></figure> -->
+              <!-- <figure class="image">
+	<img src="large_greens_blues_noise_scalloped.jpg" 
+		width=""
+		height=""
+		alt=""
+		></figure> -->
+
+              <h2 id="ink-drop-simulation">
+                Ink Drop Simulation<a
+                  class="anchorjs-link"
+                  aria-label="Anchor"
+                  data-anchorjs-icon=""
+                  href="#ink-drop-simulation"
+                  style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em"
+                ></a>
+              </h2>
+
+              <p>
+                I also explored the behavior of individual drops of ink. Jaffer
+                has
+                <a
+                  href="https://people.csail.mit.edu/jaffer/Marbling/Dropping-Paint"
+                  target="_blank"
+                  >an excellent page</a
+                >
+                detailing the math behind dropping paint/ink on the surface of
+                water, and the resulting transformation that a single drop has
+                on the rest of a marbled pattern. Again, the trick here is that
+                each ink drop should induce an area-preserving transformation on
+                the surrounding regions. So if many drops are used to create a
+                ringed pattern, the rings will slowly increase in radius and
+                decrease in thickness as they move outward. I used this
+                technique as the basis for a suminagashi simulation:
+              </p>
+
+              <div style="padding: 100% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/763243459?h=80acb25271&amp;title=0&amp;byline=0&amp;portrait=0"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <figure class="image">
+                <img
+                  src="sumi_array.jpg"
+                  width=""
+                  height=""
+                  alt="Suminagashi reference prints I made over the course of this project.  Suminagashi is a fun and easy way to get started with paper marbling using inexpensive materials you probably already have on hand.  These prints were made with newsprint, black ink, and dish soap using a plastic storage bin filled with plain water."
+                />
+                <figcaption>
+                  Suminagashi reference prints I made over the course of this
+                  project. Suminagashi is a fun and easy way to get started with
+                  paper marbling using inexpensive materials you probably
+                  already have on hand. These prints were made with newsprint,
+                  black ink, and dish soap using a plastic storage bin filled
+                  with plain water.
+                </figcaption>
+              </figure>
+
+              <p>
+                By dropping multiple drops at once, you can simulate a
+                <a href="http://marbleart.us/StoneMarble.htm" target="_blank"
+                  >“stone” pattern</a
+                >, which are typically used as a starting point for combed
+                patterns. You’ll notice that the following simulation violates
+                incompressibility a bit, as there are regions between the drops
+                that appear to shrink. Jaffer’s area-preserving technique works
+                great in an infinite domain where the inks can simply flow off
+                the edge of the screen, but the simulation below is meant to
+                tile in space, so I had to come up with some way to loop the
+                simulation in x and y while still preserving the correct local
+                behavior of the drops. Due to the area expansion occurring at
+                each drop’s center, there has to be contraction elsewhere in the
+                pattern:
+              </p>
+
+              <div style="padding: 100% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/763261287?h=b557490fee&amp;title=0&amp;byline=0&amp;portrait=0"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <p>
+                This contraction behavior is actually somewhat realistic. In a
+                finite-sized tray you will eventually notice ink patterns begin
+                to shrink and become more saturated as additional drops of ink
+                are added. You’ll also notice that the more ink drops you add,
+                the more slowly each new drop will expand across the surface of
+                the water. It seems that the thickness of the ink layer on top
+                of the water increases with each extra drop of ink added, which
+                causes the entire pattern to gradually contract. This change in
+                thickness is not explicitly modeled in my or Jaffer’s methods,
+                but can easily be added by scaling the effect of the ink drops.
+              </p>
+
+              <h2 id="challenges">
+                Challenges<a
+                  class="anchorjs-link"
+                  aria-label="Anchor"
+                  data-anchorjs-icon=""
+                  href="#challenges"
+                  style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em"
+                ></a>
+              </h2>
+
+              <p>
+                One of the trickiest technical aspects of creating this marbling
+                simulation was preserving crisp boundaries between colors in the
+                combed pattern—an important feature of paper marbling. I had
+                been using the
+                <a
+                  href="https://www.dgp.toronto.edu/public_user/stam/reality/Research/pdf/ns.pdf"
+                  target="_blank"
+                  >Stable Fluids</a
+                >
+                (Stam, 1999) method, which tends to create excessive blurring
+                the longer the simulation runs, so I wrote a new fluid solver
+                based on
+                <a
+                  href="https://www.seas.upenn.edu/~ziyinq/static/files/bimocq.pdf"
+                  target="_blank"
+                  >BiMocq2: Efficient and Conservative Fluids Using
+                  Bidirectional Mapping</a
+                >
+                (Qu <em>et al.</em> 2019), which uses some tricks to
+                significantly reduce this blurring with surprisingly little
+                computational overhead.
+              </p>
+
+              <div style="padding: 52.22% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/763271987?h=4c66c7a3de&amp;title=0&amp;byline=0&amp;portrait=0"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <p>
+                The simulation above shows a comparison of Stable Fluids (left)
+                and BiMocq2 (right) solving a system exhibiting
+                <a
+                  href="https://en.wikipedia.org/wiki/Rayleigh%E2%80%93Taylor_instability"
+                  target="_blank"
+                  >Rayleigh–Taylor instability</a
+                >, both implemented in WebGL using the same time step, grid
+                resolution, and initial conditions. The difference between the
+                methods is staggering. Not only does BiMocq2 preserve cleaner
+                boundaries between the white and black fluids, but it also
+                reduces damping and preserves details in the underlying velocity
+                field, which is evident by numerous fractal-like vortices that
+                emerge in the flow. These velocity field details are not so
+                important in the context of traditional marbling, where we’re
+                generally concerned with laminar flows of more viscous fluids,
+                but could be interesting to explore in future work.
+              </p>
+
+              <h2 id="future-work">
+                Future Work<a
+                  class="anchorjs-link"
+                  aria-label="Anchor"
+                  data-anchorjs-icon=""
+                  href="#future-work"
+                  style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em"
+                ></a>
+              </h2>
+
+              <p>
+                Looking forward, I’m interested in how digital marbling could
+                unlock new aesthetics that make use of turbulent and ephemeral
+                behaviors of fluids, which would normally be very difficult to
+                transfer to paper:
+              </p>
+
+              <figure class="image">
+                <img src="turbulent.jpg" width="" height="" alt="" />
+              </figure>
+              <figure class="image">
+                <img
+                  src="turbulent2.jpg"
+                  width=""
+                  height=""
+                  alt="Patterns reminiscent of the swirling clouds of Jupiter, generated via a very high resolution BiMocq2 simulation."
+                />
+                <figcaption>
+                  Patterns reminiscent of the swirling clouds of Jupiter,
+                  generated via a very high resolution BiMocq2 simulation.
+                </figcaption>
+              </figure>
+              <figure class="image">
+                <img
+                  src="vortices.jpg"
+                  width=""
+                  height=""
+                  alt='Early explorations combining digital marbling with <a href="https://en.wikipedia.org/wiki/K%C3%A1rm%C3%A1n_vortex_street">von Kármán vortex streets</a>.'
+                />
+                <figcaption>
+                  Early explorations combining digital marbling with
+                  <a
+                    href="https://en.wikipedia.org/wiki/K%C3%A1rm%C3%A1n_vortex_street"
+                    target="_blank"
+                    >von Kármán vortex streets</a
+                  >.
+                </figcaption>
+              </figure>
+
+              <div style="padding: 52.03% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/680566776?h=543eaa97a2&amp;title=0&amp;byline=0&amp;portrait=0"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <p>
+                Throughout the development process, it’s been interesting to
+                explore how random bugs in the code change the behavior of the
+                system in unexpected ways:
+              </p>
+
+              <div style="padding: 52.03% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/688625186?h=103dae69e6&amp;title=0&amp;byline=0&amp;portrait=0&amp;loop=1"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <figure class="image">
+                <img src="tile7.jpg" width="" height="" alt="" />
+              </figure>
+
+              <p>
+                I loved the way this unintended sloshing motion generated
+                surprising shapes:
+              </p>
+
+              <div style="padding: 49.11% 0 0 0; position: relative">
+                <iframe
+                  src="https://player.vimeo.com/video/763605852?h=8e13378fe4&amp;loop=1&amp;title=0&amp;byline=0&amp;portrait=0"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                  "
+                  frameborder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowfullscreen=""
+                  data-ready="true"
+                ></iframe>
+              </div>
+              <script src="https://player.vimeo.com/api/player.js"></script>
+
+              <p>
+                The current iteration of the marbling simulation app is still a
+                bit too much of a hacky research prototype to be released
+                publicly, but I’m hoping to find some time to wrap up this work
+                and release something in the near-ish future. Mainly, I want to
+                add some optimizations to the simulator to create better
+                real-time performance for larger patterns (the app crashed my
+                computer on several occasions!). Though the current prototype
+                has some “undo” capabilities, it would be extremely helpful to
+                also be able to edit previous combing operations while viewing
+                their effect on the final marbled pattern—this would allow you
+                to more easily control the amount of color mixing in the final
+                design.
+              </p>
+
+              <figure class="image">
+                <img
+                  src="ui.jpg"
+                  width=""
+                  height=""
+                  alt="Current UI of the marbling simulator research prototype."
+                />
+                <figcaption>
+                  Current UI of the marbling simulator research prototype.
+                </figcaption>
+              </figure>
+
+              <p>
+                In the process I also created a simple file format for importing
+                marbling combing patterns into my app; this allowed for easier
+                interop with other programs I was using. It might also be
+                interesting to generate velocity fields to apply directly to the
+                fluid simulation; there is no reason you have to stick with
+                combs when you’re working digitally.
+              </p>
+
+              <figure class="image">
+                <img
+                  src="simplecombdesign.jpg"
+                  width=""
+                  height=""
+                  alt="Input combing pattern designed in a vector format."
+                />
+                <figcaption>
+                  Input combing pattern designed in a vector format.
+                </figcaption>
+              </figure>
+
+              <p>
+                This vector format uses stroke-width to roughly map to the
+                diameter of the comb’s teeth (also known as “tines”). Taken to
+                the extreme, you can create patterns using combs with lots of
+                tiny tines, which essentially behave like bristles on a brush:
+              </p>
+
+              <figure class="image">
+                <img
+                  src="brushed1.jpg"
+                  width=""
+                  height=""
+                  alt="Variation on a bouquet marbling pattern in a brushed style."
+                />
+                <figcaption>
+                  Variation on a bouquet marbling pattern in a brushed style.
+                </figcaption>
+              </figure>
+
+              <h2 id="further-reading">
+                Further Reading<a
+                  class="anchorjs-link"
+                  aria-label="Anchor"
+                  data-anchorjs-icon=""
+                  href="#further-reading"
+                  style="font: 1em / 1 anchorjs-icons; padding-left: 0.375em"
+                ></a>
+              </h2>
+
+              <ul>
+                <li>
+                  <p>
+                    <strong
+                      ><a href="https://amzn.to/3f5GmTI" target="_blank"
+                        >The Art of Fluid Animation (2004)</a
+                      ></strong
+                    >
+                    by Jos Stam – An introduction to the concepts behind fluid
+                    animation, building up to an implementation of the
+                    <a
+                      href="https://www.dgp.toronto.edu/public_user/stam/reality/Research/pdf/ns.pdf"
+                      target="_blank"
+                      >Stable Fluids</a
+                    >
+                    paper.
+                  </p>
+                </li>
+                <li>
+                  <p>
+                    <strong
+                      ><a
+                        href="https://jamie-wong.com/2016/08/05/webgl-fluid-simulation/"
+                        target="_blank"
+                        >Fluid Simulation (with WebGL demo)</a
+                      ></strong
+                    >
+                    by Jamie Wong – The most accessible explanation of the
+                    Stable Fluids method that I’ve found. Includes many
+                    interactive widgets to help you understand each component of
+                    the method.
+                  </p>
+                </li>
+                <li>
+                  <p>
+                    <strong
+                      ><a
+                        href="https://people.csail.mit.edu/jaffer/Marbling/How-To"
+                        target="_blank"
+                        >pst-marble</a
+                      ></strong
+                    >
+                    by Aubrey Jaffer, Jürgen Gilg, and Manuel Luque – I have not
+                    had a chance to try this, but it appears to be a library for
+                    creating marbling patterns in Latex, based on
+                    <a
+                      href="https://www.cad.zju.edu.cn/home/jin/cga2012/mmarbling.pdf"
+                      target="_blank"
+                      >Mathematical Marbling</a
+                    >.
+                  </p>
+                </li>
+                <li>
+                  <p>
+                    <strong
+                      ><a
+                        href="https://n-e-r-v-o-u-s.com/blog/?p=9225"
+                        target="_blank"
+                        >Marbling Infinity Puzzles blog post</a
+                      ></strong
+                    >
+                    by Nervous System – Additional information about the design
+                    of the Marbling Infinity Puzzles.
+                  </p>
+                </li>
+                <li>
+                  <p>
+                    <strong
+                      ><a
+                        href="https://github.com/amandaghassaei/gpu-io"
+                        target="_blank"
+                        >gpu-io</a
+                      ></strong
+                    >
+                    – A WebGL GPU computing library for running physics
+                    simulations that I’ve just recently released (soon to be
+                    announced). I’ve been building all of my digital marbling
+                    simulations (and many other things) on top of this library.
+                  </p>
+                </li>
+                <li>
+                  <p>
+                    <strong
+                      ><a href="http://marbled-paper.glitch.me/" target="_blank"
+                        >Marbled Paper App</a
+                      ></strong
+                    >
+                    by Jonas Luebbers – A WebGL implementation of Mathematical
+                    Marbling.
+                  </p>
+                </li>
+              </ul>
+            </div>
+
+            <a class="u-url" href="/2022/10/25/digital-marbling/" hidden=""></a>
+          </article>
+          <footer class="site-footer h-card">
+            <data class="u-url" href="/"></data>
+            <p>All posts by Amanda Ghassaei</p>
+            <div>
+              <ul class="social-media-list">
+                <li>
+                  <a
+                    href="https://www.twitter.com/amandaghassaei"
+                    target="_blank"
+                    ><svg class="svg-icon">
+                      <use
+                        xlink:href="/assets/imgs/minima-social-icons.svg#twitter"
+                      ></use></svg
+                  ></a>
+                </li>
+                <li>
+                  <a href="https://github.com/amandaghassaei" target="_blank"
+                    ><svg class="svg-icon">
+                      <use
+                        xlink:href="/assets/imgs/minima-social-icons.svg#github"
+                      ></use></svg
+                  ></a>
+                </li>
+                <li>
+                  <a href="https://instagram.com/amandaghassaei" target="_blank"
+                    ><svg class="svg-icon">
+                      <use
+                        xlink:href="/assets/imgs/minima-social-icons.svg#instagram"
+                      ></use></svg
+                  ></a>
+                </li>
+                <!---->
+                <!---->
+                <li>
+                  <a href="/feed.xml"
+                    ><svg class="svg-icon">
+                      <use
+                        xlink:href="/assets/imgs/minima-social-icons.svg#rss"
+                      ></use></svg
+                  ></a>
+                </li>
+              </ul>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

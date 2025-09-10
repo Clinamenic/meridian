@@ -50,11 +50,11 @@ class MeridianApp {
       console.log('[App] ModuleLoader instance:', this.moduleLoader);
       await this.moduleLoader.initializeAll();
       console.log('[App] ===== MODULAR SYSTEM INITIALIZED SUCCESSFULLY =====');
-      
+
       // Log all loaded modules
       const moduleNames = this.moduleLoader.getModuleNames();
       console.log('[App] Loaded modules:', moduleNames);
-      
+
       // Check if ResourceManager is loaded
       const resourceManager = this.moduleLoader.getModule('resourceManager');
       console.log('[App] ResourceManager found:', resourceManager);
@@ -302,8 +302,8 @@ class MeridianApp {
 
         // Ensure a tool is active
         if (!activeTab) {
-                  console.log('[DEBUG] No active tool, activating Deploy tool');
-        await this.switchTool('deploy');
+          console.log('[DEBUG] No active tool, activating Deploy tool');
+          await this.switchTool('deploy');
 
           // Verify activation worked
           const newActiveTab = document.querySelector('.tab-btn.active');
@@ -560,23 +560,23 @@ class MeridianApp {
 
   async loadAllToolData() {
     console.log('[App] Loading all tool data...');
-    
+
     try {
       // Load all tool data regardless of which tab is active
       await this.loadArchiveData();
-              await this.loadResourceData();
-      
+      await this.loadResourceData();
+
       // Load deploy and broadcast data if managers are available
       const deployManager = this.getDeployManager();
       if (deployManager) {
         await deployManager.loadDeployData();
       }
-      
+
       const broadcastManager = this.getBroadcastManager();
       if (broadcastManager) {
         await broadcastManager.loadBroadcastData();
       }
-      
+
       console.log('[App] All tool data loaded successfully');
     } catch (error) {
       console.error('[App] Error loading all tool data:', error);
@@ -586,15 +586,15 @@ class MeridianApp {
   async loadToolData() {
     // Check current active tool and load its data
     const activeTab = document.querySelector('.tab-btn.active');
-            const toolName = activeTab ? activeTab.dataset.tool : 'resource';
+    const toolName = activeTab ? activeTab.dataset.tool : 'resource';
 
     switch (toolName) {
       case 'archive':
         await this.loadArchiveData();
         break;
-              case 'resource':
-          await this.loadResourceData();
-          break;
+      case 'resource':
+        await this.loadResourceData();
+        break;
       case 'deploy':
         const deployManager = this.getDeployManager();
         if (deployManager) {
@@ -623,8 +623,8 @@ class MeridianApp {
     }
   }
 
-      // Legacy method - collate data loading handled by ResourceManager
-    // loadCollateData() - REMOVED: Functionality migrated to ResourceManager
+  // Legacy method - collate data loading handled by ResourceManager
+  // loadCollateData() - REMOVED: Functionality migrated to ResourceManager
 
   // ===== UNIFIED TAG AUTOCOMPLETE SETUP =====
 
@@ -1001,7 +1001,7 @@ class MeridianApp {
         tagManager.addBulkTag(bulkTagInput.value.trim());
       }
     });
-    }
+  }
 
 
 
@@ -1043,9 +1043,9 @@ class MeridianApp {
 
   // Export functionality
   setupExportEvents() {
-          // Legacy method - export functionality now handled by ResourceManager
-      // All export-related functionality has been migrated to the resource system
-      console.log('[App] setupExportEvents called - functionality migrated to ResourceManager');
+    // Legacy method - export functionality now handled by ResourceManager
+    // All export-related functionality has been migrated to the resource system
+    console.log('[App] setupExportEvents called - functionality migrated to ResourceManager');
   }
 
   // Legacy method - export functionality now handled by ResourceManager
@@ -1851,8 +1851,8 @@ class MeridianApp {
 
     // Switch to the appropriate tool and highlight the result
     switch (result.source.toLowerCase()) {
-              case 'resource':
-          await this.switchTool('resource');
+      case 'resource':
+        await this.switchTool('resource');
         // Optionally highlight the specific resource
         break;
       case 'archive':
@@ -1909,7 +1909,7 @@ class MeridianApp {
 
     try {
       // Use the meridianDefault preset for professional appearance
-              this.marblingRenderer = new TopologyRenderer(canvas, TopologyRenderer.presets.meridianDefault);
+      this.marblingRenderer = new TopologyRenderer(canvas, TopologyRenderer.presets.meridianDefault);
       console.log('Marbling background initialized successfully');
     } catch (error) {
       console.error('Failed to initialize marbling background:', error);

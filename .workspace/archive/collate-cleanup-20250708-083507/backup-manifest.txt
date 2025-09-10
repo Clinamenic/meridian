@@ -1,0 +1,17 @@
+Collate Legacy Cleanup Backup
+Created: Tue Jul  8 08:35:07 PDT 2025
+Purpose: Backup before removing collate panel references
+Backup ID: 20250708-083507
+
+Files backed up:
+- src/renderer/app.js (Main application logic with collate references)
+- src/renderer/styles.css (Main stylesheet with collate panel CSS)
+- src/renderer/styles copy.css (Copy of stylesheet with collate panel CSS)
+- src/types/index.ts (Type definitions with CollateData interface)
+- src/main/main.ts (Main process with collate IPC handlers)
+- src/main/data-manager.ts (Data manager with collate methods)
+- src/main/preload.ts (Preload script with collate APIs)
+- src/renderer/modules/TagManager.js (Tag manager with collate references)
+- src/renderer/modules/UnifiedResourceManager.js (Unified manager with collate API usage)
+- README.md (Documentation with collate tool references)
+- meridian-quartz/quartz.config.ts (NOT FOUND)

@@ -1580,3 +1580,155 @@ button {
 .collapsible-section.collapsed .expand-btn svg {
   transform: rotate(0deg);
 }
+
+/* =============================================================================
+   ENHANCED FORM STYLING - Building on Existing Infrastructure
+   ============================================================================= */
+
+/* Enhanced form group with help system - builds on existing .form-group */
+.form-group-enhanced {
+  position: relative;
+  padding: var(--spacing-md);
+  background-color: var(--surface-bg-elevated);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--border-radius-lg);
+  transition: all 0.2s ease;
+}
+
+.form-group-enhanced:hover {
+  border-color: var(--theme-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Form group header with label and help button */
+.form-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.form-group-header label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+/* Help button styling (based on existing .panel-header-icon-btn) */
+.form-help-btn {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--surface-border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.form-help-btn:hover {
+  background-color: var(--theme-primary);
+  color: var(--text-on-theme);
+  transform: scale(1.1);
+}
+
+/* Form group control area */
+.form-group-control {
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Enhanced help text styling (builds on existing .help-text) */
+.form-group-help {
+  margin-top: var(--spacing-xs);
+}
+
+.form-group-help small {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+
+/* Enhanced checkbox group with consistent left positioning */
+.checkbox-group-enhanced {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.checkbox-group-enhanced .form-group-control {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-direction: row; /* Ensure horizontal layout */
+}
+
+.checkbox-group-enhanced input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--theme-primary);
+  flex-shrink: 0;
+  order: 1; /* Ensure checkbox comes first */
+}
+
+.checkbox-group-enhanced .checkbox-label {
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  margin: 0;
+  flex: 1;
+  order: 2; /* Ensure label comes after checkbox */
+}
+
+/* Help button positioning within checkbox groups */
+.checkbox-group-enhanced .form-help-btn {
+  order: 3; /* Ensure help button comes after label */
+  margin-left: auto; /* Push to the right */
+}
+
+/* Radio options within enhanced form groups */
+.form-group-enhanced .radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  cursor: pointer;
+}
+
+.form-group-enhanced .radio-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  margin-top: 2px; /* Align with first line of text */
+  cursor: pointer;
+  accent-color: var(--theme-primary);
+  flex-shrink: 0;
+  order: 1; /* Ensure radio comes first */
+}
+
+.form-group-enhanced .radio-option .radio-content {
+  flex: 1;
+  order: 2; /* Ensure content comes after radio */
+}
+
+.form-group-enhanced .radio-option .radio-content strong {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.form-group-enhanced .radio-option .radio-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}

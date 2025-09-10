@@ -6,7 +6,21 @@ import { promisify } from 'util';
 import { exec } from 'child_process';
 import { minimatch } from 'minimatch';
 import { GitHubManager } from './github-manager';
-import { GitHubDeployConfig, DeployResult } from '../types';
+import { ArweaveManager } from './arweave-manager';
+import { DataManager } from './data-manager';
+import { UnifiedDatabaseManager } from './unified-database-manager';
+import { 
+  GitHubDeployConfig, 
+  DeployResult,
+  ArweaveDeployConfig,
+  ArweaveDeployResult,
+  ArweaveDeployManifest,
+  ArweaveDeployFile,
+  DeploymentVerification,
+  HybridDeployConfig,
+  HybridDeployResult,
+  DeploymentCostEstimate
+} from '../types';
 
 const execAsync = promisify(exec);
 
@@ -67,9 +81,15 @@ interface SiteSettings {
 class DeployManager {
   private workspacePath: string = '';
   private githubManager: GitHubManager;
+  private arweaveManager: ArweaveManager;
+  private dataManager: DataManager;
+  private unifiedDatabaseManager: UnifiedDatabaseManager;
 
   constructor() {
     this.githubManager = new GitHubManager();
+    this.dataManager = new DataManager();
+    this.unifiedDatabaseManager = new UnifiedDatabaseManager();
+    this.arweaveManager = new ArweaveManager(this.dataManager, this.unifiedDatabaseManager);
     this.registerIpcHandlers();
   }
 
@@ -97,8 +117,33 @@ class DeployManager {
       this.githubManager.removeAccount(accountId));
     ipcMain.handle("deploy:generate-github-token-url", (_, repoName) => 
       this.githubManager.generateTokenRequestUrl(repoName));
+    ipcMain.handle("deploy:generate-token-request-url", (_, repositoryName) => 
+      this.githubManager.generateTokenRequestUrl(repositoryName));
+    ipcMain.handle("deploy:generate-github-workflow", () => 
+      this.generateGitHubWorkflow());
+    ipcMain.handle("deploy:remove-github-workflow", () => 
+      this.removeGitHubWorkflow());
+    ipcMain.handle("deploy:check-workflow-file-exists", () => 
+      this.checkWorkflowFileExists());
     ipcMain.handle("deploy:deploy-to-github-pages", (_, config) => 
       this.deployToGitHubPages(config));
+    
+    // Arweave deployment handlers
+    ipcMain.handle("deploy:arweave-manifest", (_, config) =>
+      this.generateArweaveManifest(config)
+    );
+    ipcMain.handle("deploy:arweave-deploy", (_, config) =>
+      this.deployToArweave(config)
+    );
+    ipcMain.handle("deploy:arweave-verify", (_, manifestHash) =>
+      this.verifyArweaveDeployment(manifestHash)
+    );
+    ipcMain.handle("deploy:hybrid-deploy", (_, config) =>
+      this.deployHybrid(config)
+    );
+        ipcMain.handle("deploy:arweave-cost-estimate", (_, config) =>
+      this.estimateArweaveDeploymentCost(config)
+    );
     ipcMain.handle("deploy:start-github-account-addition", (_, repoName) => 
       this.githubManager.startAccountAddition(repoName));
     
@@ -864,25 +909,25 @@ class DeployManager {
       const quartzPackageJsonPath = path.join(quartzPath, 'package.json');
       const workspacePackageJsonPath = path.join(workspacePath, 'package.json');
       
-      // Read the Quartz package.json
+      // Read the Quartz package.json to get engine requirements
       const quartzPackageJson = JSON.parse(await fs.readFile(quartzPackageJsonPath, 'utf-8'));
       
-      // Create a workspace package.json that includes all Quartz dependencies
+      // Create a minimal workspace package.json with delegation pattern
       const workspacePackageJson = {
         "name": "meridian-digital-garden",
         "version": "1.0.0",
+        "description": "Website built with custom Quartz framework",
         "type": "module",
         "engines": quartzPackageJson.engines || { 
           "node": ">=22",
           "npm": ">=10.9.2"
         },
         "scripts": {
-          "build": "npx quartz build",
-          "serve": "npx quartz build --serve"
-        },
-        // Copy all dependencies from Quartz
-        "devDependencies": quartzPackageJson.devDependencies || {},
-        "dependencies": quartzPackageJson.dependencies || {}
+          "build": "cd .quartz && npm run build",
+          "serve": "cd .quartz && npm run serve",
+          "quartz": "cd .quartz && tsx ./quartz/bootstrap-cli.mjs"
+        }
+        // No dependencies - all handled in .quartz/package.json
       };
       
       await fs.writeFile(
@@ -890,7 +935,7 @@ class DeployManager {
         JSON.stringify(workspacePackageJson, null, 2)
       );
       
-      console.log('Created workspace package.json with all Quartz dependencies');
+      console.log('Created minimal workspace package.json with delegation pattern');
     } catch (error: any) {
       console.error('Failed to create workspace package.json:', error);
       throw new Error(`Failed to create workspace package.json: ${error.message}`);
@@ -960,6 +1005,7 @@ class DeployManager {
           deployment: {
             branch: 'main',
             customCNAME: false,
+            githubPages: false,
           },
           metadata: {
             createdAt: new Date().toISOString(),
@@ -969,8 +1015,12 @@ class DeployManager {
       }
       
       // Update template and initialization status
-      settings.quartz.template = template;
-      settings.metadata.initialized = true;
+      if (!settings.quartz.template) {
+        settings.quartz.template = template;
+      }
+      if (!settings.metadata.initialized) {
+        settings.metadata.initialized = true;
+      }
       settings.lastModified = new Date().toISOString();
       
       // Save updated settings
@@ -1046,13 +1096,13 @@ yarn-error.log*`;
       let stdout: string, stderr: string;
       
       try {
-        // First, verify that dependencies are installed in the quartz directory
+        // Verify dependencies are installed in the quartz directory only
         console.log('Verifying dependencies in quartz directory...');
         try {
           await execAsync('npm list async-mutex', { cwd: quartzPath });
-          console.log('async-mutex is installed in quartz directory');
+          console.log('Dependencies verified in quartz directory');
         } catch (listError) {
-          console.log('async-mutex not found, attempting to install dependencies...');
+          console.log('Installing dependencies in quartz directory...');
           await this.installQuartzDependencies(quartzPath);
         }
         
@@ -1763,13 +1813,27 @@ Thumbs.db
     }
   }
 
-  private async generateGitHubActionsWorkflow(workspacePath: string, config: any): Promise<void> {
-    const workflowContent = `name: Deploy Pre-built Meridian Quartz Site
+  /**
+   * Generate GitHub Actions workflow for manual deployment
+   */
+  async generateGitHubWorkflow(): Promise<{success: boolean, error?: string}> {
+    try {
+      const workspacePath = this.workspacePath;
+      if (!workspacePath) {
+        return { success: false, error: 'No workspace selected' };
+      }
+
+      // Create the workflow directory
+      const workflowDir = path.join(workspacePath, '.github', 'workflows');
+      await fs.mkdir(workflowDir, { recursive: true });
+
+      // Generate the workflow content
+      const workflowContent = `name: Deploy Quartz site to GitHub Pages
 
 on:
   push:
-    branches: ["${config.branch || 'main'}"]
-  workflow_dispatch:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -1781,20 +1845,165 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-22.04
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for git info
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22 # Match the Node version requirement from package.json
+      - name: Install Dependencies
+        run: cd .quartz && npm install
+      - name: Build Quartz
+        run: npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.quartz/public'
+          path: .quartz/public
 
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4`;
+
+      // Write the workflow file
+      await fs.writeFile(path.join(workflowDir, 'deploy.yml'), workflowContent);
+
+      console.log('GitHub Actions workflow created successfully');
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to generate GitHub workflow:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Check if GitHub Actions workflow file exists
+   */
+  async checkWorkflowFileExists(): Promise<{exists: boolean, error?: string}> {
+    try {
+      const workspacePath = this.workspacePath;
+      if (!workspacePath) {
+        return { exists: false, error: 'No workspace selected' };
+      }
+      
+      const workflowPath = path.join(workspacePath, '.github', 'workflows', 'deploy.yml');
+      try {
+        await fs.access(workflowPath);
+        return { exists: true };
+      } catch (error) {
+        return { exists: false };
+      }
+    } catch (error: any) {
+      console.error('Failed to check workflow file existence:', error);
+      return { exists: false, error: error.message };
+    }
+  }
+
+  /**
+   * Remove GitHub Actions workflow for manual deployment
+   */
+  async removeGitHubWorkflow(): Promise<{success: boolean, error?: string}> {
+    try {
+      const workspacePath = this.workspacePath;
+      if (!workspacePath) {
+        return { success: false, error: 'No workspace selected' };
+      }
+
+      const workflowPath = path.join(workspacePath, '.github', 'workflows', 'deploy.yml');
+      
+      // Check if the workflow file exists
+      try {
+        await fs.access(workflowPath);
+      } catch (error) {
+        // File doesn't exist, which is fine
+        return { success: true };
+      }
+
+      // Remove the workflow file
+      await fs.unlink(workflowPath);
+
+      // Remove the workflows directory if it's empty
+      const workflowsDir = path.join(workspacePath, '.github', 'workflows');
+      try {
+        const files = await fs.readdir(workflowsDir);
+        if (files.length === 0) {
+          await fs.rmdir(workflowsDir);
+          
+          // Remove the .github directory if it's empty
+          const githubDir = path.join(workspacePath, '.github');
+          try {
+            const githubFiles = await fs.readdir(githubDir);
+            if (githubFiles.length === 0) {
+              await fs.rmdir(githubDir);
+            }
+          } catch (error) {
+            // Directory not empty or doesn't exist, which is fine
+          }
+        }
+      } catch (error) {
+        // Directory doesn't exist or can't be read, which is fine
+      }
+
+      console.log('GitHub Actions workflow removed successfully');
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to remove GitHub workflow:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  private async generateGitHubActionsWorkflow(workspacePath: string, config: any): Promise<void> {
+    const workflowContent = `name: Deploy Quartz site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - ${config.branch || 'main'}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for git info
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22 # Match the Node version requirement from package.json
+      - name: Install Dependencies
+        run: cd .quartz && npm install
+      - name: Build Quartz
+        run: npm run build
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .quartz/public
+
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4`;
@@ -2022,13 +2231,13 @@ jobs:
         with:
           node-version: 22
       - name: Install Dependencies
-        run: npm ci
+        run: cd .quartz && npm install
       - name: Build Quartz
-        run: npx quartz build
+        run: npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: public
+          path: .quartz/public
 
   deploy:
     needs: build
@@ -2062,6 +2271,295 @@ jobs:
       console.error('Failed to setup GitHub Pages workflow:', error);
       throw error;
     }
+  }
+
+  // ===== ARWEAVE DEPLOYMENT METHODS =====
+
+  /**
+   * Generate Arweave deployment manifest from build output
+   */
+  async generateArweaveManifest(
+    config: ArweaveDeployConfig
+  ): Promise<ArweaveDeployManifest> {
+    try {
+      const buildPath = path.join(config.workspacePath, '.quartz', 'public');
+      
+      // Check if build output exists
+      if (!await this.checkBuildOutputExists(buildPath)) {
+        throw new Error('Build output not found. Please build the site first.');
+      }
+
+      // Load site settings for metadata
+      const siteSettings = await this.loadSiteSettings(config.workspacePath);
+      
+      // Collect all files from build directory
+      const files: ArweaveDeployFile[] = [];
+      await this.collectBuildFilesForManifest(buildPath, files);
+
+      const manifest: ArweaveDeployManifest = {
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+        siteId: config.siteId,
+        baseUrl: `https://arweave.net/`, // Will be updated after manifest upload
+        files,
+        metadata: {
+          title: siteSettings.site?.title || 'Meridian Site',
+          description: siteSettings.site?.description || 'Personal digital garden',
+          tags: ['meridian', 'quartz', 'digital-garden'],
+          generator: 'Meridian Quartz',
+          deployTimestamp: new Date().toISOString()
+        }
+      };
+
+      return manifest;
+    } catch (error) {
+      console.error('Failed to generate Arweave manifest:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Deploy site to Arweave
+   */
+  async deployToArweave(
+    config: ArweaveDeployConfig
+  ): Promise<ArweaveDeployResult> {
+    try {
+      // Check if Arweave wallet is configured
+      if (!await this.arweaveManager.isWalletConfigured()) {
+        return {
+          success: false,
+          error: 'Arweave wallet not configured. Please set up your wallet first.',
+          manifestHash: '',
+          manifestUrl: '',
+          totalCost: { ar: '0' },
+          fileCount: 0,
+          totalSize: 0,
+          uploadedFiles: []
+        };
+      }
+
+      // Generate manifest
+      const manifest = await this.generateArweaveManifest(config);
+      
+      // Build site if not already built
+      const buildResult = await this.buildSite({ workspacePath: config.workspacePath });
+      if (buildResult.status !== 'success') {
+        return {
+          success: false,
+          error: `Site build failed: ${buildResult.errors?.join(', ') || 'Unknown build error'}`,
+          manifestHash: '',
+          manifestUrl: '',
+          totalCost: { ar: '0' },
+          fileCount: 0,
+          totalSize: 0,
+          uploadedFiles: []
+        };
+      }
+
+      const buildPath = path.join(config.workspacePath, '.quartz', 'public');
+
+      // Set workspace for DataManager to avoid "Workspace not set" errors
+      await this.dataManager.setWorkspace(config.workspacePath);
+
+      // Upload site bundle (this now includes manifest upload and returns complete result)
+      const bundleResult = await this.arweaveManager.uploadSiteBundle(buildPath, manifest);
+      
+      // The bundleResult now contains all the required fields including manifestUrl and uploadedFiles
+      return bundleResult;
+    } catch (error) {
+      console.error('Arweave deployment failed:', error);
+      return {
+        success: false,
+        error: `Arweave deployment failed: ${(error as Error).message}`,
+        manifestHash: '',
+        manifestUrl: '',
+        totalCost: { ar: '0' },
+        fileCount: 0,
+        totalSize: 0,
+        uploadedFiles: []
+      };
+    }
+  }
+
+  /**
+   * Verify Arweave deployment
+   */
+  async verifyArweaveDeployment(
+    manifestHash: string
+  ): Promise<DeploymentVerification> {
+    try {
+      return await this.arweaveManager.verifySiteDeployment(manifestHash);
+    } catch (error) {
+      console.error('Failed to verify Arweave deployment:', error);
+      return {
+        isValid: false,
+        errors: [`Verification failed: ${(error as Error).message}`],
+        verifiedFiles: 0,
+        totalFiles: 0,
+        manifestAccessible: false
+      };
+    }
+  }
+
+  /**
+   * Deploy to both GitHub Pages and Arweave
+   */
+  async deployHybrid(
+    config: HybridDeployConfig
+  ): Promise<HybridDeployResult> {
+    try {
+      let githubResult: DeployResult;
+      let arweaveResult: ArweaveDeployResult;
+
+      if (config.syncStrategy === 'parallel') {
+        // Deploy to both platforms simultaneously
+        [githubResult, arweaveResult] = await Promise.all([
+          this.deployToGitHubPages(config.githubPages),
+          this.deployToArweave(config.arweave)
+        ]);
+      } else {
+        // Deploy sequentially
+        githubResult = await this.deployToGitHubPages(config.githubPages);
+        arweaveResult = await this.deployToArweave(config.arweave);
+      }
+
+      const crossReferences = {
+        githubUrl: githubResult.url || '',
+        arweaveUrl: arweaveResult.url || ''
+      };
+
+      return {
+        githubPages: githubResult,
+        arweave: arweaveResult,
+        crossReferences
+      };
+    } catch (error) {
+      console.error('Hybrid deployment failed:', error);
+      return {
+        githubPages: {
+          success: false,
+          error: `Hybrid deployment failed: ${(error as Error).message}`
+        },
+        arweave: {
+          success: false,
+          error: `Hybrid deployment failed: ${(error as Error).message}`,
+          manifestHash: '',
+          manifestUrl: '',
+          totalCost: { ar: '0' },
+          fileCount: 0,
+          totalSize: 0,
+          uploadedFiles: []
+        },
+        crossReferences: {
+          githubUrl: '',
+          arweaveUrl: ''
+        }
+      };
+    }
+  }
+
+  /**
+   * Estimate Arweave deployment cost
+   */
+  async estimateArweaveDeploymentCost(
+    config: ArweaveDeployConfig
+  ): Promise<DeploymentCostEstimate> {
+    try {
+      const manifest = await this.generateArweaveManifest(config);
+      return await this.arweaveManager.estimateSiteDeploymentCost(manifest);
+    } catch (error) {
+      console.error('Failed to estimate Arweave deployment cost:', error);
+      return {
+        totalSize: 0,
+        arCost: '0',
+        breakdown: {
+          html: 0,
+          css: 0,
+          js: 0,
+          images: 0,
+          other: 0
+        }
+      };
+    }
+  }
+
+  /**
+   * Collect build files for manifest generation
+   */
+  private async collectBuildFilesForManifest(
+    buildPath: string,
+    files: ArweaveDeployFile[]
+  ): Promise<void> {
+    try {
+      const entries = await fs.readdir(buildPath, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(buildPath, entry.name);
+        
+        if (entry.isDirectory()) {
+          // Skip hidden directories and node_modules
+          if (!entry.name.startsWith('.') && entry.name !== 'node_modules') {
+            await this.collectBuildFilesForManifest(fullPath, files);
+          }
+        } else if (entry.isFile()) {
+          // Skip hidden files and temporary files
+          if (!entry.name.startsWith('.') && !entry.name.endsWith('.tmp')) {
+            const relativePath = path.relative(buildPath, fullPath);
+            const stats = await fs.stat(fullPath);
+            
+            // Generate content hash
+            const content = await fs.readFile(fullPath);
+            const crypto = require('crypto');
+            const hash = crypto.createHash('sha256').update(content).digest('hex');
+            
+            files.push({
+              path: `/${relativePath.replace(/\\/g, '/')}`,
+              hash,
+              size: stats.size,
+              contentType: this.getContentType(fullPath),
+              tags: {
+                'Content-Type': this.getContentType(fullPath),
+                'meridian:file-path': `/${relativePath.replace(/\\/g, '/')}`,
+                'meridian:file-size': stats.size.toString()
+              }
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to collect files from ${buildPath}:`, error);
+    }
+  }
+
+  /**
+   * Get content type for file
+   */
+  private getContentType(filePath: string): string {
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeTypes: { [key: string]: string } = {
+      '.html': 'text/html',
+      '.htm': 'text/html',
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.json': 'application/json',
+      '.xml': 'application/xml',
+      '.txt': 'text/plain',
+      '.md': 'text/markdown',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.svg': 'image/svg+xml',
+      '.webp': 'image/webp',
+      '.ico': 'image/x-icon',
+      '.woff': 'font/woff',
+      '.woff2': 'font/woff2',
+      '.ttf': 'font/ttf',
+      '.otf': 'font/otf'
+    };
+    
+    return mimeTypes[ext] || 'application/octet-stream';
   }
 }
 
