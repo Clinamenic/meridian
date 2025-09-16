@@ -7,10 +7,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Workspace management
   selectWorkspace: () => ipcRenderer.invoke('select-workspace'),
   getWorkspace: () => ipcRenderer.invoke('get-workspace'),
-  
+
   // Window management for landing page transition
   transitionToMainApp: () => ipcRenderer.invoke('transitionToMainApp'),
-  
+
   // Window control methods
   closeWindow: () => ipcRenderer.invoke('window:close'),
   minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
@@ -22,12 +22,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   archive: {
     loadData: () => ipcRenderer.invoke('archive:load-data'),
     saveData: (data: any) => ipcRenderer.invoke('archive:save-data', data),
-    uploadFile: (filePath: string, tags: string[]) => 
+    uploadFile: (filePath: string, tags: string[]) =>
       ipcRenderer.invoke('archive:upload-file', filePath, tags),
     getWalletBalance: () => ipcRenderer.invoke('archive:get-wallet-balance'),
-    estimateCost: (fileSize: number) => 
+    estimateCost: (fileSize: number) =>
       ipcRenderer.invoke('archive:estimate-cost', fileSize),
-    setupWallet: (walletJWK: string) => 
+    setupWallet: (walletJWK: string) =>
       ipcRenderer.invoke('archive:setup-wallet', walletJWK),
     getWalletInfo: () => ipcRenderer.invoke('archive:get-wallet-info'),
     isWalletConfigured: () => ipcRenderer.invoke('archive:is-wallet-configured'),
@@ -61,7 +61,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     exportToDatabase: (exportData: any) => ipcRenderer.invoke('resource:export-to-database', exportData),
     getStats: () => ipcRenderer.invoke('resource:get-stats'),
     searchResources: (criteria: any) => ipcRenderer.invoke('resource:search-resources', criteria),
-    addArweaveUploadToResource: (resourceId: string, uploadRecord: any) => 
+    addArweaveUploadToResource: (resourceId: string, uploadRecord: any) =>
       ipcRenderer.invoke('resource:add-arweave-upload-to-resource', resourceId, uploadRecord),
   },
 
@@ -78,7 +78,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deployGitHub: (config: any) => ipcRenderer.invoke('deploy:deploy-github', config),
     exportStatic: (config: any) => ipcRenderer.invoke('deploy:export-static', config),
     checkInitialized: (workspacePath: string) => ipcRenderer.invoke('deploy:check-initialized', workspacePath),
-    
+
     // GitHub-specific APIs
     githubAccounts: () => ipcRenderer.invoke('deploy:github-accounts'),
     addGitHubAccount: (token: string, nickname?: string, repoName?: string) => ipcRenderer.invoke('deploy:add-github-account', token, nickname, repoName),
@@ -87,21 +87,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
     removeGitHubAccount: (accountId: string) => ipcRenderer.invoke('deploy:remove-github-account', accountId),
     deployToGitHubPages: (config: any) => ipcRenderer.invoke('deploy:deploy-to-github-pages', config),
     generateTokenRequestUrl: (repositoryName?: string) => ipcRenderer.invoke('deploy:generate-token-request-url', repositoryName),
-            generateGitHubWorkflow: () => ipcRenderer.invoke('deploy:generate-github-workflow'),
-        removeGitHubWorkflow: () => ipcRenderer.invoke('deploy:remove-github-workflow'),
-        checkWorkflowFileExists: () => ipcRenderer.invoke('deploy:check-workflow-file-exists'),
-    startGitHubAccountAddition: (repoName?: string) => 
+    generateGitHubWorkflow: () => ipcRenderer.invoke('deploy:generate-github-workflow'),
+    removeGitHubWorkflow: () => ipcRenderer.invoke('deploy:remove-github-workflow'),
+    checkWorkflowFileExists: () => ipcRenderer.invoke('deploy:check-workflow-file-exists'),
+    startGitHubAccountAddition: (repoName?: string) =>
       ipcRenderer.invoke('deploy:start-github-account-addition', repoName),
-    generateGitHubTokenUrl: (repoName?: string) => 
+    generateGitHubTokenUrl: (repoName?: string) =>
       ipcRenderer.invoke('deploy:generate-github-token-url', repoName),
-    getGitHubAccounts: () => 
+    getGitHubAccounts: () =>
       ipcRenderer.invoke('deploy:github-accounts'),
-    
+
     // Arweave deployment APIs
     arweaveDeploy: (config: any) => ipcRenderer.invoke('deploy:arweave-deploy', config),
     arweaveCostEstimate: (config: any) => ipcRenderer.invoke('deploy:arweave-cost-estimate', config),
     hybridDeploy: (config: any) => ipcRenderer.invoke('deploy:hybrid-deploy', config),
     deployToGitHub: (config: any) => ipcRenderer.invoke('deploy:deploy-to-github', config),
+
+    // Arweave deployment history APIs
+    getDeploymentHistory: () => ipcRenderer.invoke('deploy:get-deployment-history'),
+    getDeploymentById: (id: string) => ipcRenderer.invoke('deploy:get-deployment-by-id', id),
+    getRecentDeployments: (limit?: number) => ipcRenderer.invoke('deploy:get-recent-deployments', limit),
+    deleteDeployment: (id: string) => ipcRenderer.invoke('deploy:delete-deployment', id),
+    exportDeploymentHistory: () => ipcRenderer.invoke('deploy:export-deployment-history'),
+    getDeploymentStats: () => ipcRenderer.invoke('deploy:get-deployment-stats'),
   },
 
   // Site template APIs
@@ -118,114 +126,114 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Broadcast APIs
   broadcast: {
     loadData: () => ipcRenderer.invoke('broadcast:load-data'),
-    addPost: (postData: Omit<SocialPost, 'id' | 'createdAt'>) => 
+    addPost: (postData: Omit<SocialPost, 'id' | 'createdAt'>) =>
       ipcRenderer.invoke('broadcast:add-post', postData),
-    updatePostStatus: (id: string, status: SocialPost['status'], postedAt?: { [platform: string]: string }) => 
+    updatePostStatus: (id: string, status: SocialPost['status'], postedAt?: { [platform: string]: string }) =>
       ipcRenderer.invoke('broadcast:update-post-status', id, status, postedAt),
-    postToPlatform: (postId: string, platform: Platform) => 
+    postToPlatform: (postId: string, platform: Platform) =>
       ipcRenderer.invoke('broadcast:post-to-platform', postId, platform),
-    authenticatePlatform: (platform: Platform, credentials: Record<string, string>) => 
+    authenticatePlatform: (platform: Platform, credentials: Record<string, string>) =>
       ipcRenderer.invoke('broadcast:authenticate-platform', platform, credentials),
   },
 
   // AT Protocol APIs
   atproto: {
-    addAccount: (handle: string, password: string, nickname: string) => 
+    addAccount: (handle: string, password: string, nickname: string) =>
       ipcRenderer.invoke('atproto:add-account', handle, password, nickname),
-    removeAccount: (accountId: string) => 
+    removeAccount: (accountId: string) =>
       ipcRenderer.invoke('atproto:remove-account', accountId),
-    listAccounts: () => 
+    listAccounts: () =>
       ipcRenderer.invoke('atproto:list-accounts'),
-    switchAccount: (accountId: string) => 
+    switchAccount: (accountId: string) =>
       ipcRenderer.invoke('atproto:switch-account', accountId),
-    getActiveAccount: () => 
+    getActiveAccount: () =>
       ipcRenderer.invoke('atproto:get-active-account'),
-    updateAccountNickname: (accountId: string, nickname: string) => 
+    updateAccountNickname: (accountId: string, nickname: string) =>
       ipcRenderer.invoke('atproto:update-account-nickname', accountId, nickname),
-    getProfile: (accountId?: string) => 
+    getProfile: (accountId?: string) =>
       ipcRenderer.invoke('atproto:get-profile', accountId),
-    validateSession: (accountId: string) => 
+    validateSession: (accountId: string) =>
       ipcRenderer.invoke('atproto:validate-session', accountId),
-    postContent: (content: string, accountId?: string) => 
+    postContent: (content: string, accountId?: string) =>
       ipcRenderer.invoke('atproto:post-content', content, accountId),
-    isAvailable: () => 
+    isAvailable: () =>
       ipcRenderer.invoke('atproto:is-available'),
   },
 
   // X (Twitter) APIs
   x: {
-    addAccount: (apiKey: string, apiSecret: string, accessToken: string, accessTokenSecret: string, nickname: string) => 
+    addAccount: (apiKey: string, apiSecret: string, accessToken: string, accessTokenSecret: string, nickname: string) =>
       ipcRenderer.invoke('x:add-account', apiKey, apiSecret, accessToken, accessTokenSecret, nickname),
-    removeAccount: (accountId: string) => 
+    removeAccount: (accountId: string) =>
       ipcRenderer.invoke('x:remove-account', accountId),
-    listAccounts: () => 
+    listAccounts: () =>
       ipcRenderer.invoke('x:list-accounts'),
-    switchAccount: (accountId: string) => 
+    switchAccount: (accountId: string) =>
       ipcRenderer.invoke('x:switch-account', accountId),
-    getActiveAccount: () => 
+    getActiveAccount: () =>
       ipcRenderer.invoke('x:get-active-account'),
-    updateAccountNickname: (accountId: string, nickname: string) => 
+    updateAccountNickname: (accountId: string, nickname: string) =>
       ipcRenderer.invoke('x:update-account-nickname', accountId, nickname),
-    getUserInfo: (accountId?: string) => 
+    getUserInfo: (accountId?: string) =>
       ipcRenderer.invoke('x:get-user-info', accountId),
-    validateCredentials: (accountId: string) => 
+    validateCredentials: (accountId: string) =>
       ipcRenderer.invoke('x:validate-credentials', accountId),
-    postTweet: (content: string, accountId?: string) => 
+    postTweet: (content: string, accountId?: string) =>
       ipcRenderer.invoke('x:post-tweet', content, accountId),
-    isAvailable: () => 
+    isAvailable: () =>
       ipcRenderer.invoke('x:is-available'),
-    checkAppPermissions: (accountId?: string) => 
+    checkAppPermissions: (accountId?: string) =>
       ipcRenderer.invoke('x:check-app-permissions', accountId),
   },
 
   // Centralized Account State APIs
   accountState: {
-    getState: () => 
+    getState: () =>
       ipcRenderer.invoke('account-state:get-state'),
-    getPlatformState: (platform: string) => 
+    getPlatformState: (platform: string) =>
       ipcRenderer.invoke('account-state:get-platform-state', platform),
-    refreshAll: () => 
+    refreshAll: () =>
       ipcRenderer.invoke('account-state:refresh-all'),
-    refreshPlatform: (platform: string) => 
+    refreshPlatform: (platform: string) =>
       ipcRenderer.invoke('account-state:refresh-platform', platform),
-    isInitialized: () => 
+    isInitialized: () =>
       ipcRenderer.invoke('account-state:is-initialized'),
-    handleSwitch: (platform: string, accountId: string) => 
+    handleSwitch: (platform: string, accountId: string) =>
       ipcRenderer.invoke('account-state:handle-switch', platform, accountId),
   },
 
   // Configuration APIs
   config: {
-    loadSiteSettings: (workspacePath: string) => 
+    loadSiteSettings: (workspacePath: string) =>
       ipcRenderer.invoke('config:load-site-settings', workspacePath),
-    saveSiteSettings: (workspacePath: string, settings: any) => 
+    saveSiteSettings: (workspacePath: string, settings: any) =>
       ipcRenderer.invoke('config:save-site-settings', workspacePath, settings),
   },
 
   // Credential APIs
   credentials: {
-    set: (service: Platform | 'arweave', key: string, value: string) => 
+    set: (service: Platform | 'arweave', key: string, value: string) =>
       ipcRenderer.invoke('credentials:set', service, key, value),
-    get: (service: Platform | 'arweave', key: string) => 
+    get: (service: Platform | 'arweave', key: string) =>
       ipcRenderer.invoke('credentials:get', service, key),
-    validatePlatform: (platform: Platform) => 
+    validatePlatform: (platform: Platform) =>
       ipcRenderer.invoke('credentials:validate-platform', platform),
   },
 
   // Utility APIs
-  showItemInFolder: (filePath: string) => 
+  showItemInFolder: (filePath: string) =>
     ipcRenderer.invoke('show-item-in-folder', filePath),
-  openExternal: (url: string) => 
+  openExternal: (url: string) =>
     ipcRenderer.invoke('open-external', url),
-  selectFile: (filters?: { name: string; extensions: string[] }[]) => 
+  selectFile: (filters?: { name: string; extensions: string[] }[]) =>
     ipcRenderer.invoke('select-file', filters),
-  getFileStats: (filePath: string) => 
+  getFileStats: (filePath: string) =>
     ipcRenderer.invoke('get-file-stats', filePath),
-  fileExists: (filePath: string) => 
+  fileExists: (filePath: string) =>
     ipcRenderer.invoke('file-exists', filePath),
-  readFile: (filePath: string) => 
+  readFile: (filePath: string) =>
     ipcRenderer.invoke('read-file', filePath),
-  getAppVersion: () => 
+  getAppVersion: () =>
     ipcRenderer.invoke('get-app-version'),
 });
 
@@ -234,9 +242,9 @@ export interface ElectronAPI {
   selectWorkspace: () => Promise<{ success: boolean; path?: string }>;
   getWorkspace: () => Promise<string | null>;
   transitionToMainApp: () => Promise<{ success: boolean; error?: string }>;
-  
 
-  
+
+
   archive: {
     loadData: () => Promise<any>;
     uploadFile: (filePath: string, tags: string[]) => Promise<any>;
@@ -287,7 +295,7 @@ export interface ElectronAPI {
     deployGitHub: (config: any) => Promise<any>;
     exportStatic: (config: any) => Promise<string>;
     checkInitialized: (workspacePath: string) => Promise<boolean>;
-    
+
     // GitHub-specific APIs
     githubAccounts: () => Promise<any[]>;
     addGitHubAccount: (token: string, nickname?: string, repoName?: string) => Promise<any>;
@@ -296,18 +304,26 @@ export interface ElectronAPI {
     removeGitHubAccount: (accountId: string) => Promise<void>;
     deployToGitHubPages: (config: any) => Promise<any>;
     generateTokenRequestUrl: (repositoryName?: string) => Promise<string>;
-    generateGitHubWorkflow: () => Promise<{success: boolean, error?: string}>;
-    removeGitHubWorkflow: () => Promise<{success: boolean, error?: string}>;
-    checkWorkflowFileExists: () => Promise<{exists: boolean, error?: string}>;
+    generateGitHubWorkflow: () => Promise<{ success: boolean, error?: string }>;
+    removeGitHubWorkflow: () => Promise<{ success: boolean, error?: string }>;
+    checkWorkflowFileExists: () => Promise<{ exists: boolean, error?: string }>;
     startGitHubAccountAddition: (repoName?: string) => Promise<void>;
     generateGitHubTokenUrl: (repoName?: string) => Promise<string>;
     getGitHubAccounts: () => Promise<any[]>;
-    
+
     // Arweave deployment APIs
     arweaveDeploy: (config: any) => Promise<any>;
     arweaveCostEstimate: (config: any) => Promise<any>;
     hybridDeploy: (config: any) => Promise<any>;
     deployToGitHub: (config: any) => Promise<any>;
+
+    // Arweave deployment history APIs
+    getDeploymentHistory: () => Promise<any[]>;
+    getDeploymentById: (id: string) => Promise<any | null>;
+    getRecentDeployments: (limit?: number) => Promise<any[]>;
+    deleteDeployment: (id: string) => Promise<boolean>;
+    exportDeploymentHistory: () => Promise<{ success: boolean; filePath?: string; error?: string }>;
+    getDeploymentStats: () => Promise<any>;
   };
 
   template: {
@@ -319,7 +335,7 @@ export interface ElectronAPI {
     validateTemplate: (templatePath: string) => Promise<any>;
     quickValidate: (templatePath: string) => Promise<boolean>;
   };
-  
+
   broadcast: {
     loadData: () => Promise<any>;
     addPost: (postData: Omit<SocialPost, 'id' | 'createdAt'>) => Promise<SocialPost>;
@@ -363,7 +379,7 @@ export interface ElectronAPI {
     isInitialized: () => Promise<boolean>;
     handleSwitch: (platform: string, accountId: string) => Promise<void>;
   };
-  
+
   credentials: {
     set: (service: Platform | 'arweave', key: string, value: string) => Promise<void>;
     get: (service: Platform | 'arweave', key: string) => Promise<string | null>;
@@ -374,7 +390,7 @@ export interface ElectronAPI {
     loadSiteSettings: (workspacePath: string) => Promise<any>;
     saveSiteSettings: (workspacePath: string, settings: any) => Promise<void>;
   };
-  
+
   showItemInFolder: (filePath: string) => Promise<void>;
   openExternal: (url: string) => Promise<void>;
   selectFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | null>;

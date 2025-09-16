@@ -9,7 +9,7 @@ import { TagAutocomplete } from '../components/TagAutocomplete.js';
 export class ResourceManager extends ModuleBase {
   constructor(app) {
     super(app);
-    
+
     // Meridian-compliant unified state management
     this.state = {
       resources: [],
@@ -27,14 +27,14 @@ export class ResourceManager extends ModuleBase {
         error: null
       }
     };
-    
+
     // Modal state
     this.editingResourceId = null;
     this.modalTags = [];
-    
+
     // Tag autocomplete instances for cleanup
     this.tagAutocompletes = [];
-    
+
     // Legacy state properties (to be removed after migration)
     this.resources = this.state.resources; // Alias for backward compatibility
     this.activeTagFilters = this.state.filters.activeTags; // Alias for backward compatibility
@@ -45,41 +45,41 @@ export class ResourceManager extends ModuleBase {
 
   async onInit() {
     console.log('[ResourceManager] ===== INITIALIZING RESOURCE MANAGER =====');
-    
+
     // Emit initialization event for module coordination
     this.emit('resourceManagerInitializing');
-    
+
     // Load filter state first (before rendering panel)
     console.log('[ResourceManager] Loading filter state...');
     this.loadFilterState();
-    
+
     // Don't load resources yet - wait for workspace to be selected
     console.log('[ResourceManager] Setting up panel and event listeners...');
     this.renderResourcePanel();
     console.log('[ResourceManager] Panel rendered and event listeners set up, initializing collapse state...');
     this.initializeCollapseState();
-    
+
     // Emit initialization complete event
-    this.emit('resourceManagerInitialized', { 
+    this.emit('resourceManagerInitialized', {
       moduleName: 'ResourceManager',
-      state: this.state 
+      state: this.state
     });
-    
+
     console.log('[ResourceManager] ===== RESOURCE MANAGER INITIALIZED SUCCESSFULLY =====');
   }
 
   async onCleanup() {
     console.log('[ResourceManager] Cleaning up...');
-    
+
     // Clean up tag autocomplete instances
     this.cleanupTagAutocompletes();
-    
+
     // Save collapse state
     this.saveCollapseState();
-    
+
     // Emit cleanup event
     this.emit('resourceManagerCleanedUp');
-    
+
     console.log('[ResourceManager] Cleaned up successfully');
   }
 
@@ -109,13 +109,13 @@ export class ResourceManager extends ModuleBase {
    */
   updateState(updates, emitEvent = true) {
     const oldState = JSON.parse(JSON.stringify(this.state));
-    
+
     // Deep merge updates into state
     this.mergeState(this.state, updates);
-    
+
     // Update legacy aliases for backward compatibility
     this.updateLegacyAliases();
-    
+
     // Emit state change event if requested
     if (emitEvent) {
       this.emit('resourceStateChanged', {
@@ -258,22 +258,22 @@ export class ResourceManager extends ModuleBase {
         </div>
       </div>
     `;
-    
+
     container.innerHTML = html;
-    
+
     // Restore search input value from state
     const searchInput = container.querySelector('#resource-search');
     if (searchInput) {
       searchInput.value = this.state.filters.searchTerm;
     }
-    
+
     // Restore filter logic button state
     const filterLogicBtn = container.querySelector('#resource-filter-logic-btn');
     if (filterLogicBtn) {
       filterLogicBtn.setAttribute('data-logic', this.state.filters.filterLogic);
       filterLogicBtn.setAttribute('title', `Toggle Filter Logic: ${this.state.filters.filterLogic === 'any' ? 'ANY' : 'ALL'} of these tags`);
     }
-    
+
     // Always set up event listeners after rendering
     this.setupResourceEventListeners();
     this.setupResourceItemEventListeners();
@@ -285,7 +285,7 @@ export class ResourceManager extends ModuleBase {
   renderResourceList() {
     // Get filtered resources based on current search and tag filters
     const filteredResources = this.getFilteredResources();
-    
+
     if (filteredResources.length === 0) {
       if (this.state.resources.length === 0) {
         return '<div class="loading-state">No resources yet. Click "Add Resource" to get started!</div>';
@@ -298,20 +298,30 @@ export class ResourceManager extends ModuleBase {
     return filteredResources.map(resource => {
       const isCollapsed = this.state.collapse.collapsedItems.has(resource.id);
       const arweaveHashes = resource.properties["meridian:arweave_hashes"] || [];
-      
 
-      
+
+
       return `
         <div class="resource-item ${isCollapsed ? 'collapsed' : ''}" data-id="${resource.id}">
           <div class="resource-header">
+            ${(() => {
+          const isImage = this.isImageResource(resource);
+          console.log(`[ImagePreview] Rendering resource ${resource.id}: isImage=${isImage}, location=${resource.locations.primary.value}`);
+          return isImage ? `
+                <img src="${this.getImageUrl(resource)}" 
+                     alt=""
+                     class="resource-image-preview"
+                     onerror="this.style.display='none'">
+              ` : '';
+        })()}
             <div class="resource-info">
               <h4 class="resource-title">${this.escapeHtml(resource.properties["dc:title"] || "Untitled")}</h4>
               <div class="resource-path">
                 <span class="file-status-indicator ${this.getResourceStatusIndicator(resource)}"></span>
-                ${resource.locations.primary.type === 'http-url' && this.isValidUrl(resource.locations.primary.value) 
-                  ? `<a href="${this.escapeHtml(resource.locations.primary.value)}" target="_blank" rel="noopener noreferrer" class="resource-url-link" title="Open in browser">${this.escapeHtml(resource.locations.primary.value)}</a>`
-                  : this.escapeHtml(resource.locations.primary.value)
-                }
+                ${resource.locations.primary.type === 'http-url' && this.isValidUrl(resource.locations.primary.value)
+          ? `<a href="${this.escapeHtml(resource.locations.primary.value)}" target="_blank" rel="noopener noreferrer" class="resource-url-link" title="Open in browser">${this.escapeHtml(resource.locations.primary.value)}</a>`
+          : this.escapeHtml(resource.locations.primary.value)
+        }
               </div>
             </div>
             <div class="resource-actions">
@@ -363,14 +373,14 @@ export class ResourceManager extends ModuleBase {
               <div class="tag-autocomplete" id="autocomplete-${resource.id}" style="display: none;"></div>
             </div>
             
-            ${resource.properties["meridian:tags"] && resource.properties["meridian:tags"].length > 0 ? 
-              resource.properties["meridian:tags"].map(tag => `
+            ${resource.properties["meridian:tags"] && resource.properties["meridian:tags"].length > 0 ?
+          resource.properties["meridian:tags"].map(tag => `
                 <span class="resource-tag">
                   ${this.escapeHtml(tag)}
                   <button class="remove-tag-btn" data-resource-id="${resource.id}" data-tag="${this.escapeHtml(tag)}" title="Remove tag">×</button>
                 </span>
               `).join('') : ''
-            }
+        }
           </div>
           
           ${arweaveHashes.length > 0 ? `
@@ -397,15 +407,15 @@ export class ResourceManager extends ModuleBase {
                       </a>
                       <span class="resource-hash-timestamp">${this.formatDate(hash.timestamp)}</span>
                       ${(() => {
-                        const filteredTags = hash.tags ? hash.tags.filter(tag => !tag.startsWith('uuid:') && !tag.startsWith('timestamp:')) : [];
-                        return filteredTags.length > 0 ? `
+            const filteredTags = hash.tags ? hash.tags.filter(tag => !tag.startsWith('uuid:') && !tag.startsWith('timestamp:')) : [];
+            return filteredTags.length > 0 ? `
                         <div class="resource-hash-tags">
                           ${filteredTags.map(tag => `
                             <span class="resource-hash-tag" title="${this.escapeHtml(tag)}">${this.escapeHtml(tag)}</span>
                           `).join('')}
                         </div>
                       ` : '';
-                      })()}
+          })()}
                     </div>
                     <div class="resource-hash-actions">
                       <button class="resource-hash-action-btn copy-hash-btn" data-hash="${hash.hash}" title="Copy Hash">
@@ -456,21 +466,21 @@ export class ResourceManager extends ModuleBase {
         const description = (resource.properties["meridian:description"] || "").toLowerCase();
         const url = resource.locations.primary.value.toLowerCase();
         const tags = (resource.properties["meridian:tags"] || []).join(" ").toLowerCase();
-        
-        return title.includes(searchTerm) || 
-               description.includes(searchTerm) || 
-               url.includes(searchTerm) || 
-               tags.includes(searchTerm);
+
+        return title.includes(searchTerm) ||
+          description.includes(searchTerm) ||
+          url.includes(searchTerm) ||
+          tags.includes(searchTerm);
       });
     }
 
     // Apply tag filters
     if (this.state.filters.activeTags.size > 0) {
       const activeTagsArray = Array.from(this.state.filters.activeTags);
-      
+
       filtered = filtered.filter(resource => {
         const resourceTags = new Set(resource.properties["meridian:tags"] || []);
-        
+
         if (this.state.filters.filterLogic === 'any') {
           // Show if ANY of the active filters match
           return activeTagsArray.some(tag => resourceTags.has(tag));
@@ -489,7 +499,7 @@ export class ResourceManager extends ModuleBase {
    */
   renderTagFilters() {
     const allTags = this.getAllTags();
-    
+
     if (allTags.length === 0) {
       return '<div class="no-tags">No tags yet</div>';
     }
@@ -532,7 +542,7 @@ export class ResourceManager extends ModuleBase {
    * Get count of resources with a specific tag (Meridian-compliant)
    */
   getTagCount(tag) {
-    return this.state.resources.filter(resource => 
+    return this.state.resources.filter(resource =>
       (resource.properties["meridian:tags"] || []).includes(tag)
     ).length;
   }
@@ -551,6 +561,70 @@ export class ResourceManager extends ModuleBase {
       default:
         return 'unknown';
     }
+  }
+
+  /**
+   * Check if resource is an image based on file extension or content type
+   */
+  isImageResource(resource) {
+    const location = resource.locations.primary.value.toLowerCase();
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+
+    // Check file extension in URL
+    let isImage = imageExtensions.some(ext => location.endsWith(ext));
+
+    // Check if it's tagged as an image
+    if (!isImage && resource.properties["meridian:tags"]) {
+      const tags = resource.properties["meridian:tags"];
+      isImage = tags.some(tag =>
+        tag.toLowerCase().includes('image') ||
+        tag.toLowerCase().includes('photo') ||
+        tag.toLowerCase().includes('picture')
+      );
+    }
+
+    // Check if it's an Arweave URL (often images without extensions)
+    if (!isImage && location.includes('arweave.net/')) {
+      // For Arweave URLs, we'll assume it could be an image and let the browser decide
+      // The onerror handler will hide it if it's not actually an image
+      isImage = true;
+    }
+
+    // Debug logging
+    if (isImage) {
+      console.log(`[ImagePreview] Detected image resource: ${location} (tags: ${resource.properties["meridian:tags"]?.join(', ') || 'none'})`);
+    }
+
+    return isImage;
+  }
+
+  /**
+   * Get image URL for resource
+   */
+  getImageUrl(resource) {
+    let imageUrl;
+
+    if (resource.state.type === 'internal') {
+      // For local files, use file:// protocol
+      imageUrl = `file://${resource.locations.primary.value}`;
+    } else if (resource.state.type === 'external') {
+      // For external URLs, use directly
+      imageUrl = resource.locations.primary.value;
+    } else if (resource.state.type === 'arweave') {
+      // For Arweave resources, use the Arweave gateway
+      const arweaveHashes = resource.properties["meridian:arweave_hashes"] || [];
+      if (arweaveHashes.length > 0) {
+        imageUrl = arweaveHashes[arweaveHashes.length - 1].link; // Use most recent upload
+      } else {
+        imageUrl = resource.locations.primary.value;
+      }
+    } else {
+      imageUrl = resource.locations.primary.value;
+    }
+
+    // Debug logging
+    console.log(`[ImagePreview] Resource type: ${resource.state.type}, URL: ${imageUrl}`);
+    return imageUrl;
   }
 
   /**
@@ -573,11 +647,11 @@ export class ResourceManager extends ModuleBase {
         console.warn('[ResourceManager] Collapse button missing resourceId:', btn);
         return;
       }
-      
+
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         e.preventDefault();
-        
+
         // Double-check the resource ID at click time
         const currentResourceId = btn.dataset.resourceId;
         if (currentResourceId) {
@@ -644,6 +718,77 @@ export class ResourceManager extends ModuleBase {
         await this.copyToClipboard(hash);
       });
     });
+
+    // Setup tag autocomplete for main resource list
+    this.setupMainResourceListTagAutocomplete();
+  }
+
+  /**
+   * Setup tag autocomplete for main resource list (lazy initialization)
+   */
+  setupMainResourceListTagAutocomplete() {
+    console.log('[ResourceManager] Setting up main resource list tag autocomplete (lazy initialization)');
+
+    // Store autocomplete instances to avoid recreating them
+    this.mainResourceListAutocompleteInstances = this.mainResourceListAutocompleteInstances || new Map();
+
+    // Setup tag inputs for main resource list
+    document.querySelectorAll('.resource-item .tag-input').forEach(input => {
+      const resourceId = input.dataset.resourceId;
+      const addTagBtn = input.parentElement.querySelector('.add-tag-btn');
+      const autocompleteContainer = document.querySelector(`#autocomplete-${resourceId}`);
+
+      if (!resourceId || !addTagBtn || !autocompleteContainer) {
+        console.warn('[ResourceManager] Missing elements for resource:', resourceId);
+        return;
+      }
+
+      // Input event for enabling/disabling add button and lazy autocomplete initialization
+      input.addEventListener('input', (e) => {
+        const value = e.target.value.trim();
+        addTagBtn.disabled = !value;
+
+        // Lazy initialization: create autocomplete instance only when user starts typing
+        if (value && !this.mainResourceListAutocompleteInstances.has(resourceId)) {
+          this.setupIndividualMainResourceListTagAutocomplete(input, autocompleteContainer, resourceId);
+          this.mainResourceListAutocompleteInstances.set(resourceId, true);
+        }
+      });
+
+      // Add tag button click
+      addTagBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const value = input.value.trim();
+        if (value) {
+          this.addTagToResource(resourceId, value);
+          input.value = '';
+          addTagBtn.disabled = true;
+        }
+      });
+
+      // Enter key to add tag
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const value = input.value.trim();
+          if (value) {
+            this.addTagToResource(resourceId, value);
+            input.value = '';
+            addTagBtn.disabled = true;
+          }
+        }
+      });
+    });
+
+    // Setup remove tag buttons for main resource list
+    document.querySelectorAll('.resource-item .remove-tag-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const resourceId = btn.dataset.resourceId;
+        const tag = btn.dataset.tag;
+        this.removeTagFromResource(resourceId, tag);
+      });
+    });
   }
 
   /**
@@ -676,13 +821,13 @@ export class ResourceManager extends ModuleBase {
             searchTerm: e.target.value
           }
         });
-        
+
         // Apply filters
         this.applyFilters();
-        
+
         // Save filter state
         this.saveFilterState();
-        
+
         // Emit search change event
         this.emit('searchChanged', {
           searchTerm: this.state.filters.searchTerm,
@@ -696,24 +841,24 @@ export class ResourceManager extends ModuleBase {
     if (filterLogicBtn) {
       filterLogicBtn.addEventListener('click', () => {
         const newLogic = this.state.filters.filterLogic === 'any' ? 'all' : 'any';
-        
+
         // Update state
         this.updateState({
           filters: {
             filterLogic: newLogic
           }
         });
-        
+
         // Update button appearance
         filterLogicBtn.setAttribute('data-logic', newLogic);
         filterLogicBtn.setAttribute('title', `Toggle Filter Logic: ${newLogic === 'any' ? 'ANY' : 'ALL'} of these tags`);
-        
+
         // Apply filters
         this.applyFilters();
-        
+
         // Save filter state
         this.saveFilterState();
-        
+
         // Emit filter logic change event
         this.emit('filterLogicChanged', {
           filterLogic: newLogic,
@@ -750,7 +895,7 @@ export class ResourceManager extends ModuleBase {
     resourcePanel.addEventListener('click', (e) => {
       const tagFilterBtn = e.target.closest('.tag-filter');
       const tagDropdownBtn = e.target.closest('.tag-dropdown-btn');
-      
+
       if (tagFilterBtn && !tagDropdownBtn) {
         // Single click on tag filter (not dropdown button) - toggle filter
         const tag = tagFilterBtn.dataset.tag;
@@ -835,14 +980,14 @@ export class ResourceManager extends ModuleBase {
         const resourceId = e.target.closest('.resource-hash-toggle').dataset.resourceId;
         this.toggleArweaveHashList(resourceId);
       }
-      
+
       // Copy hash button
       if (e.target.closest('.copy-hash-btn')) {
         const hash = e.target.closest('.copy-hash-btn').dataset.hash;
         this.copyToClipboard(hash);
         this.showSuccess('Hash copied to clipboard');
       }
-      
+
       // Copy URL button
       if (e.target.closest('.copy-url-btn')) {
         const url = e.target.closest('.copy-url-btn').dataset.url;
@@ -927,17 +1072,17 @@ export class ResourceManager extends ModuleBase {
     // Get currently visible resources (respecting filters)
     const visibleResources = this.getFilteredResources();
     const visibleResourceIds = visibleResources.map(r => r.id);
-    
+
     // Determine new state based on current visible resources
-    const visibleCollapsedCount = visibleResourceIds.filter(id => 
+    const visibleCollapsedCount = visibleResourceIds.filter(id =>
       this.state.collapse.collapsedItems.has(id)
     ).length;
-    
+
     const newState = visibleCollapsedCount === visibleResourceIds.length ? 'expanded' : 'collapsed';
-    
+
     // Update collapsed items: preserve state for non-visible resources
     const newCollapsedItems = new Set(this.state.collapse.collapsedItems);
-    
+
     if (newState === 'collapsed') {
       // Add all visible resources to collapsed set
       visibleResourceIds.forEach(id => newCollapsedItems.add(id));
@@ -945,7 +1090,7 @@ export class ResourceManager extends ModuleBase {
       // Remove all visible resources from collapsed set
       visibleResourceIds.forEach(id => newCollapsedItems.delete(id));
     }
-    
+
     // Update state
     this.updateState({
       collapse: {
@@ -953,20 +1098,20 @@ export class ResourceManager extends ModuleBase {
         collapsedItems: newCollapsedItems
       }
     });
-    
+
     // Optimized UI update - only update collapse-related elements
     this.updateCollapseStateOnly();
-    
+
     // Ensure consistency after state change
     this.ensureCollapseStateConsistency();
-    
+
     // Save collapse state
     this.saveCollapseState();
-    
+
     // Emit event for other modules
-    this.emit('collapseStateChanged', { 
-      globalState: newState, 
-      collapsedItems: Array.from(this.state.collapse.collapsedItems) 
+    this.emit('collapseStateChanged', {
+      globalState: newState,
+      collapsedItems: Array.from(this.state.collapse.collapsedItems)
     });
   }
 
@@ -977,40 +1122,40 @@ export class ResourceManager extends ModuleBase {
     // Verify the resource exists and is currently visible
     const visibleResources = this.getFilteredResources();
     const resource = visibleResources.find(r => r.id === resourceId);
-    
+
     if (!resource) {
       console.warn('[ResourceManager] Cannot toggle collapse for non-visible resource:', resourceId);
       return;
     }
-    
+
     const newCollapsedItems = new Set(this.state.collapse.collapsedItems);
-    
+
     if (newCollapsedItems.has(resourceId)) {
       newCollapsedItems.delete(resourceId);
     } else {
       newCollapsedItems.add(resourceId);
     }
-    
+
     // Update state
     this.updateState({
       collapse: {
         collapsedItems: newCollapsedItems
       }
     });
-    
+
     // Optimized UI update - only update the specific resource
     this.updateResourceCollapseOnly(resourceId);
-    
+
     // Update global state consistency after individual change
     this.ensureCollapseStateConsistency();
-    
+
     // Save collapse state
     this.saveCollapseState();
-    
+
     // Emit event for UI updates
-    this.emit('resourceCollapseChanged', { 
-      resourceId, 
-      isCollapsed: this.state.collapse.collapsedItems.has(resourceId) 
+    this.emit('resourceCollapseChanged', {
+      resourceId,
+      isCollapsed: this.state.collapse.collapsedItems.has(resourceId)
     });
   }
 
@@ -1042,11 +1187,11 @@ export class ResourceManager extends ModuleBase {
     const collapseAllBtn = document.getElementById('resource-collapse-all-btn');
     if (collapseAllBtn) {
       collapseAllBtn.setAttribute('data-state', this.state.collapse.globalState);
-      collapseAllBtn.setAttribute('title', 
+      collapseAllBtn.setAttribute('title',
         this.state.collapse.globalState === 'expanded' ? 'Collapse All Resources' : 'Expand All Resources'
       );
     }
-    
+
     // Update individual collapse buttons and resource items
     document.querySelectorAll('.resource-collapse-btn').forEach(btn => {
       const resourceId = btn.dataset.resourceId;
@@ -1056,7 +1201,7 @@ export class ResourceManager extends ModuleBase {
         resourceItem.classList.toggle('collapsed', isCollapsed);
       }
     });
-    
+
     // Note: Tag filter buttons are now handled by updateTagFilters() to avoid conflicts
   }
 
@@ -1068,18 +1213,18 @@ export class ResourceManager extends ModuleBase {
     const collapseAllBtn = document.getElementById('resource-collapse-all-btn');
     if (collapseAllBtn) {
       collapseAllBtn.setAttribute('data-state', this.state.collapse.globalState);
-      collapseAllBtn.setAttribute('title', 
+      collapseAllBtn.setAttribute('title',
         this.state.collapse.globalState === 'expanded' ? 'Collapse All Resources' : 'Expand All Resources'
       );
     }
-    
+
     // Update all resource items' collapse state
     document.querySelectorAll('.resource-item').forEach(item => {
       const resourceId = item.dataset.id;
       if (resourceId) {
         const isCollapsed = this.state.collapse.collapsedItems.has(resourceId);
         item.classList.toggle('collapsed', isCollapsed);
-        
+
         // Also update the collapse button state for visual consistency
         const collapseBtn = item.querySelector('.resource-collapse-btn');
         if (collapseBtn) {
@@ -1108,12 +1253,12 @@ export class ResourceManager extends ModuleBase {
     if (resourceList) {
       // Store current collapse state before re-rendering
       const currentCollapsedItems = new Set(this.state.collapse.collapsedItems);
-      
+
       resourceList.innerHTML = this.renderResourceList();
-      
+
       // Re-setup event listeners for the updated DOM
       this.setupResourceItemEventListeners();
-      
+
       // Ensure collapse state is properly applied after DOM update
       this.ensureCollapseStateConsistency();
     }
@@ -1127,10 +1272,10 @@ export class ResourceManager extends ModuleBase {
     document.querySelectorAll('.resource-item').forEach(item => {
       const resourceId = item.dataset.id;
       const isCollapsed = this.state.collapse.collapsedItems.has(resourceId);
-      
+
       // Ensure the CSS class matches the stored state
       item.classList.toggle('collapsed', isCollapsed);
-      
+
       // Also ensure the collapse button icon is correct
       const collapseBtn = item.querySelector('.resource-collapse-btn');
       if (collapseBtn) {
@@ -1140,14 +1285,14 @@ export class ResourceManager extends ModuleBase {
         }
       }
     });
-    
+
     // Update global collapse all button state
     const collapseAllBtn = document.getElementById('resource-collapse-all-btn');
     if (collapseAllBtn) {
       // Determine current global state based on actual resource states
       const visibleResources = document.querySelectorAll('.resource-item');
       const collapsedCount = document.querySelectorAll('.resource-item.collapsed').length;
-      
+
       let globalState;
       if (visibleResources.length === 0) {
         globalState = 'expanded'; // Default when no resources
@@ -1156,7 +1301,7 @@ export class ResourceManager extends ModuleBase {
       } else {
         globalState = 'expanded'; // Some or none collapsed
       }
-      
+
       // Update stored global state if it's inconsistent
       if (this.state.collapse.globalState !== globalState) {
         this.updateState({
@@ -1165,9 +1310,9 @@ export class ResourceManager extends ModuleBase {
           }
         }, false); // Don't emit event for consistency updates
       }
-      
+
       collapseAllBtn.setAttribute('data-state', globalState);
-      collapseAllBtn.setAttribute('title', 
+      collapseAllBtn.setAttribute('title',
         globalState === 'expanded' ? 'Collapse All Resources' : 'Expand All Resources'
       );
     }
@@ -1180,20 +1325,20 @@ export class ResourceManager extends ModuleBase {
     const visibleResources = document.querySelectorAll('.resource-item');
     const collapsedInDOM = document.querySelectorAll('.resource-item.collapsed');
     const storedCollapsed = Array.from(this.state.collapse.collapsedItems);
-    
+
     console.group('[ResourceManager] Collapse State Debug');
     console.log('Stored global state:', this.state.collapse.globalState);
     console.log('Visible resources in DOM:', visibleResources.length);
     console.log('Collapsed in DOM:', collapsedInDOM.length);
     console.log('Stored collapsed items:', storedCollapsed);
-    
+
     // Check for inconsistencies
     const inconsistencies = [];
     visibleResources.forEach(item => {
       const resourceId = item.dataset.id;
       const hasCollapsedClass = item.classList.contains('collapsed');
       const isStoredCollapsed = this.state.collapse.collapsedItems.has(resourceId);
-      
+
       if (hasCollapsedClass !== isStoredCollapsed) {
         inconsistencies.push({
           resourceId,
@@ -1202,15 +1347,15 @@ export class ResourceManager extends ModuleBase {
         });
       }
     });
-    
+
     if (inconsistencies.length > 0) {
       console.warn('State inconsistencies found:', inconsistencies);
     } else {
       console.log('✓ All states are consistent');
     }
-    
+
     console.groupEnd();
-    
+
     return {
       globalState: this.state.collapse.globalState,
       visibleCount: visibleResources.length,
@@ -1238,15 +1383,15 @@ export class ResourceManager extends ModuleBase {
     const filteredResources = this.getFilteredResources();
     const visibleCount = filteredResources.length;
     const totalCount = this.state.resources.length;
-    
+
     const countElement = document.getElementById('resource-count-text');
     if (countElement) {
       // Calculate the number of digits needed for zero-padding
       const totalDigits = totalCount.toString().length;
-      
+
       // Format the visible count with leading zeros to match total count digits
       const paddedVisibleCount = visibleCount.toString().padStart(totalDigits, '0');
-      
+
       countElement.textContent = `${paddedVisibleCount}/${totalCount}`;
     }
   }
@@ -1256,16 +1401,16 @@ export class ResourceManager extends ModuleBase {
    */
   getFilterInfo() {
     const parts = [];
-    
+
     if (this.state.filters.searchTerm.trim()) {
       parts.push(`Search: "${this.state.filters.searchTerm}"`);
     }
-    
+
     if (this.state.filters.activeTags.size > 0) {
       const tags = Array.from(this.state.filters.activeTags).join(', ');
       parts.push(`Tags: ${tags} (${this.state.filters.filterLogic.toUpperCase()})`);
     }
-    
+
     return parts.length > 0 ? parts.join(' | ') : '';
   }
 
@@ -1274,26 +1419,26 @@ export class ResourceManager extends ModuleBase {
    */
   toggleTagFilter(tag) {
     const newActiveTags = new Set(this.state.filters.activeTags);
-    
+
     if (newActiveTags.has(tag)) {
       newActiveTags.delete(tag);
     } else {
       newActiveTags.add(tag);
     }
-    
+
     // Update state
     this.updateState({
       filters: {
         activeTags: newActiveTags
       }
     });
-    
+
     // Update UI to reflect the new filter state
     this.updateUI();
-    
+
     // Save filter state
     this.saveFilterState();
-    
+
     // Emit filter change event
     this.emit('filtersApplied', {
       searchTerm: this.state.filters.searchTerm,
@@ -1310,13 +1455,13 @@ export class ResourceManager extends ModuleBase {
   applyFilters() {
     // Update the resource list to reflect current filters
     this.updateResourceList();
-    
+
     // Update counts
     this.updateCounts();
-    
+
     // Ensure collapse state remains consistent after filtering
     this.ensureCollapseStateConsistency();
-    
+
     // Debug: Log collapse state for troubleshooting (can be removed in production)
     // Note: Removed process.env.NODE_ENV check as it's not available in browser context
     // this.debugCollapseState();
@@ -1365,31 +1510,31 @@ export class ResourceManager extends ModuleBase {
         filterLogic: 'any'
       }
     });
-    
+
     // Clear search input
     const searchInput = document.getElementById('unified-search');
     if (searchInput) {
       searchInput.value = '';
     }
-    
+
     // Update filter logic button
     const filterLogicBtn = document.getElementById('unified-filter-logic-btn');
     if (filterLogicBtn) {
       filterLogicBtn.setAttribute('data-logic', 'any');
       filterLogicBtn.setAttribute('title', 'Toggle Filter Logic: ANY of these tags');
     }
-    
+
     // Clear filter state from localStorage
     try {
       localStorage.removeItem('resourceFilterState');
-              console.log('[ResourceManager] Cleared filter state from localStorage');
+      console.log('[ResourceManager] Cleared filter state from localStorage');
     } catch (error) {
-              console.warn('[ResourceManager] Failed to clear filter state from localStorage:', error);
+      console.warn('[ResourceManager] Failed to clear filter state from localStorage:', error);
     }
-    
+
     // Update UI to reflect cleared filters
     this.updateUI();
-    
+
     // Emit clear filters event
     this.emit('filtersCleared', {
       filteredCount: this.state.resources.length
@@ -1403,35 +1548,35 @@ export class ResourceManager extends ModuleBase {
     try {
       // Get ModalManager for user feedback
       const modalManager = this.getApp().getModule('ModalManager');
-      
+
       // Add tag via backend API
       const updatedResource = await window.electronAPI.resource.addTagToResource(resourceId, tagValue);
-      
+
       // Update local state
       const resourceIndex = this.state.resources.findIndex(r => r.id === resourceId);
       if (resourceIndex !== -1) {
         this.updateState({
-          resources: this.state.resources.map((r, i) => 
+          resources: this.state.resources.map((r, i) =>
             i === resourceIndex ? updatedResource : r
           )
         });
       }
-      
+
       // Update UI
       this.updateUI();
-      
+
       // Show success message
       if (modalManager && typeof modalManager.showSuccess === 'function') {
         modalManager.showSuccess('Tag added successfully');
       } else {
         this.showSuccess('Tag added successfully');
       }
-      
+
       // Emit event
       this.emit('tagAdded', { resourceId, tagValue });
-      
+
     } catch (error) {
-              console.error('[ResourceManager] Error adding tag:', error);
+      console.error('[ResourceManager] Error adding tag:', error);
       this.emit('error', { operation: 'addTag', error: error.message });
       this.showError('Failed to add tag');
     }
@@ -1444,47 +1589,47 @@ export class ResourceManager extends ModuleBase {
     try {
       // Get ModalManager for user feedback
       const modalManager = this.getApp().getModule('ModalManager');
-      
+
       // Remove tag via backend API
       const updatedResource = await window.electronAPI.resource.removeTagFromResource(resourceId, tag);
-      
+
       // Update local state
       const resourceIndex = this.state.resources.findIndex(r => r.id === resourceId);
       if (resourceIndex !== -1) {
         this.updateState({
-          resources: this.state.resources.map((r, i) => 
+          resources: this.state.resources.map((r, i) =>
             i === resourceIndex ? updatedResource : r
           )
         });
       }
-      
+
       // Update UI
       this.updateUI();
-      
+
       // Show success message
       if (modalManager && typeof modalManager.showSuccess === 'function') {
         modalManager.showSuccess('Tag removed successfully');
       } else {
         this.showSuccess('Tag removed successfully');
       }
-      
+
       // Emit event
       this.emit('tagRemoved', { resourceId, tag });
-      
+
     } catch (error) {
-              console.error('[ResourceManager] Error removing tag:', error);
+      console.error('[ResourceManager] Error removing tag:', error);
       this.emit('error', { operation: 'removeTag', error: error.message });
       this.showError('Failed to remove tag');
     }
   }
 
-    /**
-   * Show tag dropdown menu by element
-   */
+  /**
+ * Show tag dropdown menu by element
+ */
   showTagDropdownElement(dropdownElement) {
     // Hide all other dropdowns first
     this.hideAllTagDropdowns();
-    
+
     // Show the specific dropdown
     if (dropdownElement) {
       dropdownElement.style.display = 'block';
@@ -1497,10 +1642,10 @@ export class ResourceManager extends ModuleBase {
   showTagDropdown(tag) {
     // Hide all other dropdowns first
     this.hideAllTagDropdowns();
-    
+
     // The tag parameter is already escaped (from dataset.tag), so use it directly
     const dropdown = document.querySelector(`.tag-dropdown-menu[data-tag="${tag}"]`);
-    
+
     if (dropdown) {
       dropdown.style.display = 'block';
     }
@@ -1564,7 +1709,7 @@ export class ResourceManager extends ModuleBase {
         this.showError('Tag name cannot be empty');
         return;
       }
-      
+
       if (newTag === oldTag) {
         modal.remove();
         return;
@@ -1600,7 +1745,7 @@ export class ResourceManager extends ModuleBase {
   async renameTagGlobally(oldTag, newTag) {
     try {
       console.log(`[ResourceManager] Renaming tag "${oldTag}" to "${newTag}" globally`);
-      
+
       // Update all resources that have the old tag
       const updatedResources = [];
       for (const resource of this.state.resources) {
@@ -1614,7 +1759,7 @@ export class ResourceManager extends ModuleBase {
               "meridian:tags": updatedTags
             }
           };
-          
+
           // Save to backend
           await window.electronAPI.resource.updateResource(resource.id, updatedResource);
           updatedResources.push(updatedResource);
@@ -1636,12 +1781,12 @@ export class ResourceManager extends ModuleBase {
 
       // Reload resources to get updated data
       await this.loadResources();
-      
+
       // Update UI
       this.updateUI();
-      
+
       console.log(`[ResourceManager] Successfully renamed tag "${oldTag}" to "${newTag}" on ${updatedResources.length} resources`);
-      
+
     } catch (error) {
       console.error('Failed to rename tag globally:', error);
       throw error;
@@ -1655,14 +1800,14 @@ export class ResourceManager extends ModuleBase {
     // Confirm deletion
     const resourceCount = this.getTagCount(tag);
     const confirmed = confirm(`Are you sure you want to remove the tag "${tag}" from all ${resourceCount} resources? This action cannot be undone.`);
-    
+
     if (!confirmed) {
       return;
     }
 
     try {
       console.log(`[ResourceManager] Removing tag "${tag}" globally`);
-      
+
       // Remove tag from all resources that have it
       const updatedResources = [];
       for (const resource of this.state.resources) {
@@ -1676,7 +1821,7 @@ export class ResourceManager extends ModuleBase {
               "meridian:tags": updatedTags
             }
           };
-          
+
           // Save to backend
           await window.electronAPI.resource.updateResource(resource.id, updatedResource);
           updatedResources.push(updatedResource);
@@ -1697,14 +1842,14 @@ export class ResourceManager extends ModuleBase {
 
       // Reload resources to get updated data
       await this.loadResources();
-      
+
       // Update UI
       this.updateUI();
-      
+
       this.showSuccess(`Removed tag "${tag}" from ${updatedResources.length} resources`);
-      
+
       console.log(`[ResourceManager] Successfully removed tag "${tag}" from ${updatedResources.length} resources`);
-      
+
     } catch (error) {
       console.error('Failed to remove tag globally:', error);
       this.showError(`Failed to remove tag: ${error.message}`);
@@ -1742,7 +1887,7 @@ export class ResourceManager extends ModuleBase {
       };
       localStorage.setItem('resourceCollapseState', JSON.stringify(state));
     } catch (error) {
-              console.warn('[ResourceManager] Failed to save collapse state:', error);
+      console.warn('[ResourceManager] Failed to save collapse state:', error);
     }
   }
 
@@ -1764,7 +1909,7 @@ export class ResourceManager extends ModuleBase {
         console.log('[ResourceManager] Loaded filter state:', parsed);
       }
     } catch (error) {
-              console.warn('[ResourceManager] Failed to load filter state:', error);
+      console.warn('[ResourceManager] Failed to load filter state:', error);
     }
   }
 
@@ -1779,9 +1924,9 @@ export class ResourceManager extends ModuleBase {
         filterLogic: this.state.filters.filterLogic
       };
       localStorage.setItem('resourceFilterState', JSON.stringify(filterState));
-              console.log('[ResourceManager] Saved filter state:', filterState);
+      console.log('[ResourceManager] Saved filter state:', filterState);
     } catch (error) {
-              console.warn('[ResourceManager] Failed to save filter state:', error);
+      console.warn('[ResourceManager] Failed to save filter state:', error);
     }
   }
 
@@ -1792,7 +1937,7 @@ export class ResourceManager extends ModuleBase {
     console.log('[ResourceManager] ===== OPENING ADD RESOURCE MODAL =====');
     this.editingResourceId = null;
     this.modalTags = [];
-    
+
     // Create modal HTML content (without modal-overlay wrapper)
     const modalContent = `
       <div class="modal-header">
@@ -2109,25 +2254,25 @@ export class ResourceManager extends ModuleBase {
         </div>
       </div>
     `;
-    
+
     // Create the modal using ModalManager
     const modalManager = this.getApp().getModalManager();
     if (!modalManager) {
       console.error('[ResourceManager] ModalManager not available');
       return;
     }
-    
+
     // Create dynamic modal
     const modal = modalManager.createDynamicModal('resource-modal', modalContent, {
       size: 'large'
     });
-    
+
     // Add large-modal class
     modal.classList.add('large-modal');
-    
+
     // Setup modal event listeners
     this.setupModalEventListeners();
-    
+
     // Open the modal
     await modalManager.openModal('resource-modal');
   }
@@ -2247,7 +2392,7 @@ export class ResourceManager extends ModuleBase {
     // Arweave upload settings - updated for radio button approach
     const arweaveYesRadio = modal.querySelector('#arweave-yes');
     const arweaveNoRadio = modal.querySelector('#arweave-no');
-    
+
     if (arweaveYesRadio) {
       arweaveYesRadio.addEventListener('change', (e) => {
         console.log('[ResourceManager] Arweave upload selected: YES');
@@ -2255,7 +2400,7 @@ export class ResourceManager extends ModuleBase {
         this.updateArweaveUploadUI();
       });
     }
-    
+
     if (arweaveNoRadio) {
       arweaveNoRadio.addEventListener('change', (e) => {
         console.log('[ResourceManager] Arweave upload selected: NO');
@@ -2275,7 +2420,7 @@ export class ResourceManager extends ModuleBase {
     // Allow Enter key to add tags
     const tagKeyInput = modal.querySelector('#arweave-tag-key');
     const tagValueInput = modal.querySelector('#arweave-tag-value');
-    
+
     if (tagKeyInput && tagValueInput) {
       [tagKeyInput, tagValueInput].forEach(input => {
         input.addEventListener('keypress', (e) => {
@@ -2347,7 +2492,7 @@ export class ResourceManager extends ModuleBase {
     });
 
     this.modalState.internal.phase = phase;
-    
+
     // Special handling for different phases
     if (phase === 'metadata') {
       console.log('[ResourceManager] Showing metadata phase, setting up metadata capture');
@@ -2355,14 +2500,14 @@ export class ResourceManager extends ModuleBase {
     } else if (phase === 'arweave') {
       console.log('[ResourceManager] Showing Arweave phase, calling renderArweaveUploadPhase');
       this.renderArweaveUploadPhase();
-      
+
       // Check if the enable checkbox is visible
       setTimeout(() => {
         const enableCheckbox = modal.querySelector('#enable-arweave-upload');
         console.log('[ResourceManager] Arweave phase - enable checkbox found:', enableCheckbox);
         if (enableCheckbox) {
-                      console.log('[ResourceManager] Enable checkbox visible:', enableCheckbox.offsetParent !== null);
-            console.log('[ResourceManager] Enable checkbox checked:', enableCheckbox.checked);
+          console.log('[ResourceManager] Enable checkbox visible:', enableCheckbox.offsetParent !== null);
+          console.log('[ResourceManager] Enable checkbox checked:', enableCheckbox.checked);
         }
       }, 100);
     } else if (phase === 'review') {
@@ -2372,7 +2517,7 @@ export class ResourceManager extends ModuleBase {
       this.setupBulkTagEventListeners();
       this.renderReviewPhase();
     }
-    
+
     this.updateModalButtons();
   }
 
@@ -2400,14 +2545,14 @@ export class ResourceManager extends ModuleBase {
     });
 
     this.modalState.external.phase = phase;
-    
+
     // Generate previews when entering review phase
     if (phase === 'review') {
       this.generateExternalResourcePreviews();
       this.renderBulkTags('external');
       this.setupBulkTagEventListeners();
     }
-    
+
     this.updateModalButtons();
   }
 
@@ -2461,11 +2606,11 @@ export class ResourceManager extends ModuleBase {
   nextModalPhase() {
     console.log('[ResourceManager] nextModalPhase called');
     console.log('[ResourceManager] Current modal state:', this.modalState);
-    
+
     if (this.modalState.activeTab === 'internal') {
       const currentPhase = this.modalState.internal.phase;
       console.log('[ResourceManager] Current internal phase:', currentPhase);
-      
+
       if (currentPhase === 'selection') {
         console.log('[ResourceManager] Moving from selection to metadata');
         this.showInternalPhase('metadata');
@@ -2518,16 +2663,16 @@ export class ResourceManager extends ModuleBase {
       const input = document.createElement('input');
       input.type = 'file';
       input.multiple = true;
-      
+
       input.addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
         console.log('[ResourceManager] Files selected:', files);
         this.modalState.internal.selectedFiles = files;
-                  console.log('[ResourceManager] Files stored in modal state:', this.modalState.internal.selectedFiles);
+        console.log('[ResourceManager] Files stored in modal state:', this.modalState.internal.selectedFiles);
         this.updateFileSelectionDisplay();
         this.updateModalButtons();
       });
-      
+
       input.click();
     } catch (error) {
       console.error('[ResourceManager] Error choosing files:', error);
@@ -2570,6 +2715,56 @@ export class ResourceManager extends ModuleBase {
   }
 
   /**
+   * Extract URLs from input text (handles both plain URLs and HTML content)
+   */
+  extractUrlsFromInput(inputText) {
+    const urls = new Set(); // Use Set to avoid duplicates
+
+    // First, try to split by newlines for plain URLs
+    const lines = inputText.split('\n').map(line => line.trim()).filter(line => line);
+
+    for (const line of lines) {
+      // Check if line looks like a plain URL
+      if (this.isValidUrl(line)) {
+        urls.add(line);
+        continue;
+      }
+
+      // If not a plain URL, try to extract URLs from HTML content
+      const extractedUrls = this.extractUrlsFromHtml(line);
+      extractedUrls.forEach(url => urls.add(url));
+    }
+
+    return Array.from(urls);
+  }
+
+  /**
+   * Extract URLs from HTML content
+   */
+  extractUrlsFromHtml(htmlContent) {
+    const urls = [];
+
+    // Regular expression to find URLs in various HTML attributes
+    const urlPatterns = [
+      /src\s*=\s*["']([^"']+)["']/gi,  // src="url"
+      /href\s*=\s*["']([^"']+)["']/gi, // href="url"
+      /url\s*\(\s*["']?([^"')]+)["']?\s*\)/gi // url("url")
+    ];
+
+    for (const pattern of urlPatterns) {
+      let match;
+      while ((match = pattern.exec(htmlContent)) !== null) {
+        const url = match[1].trim();
+        if (this.isValidUrl(url)) {
+          urls.push(url);
+        }
+      }
+    }
+
+    return urls;
+  }
+
+  /**
    * Process URLs for external resources
    */
   async processUrls() {
@@ -2577,10 +2772,14 @@ export class ResourceManager extends ModuleBase {
     if (!modal) return;
 
     const urlsText = modal.querySelector('#external-urls').value;
-    const urls = urlsText.split('\n').filter(url => url.trim());
-    
+
+    // Extract URLs from the input - handle both plain URLs and HTML content
+    const urls = this.extractUrlsFromInput(urlsText);
+
+    console.log(`[URL Processing] Extracted ${urls.length} URLs:`, urls);
+
     if (urls.length === 0) {
-      this.showError('Please enter at least one URL');
+      this.showError('Please enter at least one URL or HTML content with URLs');
       return;
     }
 
@@ -2592,7 +2791,7 @@ export class ResourceManager extends ModuleBase {
     for (let i = 0; i < urls.length; i++) {
       const url = urls[i].trim();
       const progress = ((i + 1) / urls.length) * 100;
-      
+
       // Update progress
       const progressFill = modal.querySelector('#processing-progress');
       const progressText = modal.querySelector('#processing-text');
@@ -2605,7 +2804,7 @@ export class ResourceManager extends ModuleBase {
       try {
         // Extract metadata using the resource API
         const metadata = await window.electronAPI.resource.extractMetadata(url);
-        
+
         // Add result with extracted metadata
         this.modalState.external.processingResults.push({
           url: url,
@@ -2617,7 +2816,7 @@ export class ResourceManager extends ModuleBase {
         this.addProcessingLog(`✓ Extracted metadata for: ${metadata.title || url}`);
       } catch (error) {
         console.error(`Failed to extract metadata for ${url}:`, error);
-        
+
         // Fallback to basic metadata
         this.modalState.external.processingResults.push({
           url: url,
@@ -2667,7 +2866,7 @@ export class ResourceManager extends ModuleBase {
       if (modal) {
         modal.remove();
       }
-      
+
       this.showSuccess('Resources added successfully');
     } catch (error) {
       console.error('[ResourceManager] Error adding resources:', error);
@@ -2699,7 +2898,7 @@ export class ResourceManager extends ModuleBase {
       // Check if this file was uploaded to Arweave during the modal flow
       const arweaveResult = arweaveSettings.uploadResults[i];
       const arweaveHashes = [];
-      
+
       if (arweaveResult && arweaveResult.success) {
         arweaveHashes.push({
           hash: arweaveResult.transactionId,
@@ -2820,7 +3019,7 @@ export class ResourceManager extends ModuleBase {
   showTagSuggestions(input) {
     const suggestions = this.getTagSuggestions(input);
     const display = document.getElementById('modal-tags-display');
-    
+
     if (suggestions.length > 0 && input) {
       display.innerHTML = `
         <div class="tag-suggestions">
@@ -2851,10 +3050,10 @@ export class ResourceManager extends ModuleBase {
    */
   getTagSuggestions(input) {
     if (!input) return [];
-    
+
     const allTags = this.getAllTags();
     const inputLower = input.toLowerCase();
-    
+
     return allTags
       .filter(tag => tag.toLowerCase().includes(inputLower))
       .slice(0, 5); // Limit to 5 suggestions
@@ -2929,7 +3128,7 @@ export class ResourceManager extends ModuleBase {
     };
 
     await this.addResource(resource);
-    
+
     // Close modal
     modal.remove();
     this.showSuccess('Resource added successfully');
@@ -2989,7 +3188,7 @@ export class ResourceManager extends ModuleBase {
    */
   async editResource(resourceId) {
     console.log(`[ResourceManager] Opening edit modal for resource: ${resourceId}`);
-    
+
     try {
       // Find the resource in our state
       const resource = this.state.resources.find(r => r.id === resourceId);
@@ -3000,7 +3199,7 @@ export class ResourceManager extends ModuleBase {
       // Load additional data from database if available
       let customProperties = {};
       let alternativeLocations = [];
-      
+
       try {
         // Try to load from database (will fail gracefully if not available)
         if (window.api && window.api.database) {
@@ -3012,10 +3211,10 @@ export class ResourceManager extends ModuleBase {
       }
 
       this.editingResourceId = resourceId;
-      
+
       // Initialize modal tags with current resource tags
       this.modalTags = [...(resource.properties['meridian:tags'] || [])];
-      
+
       console.log('[ResourceManager] Debug - About to generate modal content');
       const modalContent = this.generateEditModalContent(resource, customProperties, alternativeLocations);
       console.log('[ResourceManager] Debug - Modal content generated, length:', modalContent.length);
@@ -3047,7 +3246,7 @@ export class ResourceManager extends ModuleBase {
       await modalManager.openModal('edit-resource-dynamic');
 
       console.log(`[ResourceManager] Edit modal opened for resource: ${resourceId}`);
-      
+
     } catch (error) {
       console.error('[ResourceManager] Failed to open edit modal:', error);
       this.showError('Failed to open edit modal: ' + error.message);
@@ -3059,7 +3258,7 @@ export class ResourceManager extends ModuleBase {
    */
   generateEditModalContent(resource, customProperties, alternativeLocations) {
     const tags = resource.properties['meridian:tags'] || [];
-    
+
     return `
       <div class="modal-header">
         <h3>Edit Resource</h3>
@@ -3094,7 +3293,7 @@ export class ResourceManager extends ModuleBase {
     console.log('[ResourceManager] Debug - Generating basic info section for resource:', resource);
     console.log('[ResourceManager] Debug - Resource title property:', resource.properties['dc:title']);
     console.log('[ResourceManager] Debug - Escaped title value:', this.escapeHtml(resource.properties['dc:title'] || ''));
-    
+
     return `
       <div class="form-section">
         <h4>Basic Information</h4>
@@ -3138,7 +3337,7 @@ export class ResourceManager extends ModuleBase {
    */
   generateLocationSection(resource, customProperties, alternativeLocations) {
     const currentValue = resource.locations.primary.value || '';
-    
+
     return `
       <div class="form-section">
         <h4>Resource Location</h4>
@@ -3243,7 +3442,7 @@ export class ResourceManager extends ModuleBase {
    */
   generateCustomPropertiesSection(customProperties) {
     const propertiesArray = Object.entries(customProperties);
-    
+
     return `
       <div class="form-section">
         <h4>Index Metadata Properties</h4>
@@ -3255,17 +3454,19 @@ export class ResourceManager extends ModuleBase {
                 <input 
                   type="text" 
                   class="property-key-input" 
+                  id="new-property-key-input"
                   placeholder="Property name"
                 />
-                <div class="property-key-autocomplete" style="display: none;"></div>
+                <div class="property-key-autocomplete" id="new-property-key-autocomplete" style="display: none;"></div>
               </div>
               <div class="form-group">
                 <input 
                   type="text" 
                   class="property-value-input" 
+                  id="new-property-value-input"
                   placeholder="Property value"
                 />
-                <div class="property-value-autocomplete" style="display: none;"></div>
+                <div class="property-value-autocomplete" id="new-property-value-autocomplete" style="display: none;"></div>
               </div>
               <div class="form-group">
                 <button type="button" class="secondary-btn add-property-btn">Add</button>
@@ -3297,9 +3498,11 @@ export class ResourceManager extends ModuleBase {
             <input 
               type="text" 
               class="property-value-input" 
+              id="property-value-input-${index}"
               value="${this.escapeHtml(value)}"
               placeholder="Property value"
             />
+            <div class="property-value-autocomplete" id="property-value-autocomplete-${index}" style="display: none;"></div>
           </div>
           <div class="form-group">
             <button type="button" class="secondary-btn remove-property-btn">Remove</button>
@@ -3317,7 +3520,7 @@ export class ResourceManager extends ModuleBase {
       return '<p class="no-alternative-locations">No alternative URLs added yet</p>';
     }
 
-    return alternativeLocations.map((location, index) => 
+    return alternativeLocations.map((location, index) =>
       this.generateAlternativeLocationItem(location, index)
     ).join('');
   }
@@ -3379,7 +3582,7 @@ export class ResourceManager extends ModuleBase {
   generateAlternativeLocationItem(location, index) {
     const typeLabel = location.locationType === 'arweave-hash' ? 'Arweave' : 'URL';
     const isExternal = location.isExternalArweave ? ' (External)' : '';
-    
+
     return `
       <div class="alternative-location-item" data-location-id="${location.id}">
         <div class="location-header">
@@ -3419,7 +3622,7 @@ export class ResourceManager extends ModuleBase {
               <path d="M6 2V10M2 6H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </button>
-          <div class="tag-autocomplete" style="display: none;"></div>
+          <div class="tag-autocomplete" id="edit-resource-tag-autocomplete" style="display: none;"></div>
         </div>
         <div class="resource-tags" id="edit-resource-tags-list">
           ${tags.map(tag => `
@@ -3439,7 +3642,7 @@ export class ResourceManager extends ModuleBase {
   generateFileStatusIndicator(resource) {
     const isAccessible = resource.locations.primary.accessible;
     const lastVerified = resource.locations.primary.lastVerified;
-    
+
     return `
       <div class="file-status-indicator ${isAccessible ? 'accessible' : 'inaccessible'}">
         <span class="status-icon">${isAccessible ? '✓' : '⚠'}</span>
@@ -3457,7 +3660,7 @@ export class ResourceManager extends ModuleBase {
   generateUrlValidationIndicator(resource) {
     const isAccessible = resource.locations.primary.accessible;
     const lastVerified = resource.locations.primary.lastVerified;
-    
+
     return `
       <div class="url-validation ${isAccessible ? 'valid' : 'invalid'}">
         <span class="validation-icon">${isAccessible ? '✓' : '⚠'}</span>
@@ -3476,7 +3679,7 @@ export class ResourceManager extends ModuleBase {
     if (location.isAccessible === null) {
       return '<div class="location-status pending">Not verified</div>';
     }
-    
+
     return `
       <div class="location-status ${location.isAccessible ? 'accessible' : 'inaccessible'}">
         <span class="status-icon">${location.isAccessible ? '✓' : '⚠'}</span>
@@ -3523,7 +3726,7 @@ export class ResourceManager extends ModuleBase {
     successDiv.className = 'success-message';
     successDiv.textContent = message;
     document.body.appendChild(successDiv);
-    
+
     setTimeout(() => {
       successDiv.remove();
     }, 3000);
@@ -3537,7 +3740,7 @@ export class ResourceManager extends ModuleBase {
     errorDiv.className = 'error-message';
     errorDiv.textContent = message;
     document.body.appendChild(errorDiv);
-    
+
     setTimeout(() => {
       errorDiv.remove();
     }, 3000);
@@ -3572,7 +3775,7 @@ export class ResourceManager extends ModuleBase {
   async loadResources() {
     try {
       console.log('[ResourceManager] Loading resources from backend...');
-      
+
       // Check if workspace is selected
       if (!this.getWorkspacePath()) {
         console.log('[ResourceManager] No workspace selected, showing no workspace state');
@@ -3582,27 +3785,27 @@ export class ResourceManager extends ModuleBase {
 
       // Load resource data from backend - this will create resources.json if it doesn't exist
       const resourceData = await window.electronAPI.resource.loadData();
-      
 
-      
+
+
       // Update state
       this.updateState({
         resources: resourceData.resources || []
       });
-      
+
       // Update UI
       this.updateUI();
-      
+
       // Ensure collapse state is properly applied after UI update
       this.updateCollapseStateOnly();
-      
+
       console.log(`[ResourceManager] Loaded ${this.state.resources.length} resources from backend`);
-      
+
       // Emit resources loaded event
       this.emit('resourcesLoaded', {
         count: this.state.resources.length
       });
-      
+
     } catch (error) {
       console.error('[ResourceManager] Error loading resources:', error);
       this.updateState({
@@ -3644,7 +3847,7 @@ export class ResourceManager extends ModuleBase {
   async saveResources() {
     try {
       console.log('[ResourceManager] Saving resources to backend...');
-      
+
       // Check if workspace is selected
       if (!this.getWorkspacePath()) {
         console.error('[ResourceManager] No workspace selected, cannot save');
@@ -3688,23 +3891,23 @@ export class ResourceManager extends ModuleBase {
   async addResource(resource) {
     try {
       console.log('[ResourceManager] Adding resource:', resource);
-      
+
       // Add resource via backend API
       const addedResource = await window.electronAPI.resource.addResource(resource);
-      
+
       // Update state
       this.updateState({
         resources: [...this.state.resources, addedResource]
       });
-      
+
       // Update UI
       this.updateUI();
-      
+
       console.log('[ResourceManager] Resource added successfully');
-      
+
       // Emit resource added event
       this.emit('resourceAdded', { resource: addedResource });
-      
+
     } catch (error) {
       console.error('[ResourceManager] Error adding resource:', error);
       this.emit('error', { operation: 'addResource', error: error.message });
@@ -3718,23 +3921,23 @@ export class ResourceManager extends ModuleBase {
   async removeResourceById(resourceId) {
     try {
       console.log('[ResourceManager] Removing resource:', resourceId);
-      
+
       // Remove resource via backend API
       await window.electronAPI.resource.removeResource(resourceId);
-      
+
       // Update state
       this.updateState({
         resources: this.state.resources.filter(r => r.id !== resourceId)
       });
-      
+
       // Update UI
       this.updateUI();
-      
+
       console.log('[ResourceManager] Resource removed successfully');
-      
+
       // Emit resource removed event
       this.emit('resourceRemoved', { resourceId });
-      
+
     } catch (error) {
       console.error('[ResourceManager] Error removing resource:', error);
       this.emit('error', { operation: 'removeResource', error: error.message });
@@ -3747,24 +3950,24 @@ export class ResourceManager extends ModuleBase {
    */
   async openExportModal() {
     console.log('[ResourceManager] Opening export modal');
-    
+
     // Get filtered resources for export
     const filteredResources = this.getFilteredResources();
-    
+
     // Update modal content
     const resourceCountEl = document.getElementById('export-resource-count');
     const filterInfoEl = document.getElementById('export-filter-info');
-    
+
     if (resourceCountEl) {
       resourceCountEl.textContent = `Ready to export ${filteredResources.length} resources`;
     }
-    
+
     if (filterInfoEl) {
       const filterInfo = this.getExportFilterInfo();
       filterInfoEl.textContent = filterInfo;
       filterInfoEl.style.display = filterInfo ? 'block' : 'none';
     }
-    
+
     // Use ModalManager to show the modal
     const modalManager = this.getApp().getModalManager();
     if (modalManager) {
@@ -3797,16 +4000,16 @@ export class ResourceManager extends ModuleBase {
    */
   getExportFilterInfo() {
     const parts = [];
-    
+
     if (this.state.filters.searchTerm) {
       parts.push(`Search: "${this.state.filters.searchTerm}"`);
     }
-    
+
     if (this.state.filters.activeTags.size > 0) {
       const tags = Array.from(this.state.filters.activeTags).join(', ');
       parts.push(`Tags: ${tags} (${this.state.filters.filterLogic.toUpperCase()})`);
     }
-    
+
     return parts.length > 0 ? parts.join(' | ') : '';
   }
 
@@ -3816,9 +4019,9 @@ export class ResourceManager extends ModuleBase {
   async handleExport(format) {
     try {
       console.log('[ResourceManager] Handling export:', format);
-      
+
       const filteredResources = this.getFilteredResources();
-      
+
       if (filteredResources.length === 0) {
         this.showError('No resources to export');
         return;
@@ -3840,25 +4043,25 @@ export class ResourceManager extends ModuleBase {
           // For database export, we'll use the backend
           await this.exportToDatabase();
           return;
-          
+
         case 'json':
           exportData = this.generateJsonExport(filteredResources);
           filename = `resources-${new Date().toISOString().split('T')[0]}.json`;
           mimeType = 'application/json';
           break;
-          
+
         case 'text':
           exportData = this.generateTextExport(filteredResources);
           filename = `resources-${new Date().toISOString().split('T')[0]}.txt`;
           mimeType = 'text/plain';
           break;
-          
+
         case 'bookmarks':
           exportData = this.generateHtmlExport(filteredResources);
           filename = `resources-${new Date().toISOString().split('T')[0]}.html`;
           mimeType = 'text/html';
           break;
-          
+
         default:
           this.showError(`Unsupported export format: ${format}`);
           return;
@@ -3866,9 +4069,9 @@ export class ResourceManager extends ModuleBase {
 
       // Trigger download
       this.downloadFile(exportData, filename, mimeType);
-      
+
       this.showSuccess(`Exported ${filteredResources.length} resources as ${format.toUpperCase()}`);
-      
+
     } catch (error) {
       console.error('[ResourceManager] Export error:', error);
       this.showError('Export failed');
@@ -3881,9 +4084,9 @@ export class ResourceManager extends ModuleBase {
   async exportToDatabase() {
     try {
       console.log('[ResourceManager] Exporting to database');
-      
+
       const filteredResources = this.getFilteredResources();
-      
+
       // Call backend to export database
       const result = await window.electronAPI.resource.exportToDatabase({
         resources: filteredResources,
@@ -3893,15 +4096,15 @@ export class ResourceManager extends ModuleBase {
           filterLogic: this.filterLogic
         }
       });
-      
+
       if (result.success) {
         this.showSuccess(`Database exported successfully to: ${result.filePath}`);
       } else {
         this.showError('Database export failed');
       }
-      
+
     } catch (error) {
-              console.error('[ResourceManager] Database export error:', error);
+      console.error('[ResourceManager] Database export error:', error);
       this.showError('Database export failed');
     }
   }
@@ -3924,7 +4127,7 @@ export class ResourceManager extends ModuleBase {
         format: 'json'
       }
     };
-    
+
     return JSON.stringify(exportData, null, 2);
   }
 
@@ -3948,7 +4151,7 @@ export class ResourceManager extends ModuleBase {
     html += '<TITLE>Bookmarks</TITLE>\n';
     html += '<H1>Bookmarks</H1>\n';
     html += '<DL><p>\n';
-    
+
     // Group resources by tags
     const resourcesByTag = {};
     resources.forEach(resource => {
@@ -3967,27 +4170,27 @@ export class ResourceManager extends ModuleBase {
         });
       }
     });
-    
+
     // Generate HTML for each tag group
     Object.keys(resourcesByTag).sort().forEach(tag => {
       html += `    <DT><H3>${this.escapeHtml(tag)}</H3>\n`;
       html += '    <DL><p>\n';
-      
+
       resourcesByTag[tag].forEach(resource => {
         const title = resource.properties["dc:title"] || "Untitled";
         const url = resource.locations.primary.value;
         const description = resource.properties["meridian:description"] || "";
-        
+
         html += `        <DT><A HREF="${this.escapeHtml(url)}" ADD_DATE="${Math.floor(new Date(resource.timestamps.created).getTime() / 1000)}">${this.escapeHtml(title)}</A>\n`;
-        
+
         if (description) {
           html += `        <DD>${this.escapeHtml(description)}\n`;
         }
       });
-      
+
       html += '    </DL><p>\n';
     });
-    
+
     html += '</DL><p>\n';
     return html;
   }
@@ -4013,10 +4216,10 @@ export class ResourceManager extends ModuleBase {
   addArweaveUploadTag() {
     const keyInput = document.getElementById('arweave-tag-key');
     const valueInput = document.getElementById('arweave-tag-value');
-    
+
     let key = keyInput.value.trim();
     const value = valueInput.value.trim();
-    
+
     if (!key || !value) {
       this.showError('Both tag key and value are required');
       return;
@@ -4024,7 +4227,7 @@ export class ResourceManager extends ModuleBase {
 
     // Clean up tag key - replace spaces with dashes, keep alphanumeric and common chars
     key = key.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '');
-    
+
     if (!key) {
       this.showError('Tag key must contain at least some alphanumeric characters');
       return;
@@ -4037,11 +4240,11 @@ export class ResourceManager extends ModuleBase {
     }
 
     this.modalState.internal.arweaveSettings.uploadTags.push({ key, value });
-    
+
     // Clear inputs
     keyInput.value = '';
     valueInput.value = '';
-    
+
     this.renderArweaveUploadTags();
   }
 
@@ -4059,7 +4262,7 @@ export class ResourceManager extends ModuleBase {
   renderArweaveUploadTags() {
     const tagsContainer = document.getElementById('arweave-tags-list');
     const tags = this.modalState.internal.arweaveSettings.uploadTags;
-    
+
     if (tags.length === 0) {
       tagsContainer.innerHTML = '<p class="no-tags">No tags added yet</p>';
       return;
@@ -4090,33 +4293,33 @@ export class ResourceManager extends ModuleBase {
     if (!modal) return;
 
     const uploadConfig = modal.querySelector('#arweave-upload-config');
-    
+
     if (this.modalState.internal.arweaveSettings.enabled) {
       console.log('[ResourceManager] Showing Arweave upload configuration');
       uploadConfig.style.display = 'block';
       this.renderArweaveUploadPhase();
-      
+
       // Auto-select all files when upload is enabled
       const files = this.modalState.internal.selectedFiles;
       this.modalState.internal.arweaveSettings.selectedFiles.clear();
       for (let i = 0; i < files.length; i++) {
         this.modalState.internal.arweaveSettings.selectedFiles.add(i);
       }
-      
+
       // Update checkboxes to reflect the auto-selection - use a longer delay to ensure DOM is ready
       setTimeout(() => {
         const checkboxes = modal.querySelectorAll('.file-upload-checkbox');
         console.log('[ResourceManager] Found', checkboxes.length, 'checkboxes to update');
         checkboxes.forEach((checkbox, index) => {
           checkbox.checked = true;
-                      console.log('[ResourceManager] Set checkbox', index, 'to checked');
+          console.log('[ResourceManager] Set checkbox', index, 'to checked');
         });
         this.updateArweaveUploadSummary();
       }, 200);
     } else {
       console.log('[ResourceManager] Hiding Arweave upload configuration');
       uploadConfig.style.display = 'none';
-      
+
       // Clear selected files when upload is disabled
       this.modalState.internal.arweaveSettings.selectedFiles.clear();
     }
@@ -4131,18 +4334,18 @@ export class ResourceManager extends ModuleBase {
 
     const files = this.modalState.internal.selectedFiles;
     const fileUploadList = modal.querySelector('#file-upload-list');
-    
+
     console.log('[ResourceManager] renderArweaveUploadPhase called');
-          console.log('[ResourceManager] Files in modal state:', files);
-      console.log('[ResourceManager] Modal state:', this.modalState.internal);
-    
+    console.log('[ResourceManager] Files in modal state:', files);
+    console.log('[ResourceManager] Modal state:', this.modalState.internal);
+
     if (files.length === 0) {
       console.log('[ResourceManager] No files found, showing empty message');
       fileUploadList.innerHTML = '<p>No files selected for upload</p>';
       return;
     }
 
-          console.log('[ResourceManager] Rendering', files.length, 'files for upload');
+    console.log('[ResourceManager] Rendering', files.length, 'files for upload');
 
     // Generate file upload controls with Select All/Deselect All buttons
     fileUploadList.innerHTML = `
@@ -4175,13 +4378,13 @@ export class ResourceManager extends ModuleBase {
     // Setup event listeners for Select All/Deselect All buttons
     const selectAllBtn = modal.querySelector('.select-all-files-btn');
     const deselectAllBtn = modal.querySelector('.deselect-all-files-btn');
-    
+
     if (selectAllBtn) {
       selectAllBtn.addEventListener('click', () => {
         this.selectAllFilesForUpload();
       });
     }
-    
+
     if (deselectAllBtn) {
       deselectAllBtn.addEventListener('click', () => {
         this.deselectAllFilesForUpload();
@@ -4286,7 +4489,7 @@ export class ResourceManager extends ModuleBase {
     const selectedFiles = this.modalState.internal.arweaveSettings.selectedFiles;
     const files = this.modalState.internal.selectedFiles;
     const uploadTags = this.modalState.internal.arweaveSettings.uploadTags;
-    
+
     if (selectedFiles.size === 0) {
       this.showError('No files selected for upload');
       return;
@@ -4294,22 +4497,22 @@ export class ResourceManager extends ModuleBase {
 
     // Convert tags to Arweave format (array of "key:value" strings)
     const arweaveTags = uploadTags.map(tag => `${tag.key}:${tag.value}`);
-    
+
     // Show progress UI
     modal.querySelector('#upload-progress').style.display = 'block';
-    
+
     const selectedFileArray = Array.from(selectedFiles);
     let completedUploads = 0;
-    
+
     for (const fileIndex of selectedFileArray) {
       const file = files[fileIndex];
-      
+
       try {
         // Update progress
         const progress = ((completedUploads + 1) / selectedFileArray.length) * 100;
         modal.querySelector('#upload-progress-fill').style.width = `${progress}%`;
         modal.querySelector('#upload-progress-text').textContent = `${Math.round(progress)}%`;
-        
+
         // Update status
         const statusElement = modal.querySelector(`.upload-status[data-file-index="${fileIndex}"]`);
         if (statusElement) {
@@ -4318,7 +4521,7 @@ export class ResourceManager extends ModuleBase {
 
         // Execute upload with tags
         const result = await window.electronAPI.archive.uploadFile(file.path, arweaveTags);
-        
+
         if (result.success) {
           // Store upload result
           this.modalState.internal.arweaveSettings.uploadResults[fileIndex] = {
@@ -4327,7 +4530,7 @@ export class ResourceManager extends ModuleBase {
             cost: this.modalState.internal.arweaveSettings.fileCosts[fileIndex],
             tags: arweaveTags // Store the tags used for this upload
           };
-          
+
           // Update status
           if (statusElement) {
             statusElement.textContent = `Uploaded: ${result.transactionId.substring(0, 8)}...`;
@@ -4339,33 +4542,33 @@ export class ResourceManager extends ModuleBase {
             success: false,
             error: result.error
           };
-          
+
           if (statusElement) {
             statusElement.textContent = `Failed: ${result.error}`;
             statusElement.className = 'upload-status error';
           }
         }
-        
+
         completedUploads++;
-        
+
       } catch (error) {
         console.error(`Failed to upload file ${file.name}:`, error);
-        
+
         this.modalState.internal.arweaveSettings.uploadResults[fileIndex] = {
           success: false,
           error: error.message
         };
-        
+
         const statusElement = modal.querySelector(`.upload-status[data-file-index="${fileIndex}"]`);
         if (statusElement) {
           statusElement.textContent = `Error: ${error.message}`;
           statusElement.className = 'upload-status error';
         }
-        
+
         completedUploads++;
       }
     }
-    
+
     // Hide progress after completion
     setTimeout(() => {
       modal.querySelector('#upload-progress').style.display = 'none';
@@ -4380,12 +4583,12 @@ export class ResourceManager extends ModuleBase {
     if (!modal) return;
 
     const arweaveSettings = this.modalState.internal.arweaveSettings;
-    
+
     console.log('[ResourceManager] executeArweaveUploadsAndContinue called');
-          console.log('[ResourceManager] Upload enabled:', arweaveSettings.enabled);
-      console.log('[ResourceManager] Selected files count:', arweaveSettings.selectedFiles.size);
-      console.log('[ResourceManager] Selected files:', Array.from(arweaveSettings.selectedFiles));
-    
+    console.log('[ResourceManager] Upload enabled:', arweaveSettings.enabled);
+    console.log('[ResourceManager] Selected files count:', arweaveSettings.selectedFiles.size);
+    console.log('[ResourceManager] Selected files:', Array.from(arweaveSettings.selectedFiles));
+
     // Check if upload is enabled and files are selected
     if (!arweaveSettings.enabled || arweaveSettings.selectedFiles.size === 0) {
       console.log('[ResourceManager] No uploads to execute, proceeding to review');
@@ -4411,45 +4614,45 @@ export class ResourceManager extends ModuleBase {
     try {
       // Execute the uploads
       await this.executeArweaveUploads();
-      
+
       // Show completion message briefly
       const progressText = modal.querySelector('#upload-progress-text');
       if (progressText) {
         progressText.textContent = 'Uploads completed!';
       }
-      
+
       // Wait a moment to show completion
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Hide progress
       if (progressContainer) {
         progressContainer.style.display = 'none';
       }
-      
+
       // Re-enable and update Next button
       if (nextBtn) {
         nextBtn.disabled = false;
         nextBtn.textContent = 'Next';
       }
-      
+
       // Continue to review phase
       this.showInternalPhase('review');
-      
+
     } catch (error) {
-              console.error('[ResourceManager] Error during upload execution:', error);
-      
+      console.error('[ResourceManager] Error during upload execution:', error);
+
       // Show error message
       const progressText = modal.querySelector('#upload-progress-text');
       if (progressText) {
         progressText.textContent = 'Upload failed!';
       }
-      
+
       // Re-enable Next button
       if (nextBtn) {
         nextBtn.disabled = false;
         nextBtn.textContent = 'Next';
       }
-      
+
       // Still continue to review phase to show what happened
       this.showInternalPhase('review');
     }
@@ -4503,16 +4706,16 @@ export class ResourceManager extends ModuleBase {
             <div class="upload-successes">
               <h6>✅ Successful Uploads (${successfulUploads.length})</h6>
               ${successfulUploads.map((result, index) => {
-                const fileIndex = uploadResults.findIndex(r => r === result);
-                const file = files[fileIndex];
-                return `
+        const fileIndex = uploadResults.findIndex(r => r === result);
+        const file = files[fileIndex];
+        return `
                   <div class="upload-result-item success">
                     <span class="file-name">${this.escapeHtml(file.name)}</span>
                     <span class="transaction-id">${this.truncateHash(result.transactionId)}</span>
                     <a href="https://www.arweave.net/${result.transactionId}" target="_blank" class="arweave-link">View on Arweave</a>
                   </div>
                 `;
-              }).join('')}
+      }).join('')}
             </div>
           ` : ''}
           
@@ -4520,15 +4723,15 @@ export class ResourceManager extends ModuleBase {
             <div class="upload-failures">
               <h6>❌ Failed Uploads (${failedUploads.length})</h6>
               ${failedUploads.map((result, index) => {
-                const fileIndex = uploadResults.findIndex(r => r === result);
-                const file = files[fileIndex];
-                return `
+        const fileIndex = uploadResults.findIndex(r => r === result);
+        const file = files[fileIndex];
+        return `
                   <div class="upload-result-item failure">
                     <span class="file-name">${this.escapeHtml(file.name)}</span>
                     <span class="error-message">${this.escapeHtml(result.error)}</span>
                   </div>
                 `;
-              }).join('')}
+      }).join('')}
             </div>
           ` : ''}
         </div>
@@ -4567,12 +4770,12 @@ export class ResourceManager extends ModuleBase {
     const bulkMetadata = this.modalState.internal.bulkMetadata;
     const bulkTags = this.modalState.internal.bulkTags;
     const individualTags = this.modalState.internal.individualTags;
-    
+
     // Generate preview data for each file
     this.modalState.internal.resourcePreviews = files.map((file, index) => {
       const resourceId = `preview-${index}`;
       const combinedTags = [...bulkTags, ...(individualTags[resourceId] || [])];
-      
+
       return {
         id: resourceId,
         file: file,
@@ -4584,7 +4787,7 @@ export class ResourceManager extends ModuleBase {
         size: file.size
       };
     });
-    
+
     this.renderInternalResourcePreviews();
   }
 
@@ -4640,14 +4843,14 @@ export class ResourceManager extends ModuleBase {
             <div class="tag-autocomplete" id="autocomplete-${preview.id}" style="display: none;"></div>
           </div>
           
-          ${preview.tags && preview.tags.length > 0 ? 
-            preview.tags.map(tag => `
+          ${preview.tags && preview.tags.length > 0 ?
+        preview.tags.map(tag => `
               <span class="resource-tag">
                 ${this.escapeHtml(tag)}
                 <button class="remove-tag-btn" data-resource-id="${preview.id}" data-tag="${this.escapeHtml(tag)}" title="Remove tag">×</button>
               </span>
             `).join('') : ''
-          }
+      }
         </div>
       </div>
     `).join('');
@@ -4663,12 +4866,12 @@ export class ResourceManager extends ModuleBase {
     const results = this.modalState.external.processingResults;
     const bulkTags = this.modalState.external.bulkTags;
     const individualTags = this.modalState.external.individualTags;
-    
+
     // Generate preview data for each result
     this.modalState.external.resourcePreviews = results.map((result, index) => {
       const resourceId = `preview-${index}`;
       const combinedTags = [...bulkTags, ...(individualTags[resourceId] || [])];
-      
+
       return {
         id: resourceId,
         title: result.title,
@@ -4678,7 +4881,7 @@ export class ResourceManager extends ModuleBase {
         type: 'external'
       };
     });
-    
+
     this.renderExternalResourcePreviews();
   }
 
@@ -4730,14 +4933,14 @@ export class ResourceManager extends ModuleBase {
             <div class="tag-autocomplete" id="autocomplete-${preview.id}" style="display: none;"></div>
           </div>
           
-          ${preview.tags && preview.tags.length > 0 ? 
-            preview.tags.map(tag => `
+          ${preview.tags && preview.tags.length > 0 ?
+        preview.tags.map(tag => `
               <span class="resource-tag">
                 ${this.escapeHtml(tag)}
                 <button class="remove-tag-btn" data-resource-id="${preview.id}" data-tag="${this.escapeHtml(tag)}" title="Remove tag">×</button>
               </span>
             `).join('') : ''
-          }
+      }
         </div>
       </div>
     `).join('');
@@ -4838,7 +5041,7 @@ export class ResourceManager extends ModuleBase {
   setupBulkTagAutocomplete(input, autocompleteContainer, tabType) {
     if (!input || !autocompleteContainer) return;
 
-    const tagManager = this.getModule('TagManager');
+    const tagManager = this.getModule('tagManager');
     if (!tagManager) return;
 
     const autocomplete = new TagAutocomplete({
@@ -4990,10 +5193,14 @@ export class ResourceManager extends ModuleBase {
    * Setup individual tag autocomplete
    */
   setupIndividualTagAutocomplete(input, autocompleteContainer, resourceId) {
-    if (!input || !autocompleteContainer) return;
+    if (!input || !autocompleteContainer) {
+      return;
+    }
 
-    const tagManager = this.getModule('TagManager');
-    if (!tagManager) return;
+    const tagManager = this.getModule('tagManager');
+    if (!tagManager) {
+      return;
+    }
 
     const autocomplete = new TagAutocomplete({
       inputSelector: `input[data-resource-id="${resourceId}"]`,
@@ -5001,6 +5208,35 @@ export class ResourceManager extends ModuleBase {
       getSuggestions: (inputValue) => tagManager.getIntelligentResourceTagSuggestions(inputValue, [], 8),
       onTagSelect: (tag) => {
         this.addIndividualTag(resourceId, tag);
+        input.value = '';
+        input.parentElement.querySelector('.add-tag-btn').disabled = true;
+      },
+      onInputChange: (inputElement) => {
+        const value = inputElement.value.trim();
+        inputElement.parentElement.querySelector('.add-tag-btn').disabled = !value;
+      }
+    });
+  }
+
+  /**
+   * Setup individual main resource list tag autocomplete
+   */
+  setupIndividualMainResourceListTagAutocomplete(input, autocompleteContainer, resourceId) {
+    if (!input || !autocompleteContainer) {
+      return;
+    }
+
+    const tagManager = this.getModule('tagManager');
+    if (!tagManager) {
+      return;
+    }
+
+    const autocomplete = new TagAutocomplete({
+      inputSelector: `input[data-resource-id="${resourceId}"]`,
+      autocompleteSelector: `#autocomplete-${resourceId}`,
+      getSuggestions: (inputValue) => tagManager.getIntelligentResourceTagSuggestions(inputValue, [], 8),
+      onTagSelect: (tag) => {
+        this.addTagToResource(resourceId, tag);
         input.value = '';
         input.parentElement.querySelector('.add-tag-btn').disabled = true;
       },
@@ -5141,16 +5377,16 @@ export class ResourceManager extends ModuleBase {
 
     const files = this.modalState.internal.selectedFiles;
     this.modalState.internal.arweaveSettings.selectedFiles.clear();
-    
+
     for (let i = 0; i < files.length; i++) {
       this.modalState.internal.arweaveSettings.selectedFiles.add(i);
     }
-    
+
     // Update checkboxes
     modal.querySelectorAll('.file-upload-checkbox').forEach((checkbox, index) => {
       checkbox.checked = true;
     });
-    
+
     this.updateArweaveUploadSummary();
   }
 
@@ -5162,12 +5398,12 @@ export class ResourceManager extends ModuleBase {
     if (!modal) return;
 
     this.modalState.internal.arweaveSettings.selectedFiles.clear();
-    
+
     // Update checkboxes
     modal.querySelectorAll('.file-upload-checkbox').forEach(checkbox => {
       checkbox.checked = false;
     });
-    
+
     this.updateArweaveUploadSummary();
   }
 
@@ -5219,12 +5455,12 @@ export class ResourceManager extends ModuleBase {
     const urlInput = document.getElementById('edit-primary-url');
     const filePathInput = document.getElementById('edit-file-path');
     const typeBadge = document.getElementById('resource-type-badge');
-    
+
     if (urlInput && filePathInput && typeBadge) {
       const updateTypeBadge = () => {
         const hasFilePath = filePathInput.value.trim();
         const hasUrl = urlInput.value.trim();
-        
+
         if (hasFilePath) {
           typeBadge.textContent = 'Internal Resource';
           typeBadge.className = 'type-badge internal';
@@ -5236,10 +5472,10 @@ export class ResourceManager extends ModuleBase {
           typeBadge.className = 'type-badge undefined';
         }
       };
-      
+
       urlInput.addEventListener('input', updateTypeBadge);
       filePathInput.addEventListener('input', updateTypeBadge);
-      
+
       // Initial update
       updateTypeBadge();
     }
@@ -5296,7 +5532,7 @@ export class ResourceManager extends ModuleBase {
     // Alternative URL input and button
     const alternativeUrlInput = document.getElementById('alternative-url-input');
     const addUrlBtn = document.getElementById('add-alternative-url-btn');
-    
+
     if (addUrlBtn && alternativeUrlInput) {
       const addAlternativeUrl = () => {
         const url = alternativeUrlInput.value.trim();
@@ -5309,7 +5545,7 @@ export class ResourceManager extends ModuleBase {
           }
         }
       };
-      
+
       addUrlBtn.addEventListener('click', addAlternativeUrl);
       alternativeUrlInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -5321,7 +5557,7 @@ export class ResourceManager extends ModuleBase {
     // Arweave Hash input and button
     const arweaveHashInput = document.getElementById('arweave-hash-input');
     const addArweaveBtn = document.getElementById('add-arweave-hash-btn');
-    
+
     if (addArweaveBtn && arweaveHashInput) {
       const addArweaveHash = () => {
         const hash = arweaveHashInput.value.trim();
@@ -5334,7 +5570,7 @@ export class ResourceManager extends ModuleBase {
           }
         }
       };
-      
+
       addArweaveBtn.addEventListener('click', addArweaveHash);
       arweaveHashInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -5406,7 +5642,7 @@ export class ResourceManager extends ModuleBase {
   handleEditModalClose(resourceId) {
     console.log(`[ResourceManager] Edit modal closed for resource: ${resourceId}`);
     this.editingResourceId = null;
-    
+
     // Clean up any event listeners or temporary state
     this.cleanupEditModal();
   }
@@ -5435,7 +5671,7 @@ export class ResourceManager extends ModuleBase {
    */
   async handleEditSubmit() {
     console.log('[ResourceManager] Handling edit form submission');
-    
+
     try {
       if (!this.editingResourceId) {
         throw new Error('No resource being edited');
@@ -5443,7 +5679,7 @@ export class ResourceManager extends ModuleBase {
 
       // Collect form data
       const formData = this.collectEditFormData();
-      
+
       // Validate form data
       const validation = this.validateEditFormData(formData);
       if (!validation.isValid) {
@@ -5453,19 +5689,19 @@ export class ResourceManager extends ModuleBase {
 
       // Update resource
       await this.updateResourceFromForm(this.editingResourceId, formData);
-      
+
       // Close modal and refresh
       const modalManager = this.getApp().getModalManager();
       if (modalManager) {
         modalManager.closeModal('edit-resource-dynamic');
       }
       this.showSuccess('Resource updated successfully');
-      
+
       // Refresh the resource list
       await this.loadResources();
-      
+
     } catch (error) {
-              console.error('[ResourceManager] Failed to submit edit form:', error);
+      console.error('[ResourceManager] Failed to submit edit form:', error);
       this.showError('Failed to save changes: ' + error.message);
     }
   }
@@ -5477,11 +5713,11 @@ export class ResourceManager extends ModuleBase {
     // Debug: Check if the title input exists and has a value
     const titleInput = document.getElementById('edit-resource-title');
     const titleValue = titleInput?.value?.trim() || '';
-    
+
     console.log('[ResourceManager] Debug - Title input element:', titleInput);
     console.log('[ResourceManager] Debug - Title input value:', titleValue);
     console.log('[ResourceManager] Debug - Title input value length:', titleValue.length);
-    
+
     const formData = {
       title: titleValue,
       type: document.getElementById('edit-resource-type')?.value || 'document',
@@ -5532,7 +5768,7 @@ export class ResourceManager extends ModuleBase {
     console.log('[ResourceManager] Debug - Title value:', formData.title);
     console.log('[ResourceManager] Debug - Title type:', typeof formData.title);
     console.log('[ResourceManager] Debug - Title truthy check:', !!formData.title);
-    
+
     if (!formData.title) {
       return { isValid: false, message: 'Title is required' };
     }
@@ -5540,7 +5776,7 @@ export class ResourceManager extends ModuleBase {
     // Check if we have either a file path or URL
     const hasFilePath = formData.filePath && formData.filePath.trim();
     const hasUrl = formData.primaryUrl && formData.primaryUrl.trim();
-    
+
     if (!hasFilePath && !hasUrl) {
       return { isValid: false, message: 'Either a file path or URL is required' };
     }
@@ -5573,7 +5809,7 @@ export class ResourceManager extends ModuleBase {
     }
 
     const resource = this.state.resources[resourceIndex];
-    
+
     // Update basic properties
     resource.properties['dc:title'] = formData.title;
     resource.properties['dc:type'] = formData.type;
@@ -5583,7 +5819,7 @@ export class ResourceManager extends ModuleBase {
     // Update location and type based on form data
     const hasFilePath = formData.filePath && formData.filePath.trim();
     const hasUrl = formData.primaryUrl && formData.primaryUrl.trim();
-    
+
     if (hasFilePath) {
       // Internal resource (file path takes precedence)
       resource.state.type = 'internal';
@@ -5599,7 +5835,7 @@ export class ResourceManager extends ModuleBase {
 
     // Update timestamps
     const now = new Date().toISOString();
-    
+
     // Ensure metadata object exists
     if (!resource.metadata) {
       resource.metadata = {};
@@ -5621,7 +5857,7 @@ export class ResourceManager extends ModuleBase {
 
         // Update custom properties
         const existingProperties = await window.api.database.getCustomProperties(resourceId);
-        
+
         // Remove properties that were deleted
         for (const key of Object.keys(existingProperties)) {
           if (!(key in formData.customProperties)) {
@@ -5636,7 +5872,7 @@ export class ResourceManager extends ModuleBase {
 
         // Update tags
         const currentTags = resource.properties['meridian:tags'] || [];
-        
+
         // Remove old tags
         for (const tag of currentTags) {
           if (!formData.tags.includes(tag)) {
@@ -5658,7 +5894,7 @@ export class ResourceManager extends ModuleBase {
     }
 
     // Update state
-    this.updateState({ 
+    this.updateState({
       resources: [...this.state.resources.slice(0, resourceIndex), resource, ...this.state.resources.slice(resourceIndex + 1)]
     });
 
@@ -5673,7 +5909,7 @@ export class ResourceManager extends ModuleBase {
    */
   async browseForFile() {
     console.log('[ResourceManager] Opening file browser');
-    
+
     try {
       if (!window.electronAPI || !window.electronAPI.selectFile) {
         this.showError('File browser not available');
@@ -5698,9 +5934,9 @@ export class ResourceManager extends ModuleBase {
         // Update file status
         this.updateFileStatus(selectedPath);
       }
-      
+
     } catch (error) {
-              console.error('[ResourceManager] File browser failed:', error);
+      console.error('[ResourceManager] File browser failed:', error);
       this.showError('Failed to open file browser: ' + error.message);
     }
   }
@@ -5715,7 +5951,7 @@ export class ResourceManager extends ModuleBase {
     try {
       // Check if file exists
       const exists = window.api && window.api.fs ? await window.api.fs.exists(filePath) : true;
-      
+
       statusContainer.innerHTML = `
         <div class="file-status-indicator ${exists ? 'accessible' : 'inaccessible'}">
           <span class="status-icon">${exists ? '✓' : '⚠'}</span>
@@ -5726,7 +5962,7 @@ export class ResourceManager extends ModuleBase {
         </div>
       `;
     } catch (error) {
-              console.error('[ResourceManager] Failed to check file status:', error);
+      console.error('[ResourceManager] Failed to check file status:', error);
     }
   }
 
@@ -5735,13 +5971,13 @@ export class ResourceManager extends ModuleBase {
    */
   async addCustomProperty() {
     console.log('[ResourceManager] Adding custom property');
-    
+
     const template = document.getElementById('new-property-template');
     if (!template) return;
 
     const keyInput = template.querySelector('.property-key-input');
     const valueInput = template.querySelector('.property-value-input');
-    
+
     const key = keyInput?.value?.trim();
     const value = valueInput?.value?.trim();
 
@@ -5753,7 +5989,7 @@ export class ResourceManager extends ModuleBase {
     // Check for duplicates
     const existingKeys = Array.from(document.querySelectorAll('.custom-property-item:not(#new-property-template) .property-key-input'))
       .map(input => input.value.trim());
-    
+
     if (existingKeys.includes(key)) {
       this.showError('Property name already exists');
       return;
@@ -5762,7 +5998,7 @@ export class ResourceManager extends ModuleBase {
     // Create new property item
     const container = document.getElementById('custom-properties-container');
     const newIndex = container.querySelectorAll('.custom-property-item:not(#new-property-template)').length;
-    
+
     const newItem = document.createElement('div');
     newItem.innerHTML = this.generateCustomPropertyItem(key, value, newIndex);
     newItem.className = 'custom-property-item';
@@ -5778,7 +6014,7 @@ export class ResourceManager extends ModuleBase {
     // Setup autocomplete for the new item
     const newKeyInput = newItem.querySelector('.property-key-input');
     const newValueInput = newItem.querySelector('.property-value-input');
-    
+
     if (!newKeyInput.readOnly) {
       this.setupPropertyKeyAutocomplete(newKeyInput);
     }
@@ -5795,7 +6031,7 @@ export class ResourceManager extends ModuleBase {
 
     const keyInput = propertyItem.querySelector('.property-key-input');
     const key = keyInput?.value?.trim();
-    
+
     console.log(`[ResourceManager] Removing custom property: ${key}`);
     propertyItem.remove();
   }
@@ -5807,22 +6043,29 @@ export class ResourceManager extends ModuleBase {
     if (!input) return;
 
     try {
-      const suggestions = window.api && window.api.database ? 
-        await window.api.database.getPropertyKeySuggestions() : 
-        this.getLocalPropertyKeySuggestions();
+      // Find the autocomplete container for this input
+      const autocompleteContainer = input.parentElement.querySelector('.property-key-autocomplete');
+      if (!autocompleteContainer) {
+        console.warn('[ResourceManager] No autocomplete container found for property key input');
+        return;
+      }
 
-      const autocomplete = new TagAutocomplete(input, {
-        suggestions: suggestions || [],
-        placeholder: 'Enter property name...',
-        caseSensitive: false,
-        allowCustomValues: true,
+      const autocomplete = new TagAutocomplete({
+        inputSelector: `#${input.id}`,
+        autocompleteSelector: `#${autocompleteContainer.id}`,
+        getSuggestions: async (inputValue) => {
+          const suggestions = window.api && window.api.database ?
+            await window.api.database.getPropertyKeySuggestions() :
+            this.getLocalPropertyKeySuggestions();
+          return (suggestions || []).filter(s => s.toLowerCase().includes(inputValue.toLowerCase()));
+        },
         maxSuggestions: 10
       });
 
       this.tagAutocompletes.push(autocomplete);
-      
+
     } catch (error) {
-              console.error('[ResourceManager] Failed to setup property key autocomplete:', error);
+      console.error('[ResourceManager] Failed to setup property key autocomplete:', error);
     }
   }
 
@@ -5838,22 +6081,29 @@ export class ResourceManager extends ModuleBase {
     if (!key) return;
 
     try {
-      const suggestions = window.api && window.api.database ? 
-        await window.api.database.getPropertyValueSuggestions(key) : 
-        this.getLocalPropertyValueSuggestions(key);
+      // Find the autocomplete container for this input
+      const autocompleteContainer = input.parentElement.querySelector('.property-value-autocomplete');
+      if (!autocompleteContainer) {
+        console.warn('[ResourceManager] No autocomplete container found for property value input');
+        return;
+      }
 
-      const autocomplete = new TagAutocomplete(input, {
-        suggestions: suggestions || [],
-        placeholder: 'Enter property value...',
-        caseSensitive: false,
-        allowCustomValues: true,
+      const autocomplete = new TagAutocomplete({
+        inputSelector: `#${input.id}`,
+        autocompleteSelector: `#${autocompleteContainer.id}`,
+        getSuggestions: async (inputValue) => {
+          const suggestions = window.api && window.api.database ?
+            await window.api.database.getPropertyValueSuggestions(key) :
+            this.getLocalPropertyValueSuggestions(key);
+          return (suggestions || []).filter(s => s.toLowerCase().includes(inputValue.toLowerCase()));
+        },
         maxSuggestions: 10
       });
 
       this.tagAutocompletes.push(autocomplete);
-      
+
     } catch (error) {
-              console.error('[ResourceManager] Failed to setup property value autocomplete:', error);
+      console.error('[ResourceManager] Failed to setup property value autocomplete:', error);
     }
   }
 
@@ -5862,7 +6112,7 @@ export class ResourceManager extends ModuleBase {
    */
   getLocalPropertyKeySuggestions() {
     const keys = new Set();
-    
+
     this.state.resources.forEach(resource => {
       if (resource.customProperties) {
         Object.keys(resource.customProperties).forEach(key => keys.add(key));
@@ -5877,7 +6127,7 @@ export class ResourceManager extends ModuleBase {
    */
   getLocalPropertyValueSuggestions(key) {
     const values = new Set();
-    
+
     this.state.resources.forEach(resource => {
       if (resource.customProperties && resource.customProperties[key]) {
         values.add(resource.customProperties[key]);
@@ -5936,7 +6186,7 @@ export class ResourceManager extends ModuleBase {
    */
   async addAlternativeUrl() {
     console.log('[ResourceManager] Adding alternative URL');
-    
+
     const urlInput = document.getElementById('new-alternative-url');
     if (!urlInput) return;
 
@@ -5957,7 +6207,7 @@ export class ResourceManager extends ModuleBase {
     // Check for duplicates
     const existingUrls = Array.from(document.querySelectorAll('.alternative-location-item .location-value'))
       .map(el => el.textContent.trim());
-    
+
     if (existingUrls.includes(url)) {
       this.showError('This URL already exists in alternative locations');
       return;
@@ -5966,7 +6216,7 @@ export class ResourceManager extends ModuleBase {
     // Create new alternative location item
     const container = document.getElementById('alternative-locations-container');
     const newIndex = container.querySelectorAll('.alternative-location-item').length;
-    
+
     const newItem = document.createElement('div');
     newItem.innerHTML = this.generateAlternativeLocationItem({
       type: 'external_url',
@@ -5995,7 +6245,7 @@ export class ResourceManager extends ModuleBase {
    */
   async addExternalArweaveHash() {
     console.log('[ResourceManager] Adding external Arweave hash');
-    
+
     const hashInput = document.getElementById('new-arweave-hash');
     if (!hashInput) return;
 
@@ -6014,7 +6264,7 @@ export class ResourceManager extends ModuleBase {
     // Check for duplicates
     const existingHashes = Array.from(document.querySelectorAll('.alternative-location-item .location-value'))
       .map(el => el.textContent.trim());
-    
+
     if (existingHashes.includes(hash)) {
       this.showError('This Arweave hash already exists in alternative locations');
       return;
@@ -6023,7 +6273,7 @@ export class ResourceManager extends ModuleBase {
     // Create new alternative location item
     const container = document.getElementById('alternative-locations-container');
     const newIndex = container.querySelectorAll('.alternative-location-item').length;
-    
+
     const arweaveUrl = `https://arweave.net/${hash}`;
     const newItem = document.createElement('div');
     newItem.innerHTML = this.generateAlternativeLocationItem({
@@ -6056,7 +6306,7 @@ export class ResourceManager extends ModuleBase {
 
     const locationValue = locationItem.querySelector('.location-value')?.textContent?.trim();
     console.log(`[ResourceManager] Removing alternative location: ${locationValue}`);
-    
+
     locationItem.remove();
   }
 
@@ -6091,8 +6341,8 @@ export class ResourceManager extends ModuleBase {
       });
 
     } catch (error) {
-              console.warn(`[ResourceManager] URL check failed for ${url}:`, error);
-      
+      console.warn(`[ResourceManager] URL check failed for ${url}:`, error);
+
       const statusElement = document.querySelector(`[data-index="${index}"] .location-status`);
       if (statusElement) {
         statusElement.innerHTML = this.generateLocationStatusIndicator({
@@ -6111,7 +6361,7 @@ export class ResourceManager extends ModuleBase {
    */
   async addEditTag() {
     console.log('[ResourceManager] Adding tag to edit form');
-    
+
     const tagInput = document.getElementById('edit-resource-tag-input');
     if (!tagInput) return;
 
@@ -6124,7 +6374,7 @@ export class ResourceManager extends ModuleBase {
     // Check for duplicates
     const existingTags = Array.from(document.querySelectorAll('.modal-tags-list .modal-tag'))
       .map(tag => tag.textContent.replace('×', '').trim());
-    
+
     if (existingTags.includes(tagValue)) {
       this.showError('Tag already exists');
       return;
@@ -6151,7 +6401,7 @@ export class ResourceManager extends ModuleBase {
     if (!tagValue) return;
 
     console.log(`[ResourceManager] Removing tag: ${tagValue}`);
-    
+
     // Remove from modal tags array
     const index = this.modalTags.indexOf(tagValue);
     if (index > -1) {
@@ -6188,25 +6438,41 @@ export class ResourceManager extends ModuleBase {
     if (!input) return;
 
     try {
-      const allTags = this.getAllTags();
-      
-      const autocomplete = new TagAutocomplete(input, {
-        suggestions: allTags,
-        placeholder: 'Enter tag...',
-        caseSensitive: false,
-        allowCustomValues: true,
-        maxSuggestions: 10,
-        onSelect: (tag) => {
+      const tagManager = this.getModule('tagManager');
+      if (!tagManager) {
+        console.warn('[ResourceManager] TagManager not available for autocomplete');
+        return;
+      }
+
+      // Find the autocomplete container for this input
+      const autocompleteContainer = input.parentElement.querySelector('.tag-autocomplete');
+      if (!autocompleteContainer) {
+        console.warn('[ResourceManager] No autocomplete container found for input');
+        return;
+      }
+
+      const autocomplete = new TagAutocomplete({
+        inputSelector: `#${input.id}`,
+        autocompleteSelector: `#${autocompleteContainer.id}`,
+        getSuggestions: (inputValue) => tagManager.getIntelligentResourceTagSuggestions(inputValue, [], 8),
+        onTagSelect: (tag) => {
           // Auto-add tag when selected from autocomplete
           input.value = tag;
           this.addEditTag();
+        },
+        onInputChange: (inputElement) => {
+          // Enable/disable add button based on input
+          const addBtn = inputElement.parentElement.querySelector('.add-tag-btn');
+          if (addBtn) {
+            addBtn.disabled = !inputElement.value.trim();
+          }
         }
       });
 
       this.tagAutocompletes.push(autocomplete);
-      
+
     } catch (error) {
-              console.error('[ResourceManager] Failed to setup tag autocomplete:', error);
+      console.error('[ResourceManager] Failed to setup tag autocomplete:', error);
     }
   }
 
@@ -6215,7 +6481,7 @@ export class ResourceManager extends ModuleBase {
    */
   async openUploadModalForResource(resourceId) {
     console.log(`[ResourceManager] Opening upload modal for resource: ${resourceId}`);
-    
+
     try {
       // Get the resource data
       const resource = this.state.resources.find(r => r.id === resourceId);
@@ -6233,7 +6499,7 @@ export class ResourceManager extends ModuleBase {
 
       // Open the upload modal with resource context
       await uploadManager.openModalForResource(resource);
-      
+
     } catch (error) {
       console.error('[ResourceManager] Error opening upload modal:', error);
       this.showError('Failed to open upload modal');

@@ -4,8 +4,9 @@ import * as fs from 'fs';
 import { UnifiedResource, UnifiedData } from '../types';
 
 /**
- * SQLite Database Manager for Unified Resources
+ * SQLite Database Manager for Resources
  * Handles all database operations with JSON export functionality
+ * Database file: resources.db (migrated from unified_resources.db)
  */
 export class UnifiedDatabaseManager {
   private db: sqlite3.Database | null = null;
@@ -22,13 +23,16 @@ export class UnifiedDatabaseManager {
    */
   async initialize(workspacePath: string): Promise<void> {
     this.workspacePath = workspacePath;
-    this.dbPath = path.join(workspacePath, '.meridian', 'data', 'unified_resources.db');
+    this.dbPath = path.join(workspacePath, '.meridian', 'data', 'resources.db');
     
     // Ensure .meridian/data directory exists
     const dataDir = path.dirname(this.dbPath);
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
+
+    // Migrate from old filename if it exists
+    await this.migrateDatabaseFilename();
 
     return new Promise((resolve, reject) => {
       this.db = new sqlite3.Database(this.dbPath!, async (err: Error | null) => {
@@ -85,6 +89,26 @@ export class UnifiedDatabaseManager {
       await run('DROP INDEX IF EXISTS idx_resources_created_at');
       await run('CREATE INDEX IF NOT EXISTS idx_resources_indexed_at ON resources (indexed_at_timestamp)');
       console.log('[UnifiedDatabaseManager] Updated index for indexed_at_timestamp');
+    }
+  }
+
+  /**
+   * Migration: Rename database file from unified_resources.db to resources.db
+   */
+  private async migrateDatabaseFilename(): Promise<void> {
+    if (!this.workspacePath) return;
+    
+    const oldPath = path.join(this.workspacePath, '.meridian', 'data', 'unified_resources.db');
+    const newPath = path.join(this.workspacePath, '.meridian', 'data', 'resources.db');
+    
+    try {
+      if (fs.existsSync(oldPath) && !fs.existsSync(newPath)) {
+        fs.renameSync(oldPath, newPath);
+        console.log('[UnifiedDatabaseManager] Migrated database filename from unified_resources.db to resources.db');
+      }
+    } catch (error) {
+      console.error('[UnifiedDatabaseManager] Failed to migrate database filename:', error);
+      // Continue anyway - the new database will be created
     }
   }
 
@@ -881,6 +905,7 @@ export class UnifiedDatabaseManager {
 
   /**
    * Export database to a new SQLite file
+   * Exports to resources-{timestamp}.db format
    */
   async exportToDatabase(exportData: {
     resources: any[];
@@ -898,7 +923,7 @@ export class UnifiedDatabaseManager {
       // Generate export filename with timestamp
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const exportDir = path.join(this.workspacePath!, '.meridian', 'exports');
-      const exportPath = path.join(exportDir, `unified-resources-${timestamp}.db`);
+      const exportPath = path.join(exportDir, `resources-${timestamp}.db`);
 
       // Ensure export directory exists
       if (!fs.existsSync(exportDir)) {

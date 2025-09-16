@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Build and Development
+
 - `npm run build` - TypeScript compilation to `/dist` directory
 - `npm run build:watch` - Watch mode for TypeScript compilation
 - `npm run build:bundle` - Bundle main process with esbuild for production
@@ -12,11 +13,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run dev` - Development mode with hot reload (concurrent build watch + Electron)
 
 ### Testing and Code Quality
+
 - `npm test` - Run Jest tests
 - `npm run lint` - ESLint TypeScript files in `src/`
 - `npm run lint:fix` - Auto-fix ESLint issues
 
 ### Packaging
+
 - `npm run package` - Package for current platform
 - `npm run package:prod` - Production packaging with optimized dependencies
 - `npm run package:ultra` - Ultra-optimized packaging with bundled main process
@@ -24,6 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Architecture Overview
 
 ### Application Structure
+
 Meridian is an Electron desktop application with a modular frontend/backend architecture:
 
 - **Main Process** (`src/main/`): TypeScript backend with specialized managers
@@ -38,6 +42,7 @@ The main process uses a centralized class-based architecture with specialized ma
 **Core Application Class**: `MeridianApp` in `main.ts` orchestrates all managers and IPC handlers.
 
 **Manager Classes** (all TypeScript):
+
 - `CredentialManager` - OS-level encrypted credential storage
 - `DataManager` - JSON file-based data persistence
 - `UnifiedDatabaseManager` - SQLite database operations for resources
@@ -56,11 +61,13 @@ The main process uses a centralized class-based architecture with specialized ma
 The frontend uses a **modular event-driven architecture**:
 
 **Module System**:
+
 - `ModuleBase.js` - Abstract base class for all modules
 - `ModuleLoader.js` - Centralized module lifecycle management
 - All modules extend `ModuleBase` and are managed by `ModuleLoader`
 
 **Module Dependencies** (initialization order):
+
 1. `TagManager` - Tag autocomplete and management
 2. `ResourceManager` - Unified resource and file management (depends on TagManager)
 3. `ModalManager` - Modal dialog system
@@ -70,19 +77,21 @@ The frontend uses a **modular event-driven architecture**:
 7. `UploadManager` - File upload operations
 
 **Inter-Module Communication**:
+
 - Event-driven system using `EventTarget`
 - Modules can emit/listen for events via `ModuleBase` methods
 - Centralized event bus managed by `ModuleLoader`
 
 ### Data Architecture
 
-**Primary Storage**: SQLite database (`unified_resources.db`) for resources and uploads
+**Primary Storage**: SQLite database (`resources.db`) for resources and uploads
 **Fallback Storage**: JSON files for backward compatibility
 **File Organization**:
+
 ```
 <workspace>/.meridian/
 ├── data/
-│   ├── unified_resources.db    # SQLite database (primary)
+│   ├── resources.db            # SQLite database (primary)
 │   ├── unified.json           # JSON fallback
 │   ├── broadcast.json         # Social media data
 │   └── archive.json           # Legacy archive data
@@ -100,31 +109,38 @@ The frontend uses a **modular event-driven architecture**:
 ## Key Development Patterns
 
 ### IPC Handler Pattern
+
 All backend operations use the handle/invoke pattern:
+
 ```javascript
 // Main process
-ipcMain.handle('module:operation', async (_, param1, param2) => {
+ipcMain.handle("module:operation", async (_, param1, param2) => {
   return await this.manager.operation(param1, param2);
 });
 
 // Renderer process
-const result = await electronAPI.invoke('module:operation', param1, param2);
+const result = await electronAPI.invoke("module:operation", param1, param2);
 ```
 
 ### Module Integration
+
 When adding new modules:
+
 1. Extend `ModuleBase` class
 2. Register in `ModuleLoader.loadAllModules()` with proper dependency order
 3. Follow event-driven communication patterns
 4. Use consistent error handling and logging
 
 ### Database Operations
+
 The app uses dual storage (SQLite primary, JSON fallback):
+
 - All resource operations go through `UnifiedDatabaseManager`
 - Automatic fallback to JSON if database operations fail
 - Migration system for upgrading from JSON to SQLite
 
 ### Error Handling
+
 - Consistent error logging with module prefixes: `[ModuleName]`
 - Try/catch blocks with fallback mechanisms
 - User-friendly error messages via notification system

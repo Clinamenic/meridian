@@ -355,6 +355,17 @@ class MeridianApp {
   async updateWorkspaceIndicator() {
     // Update footer workspace status (workspace indicator in subheader removed)
     this.updateFooterWorkspace();
+    
+    // Ensure GitHub Pages settings are synchronized with actual workflow file
+    try {
+      const deployManager = this.getDeployManager();
+      if (deployManager && typeof deployManager.ensureGitHubPagesSync === 'function') {
+        await deployManager.ensureGitHubPagesSync();
+      }
+    } catch (error) {
+      console.error('[App] Failed to sync GitHub Pages settings:', error);
+      // Don't throw - this is a maintenance operation that shouldn't break workspace loading
+    }
   }
 
   // Footer status updates

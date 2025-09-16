@@ -29,16 +29,15 @@ export class TagAutocomplete {
   }
   
   setupEvents() {
-    // Input event for showing suggestions
-    this.input.addEventListener('input', (e) => {
+    // Store bound methods for cleanup
+    this.handleInput = (e) => {
       this.show(e.target.value);
       if (this.onInputChange) {
         this.onInputChange(e.target);
       }
-    });
+    };
     
-    // Keyboard navigation
-    this.input.addEventListener('keydown', (e) => {
+    this.handleKeydown = (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         const value = e.target.value.trim();
@@ -48,12 +47,16 @@ export class TagAutocomplete {
       } else if (e.key === 'Escape') {
         this.hide();
       }
-    });
+    };
     
-    // Hide on blur (with delay for clicks)
-    this.input.addEventListener('blur', () => {
+    this.handleBlur = () => {
       setTimeout(() => this.hide(), 200);
-    });
+    };
+    
+    // Add event listeners
+    this.input.addEventListener('input', this.handleInput);
+    this.input.addEventListener('keydown', this.handleKeydown);
+    this.input.addEventListener('blur', this.handleBlur);
   }
   
   show(inputValue) {
@@ -65,7 +68,7 @@ export class TagAutocomplete {
     }
     
     // Get suggestions from the provided function
-    const suggestions = this.getSuggestions(value, this.excludeTags, this.maxSuggestions);
+    const suggestions = this.getSuggestions(inputValue, this.excludeTags, this.maxSuggestions);
     
     if (suggestions.length === 0) {
       this.hide();
@@ -105,8 +108,8 @@ export class TagAutocomplete {
   
   cleanup() {
     // Remove event listeners if needed
-    if (this.input) {
-      this.input.removeEventListener('input', this.show);
+    if (this.input && this.handleInput && this.handleKeydown && this.handleBlur) {
+      this.input.removeEventListener('input', this.handleInput);
       this.input.removeEventListener('keydown', this.handleKeydown);
       this.input.removeEventListener('blur', this.handleBlur);
     }

@@ -5,6 +5,41 @@ All notable changes to Meridian will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2025-09-16
+
+### Added
+
+- **Arweave Deployment History System**: Comprehensive deployment tracking with persistent history storage
+- **Enhanced Deployment UI**: Streamlined deployment interface with flattened sections and improved user experience
+- **Deployment Status Tracking**: Real-time deployment status monitoring with detailed progress feedback
+- **Cost Estimation Improvements**: Enhanced Arweave deployment cost calculation with wallet integration
+- **Unified Deploy Interface**: Consolidated deployment workflow with collapsible sections for better organization
+- **ArweaveHistoryManager**: New dedicated manager for tracking deployment history and metadata
+- **Export Functionality**: Export deployment history for record-keeping and analysis
+
+### Changed
+
+- **Deploy Manager Architecture**: Major refactoring of deployment system for improved maintainability and performance
+- **UI Simplification**: Removed complex tabbed interface in favor of streamlined collapsible sections
+- **Form Layout**: Enhanced form design with improved spacing, typography, and visual hierarchy
+- **Section Organization**: Restructured deployment sections for logical workflow progression
+- **Documentation Cleanup**: Archived temporary documentation files and improved project organization
+
+### Technical Improvements
+
+- **Code Reduction**: Reduced deployment code complexity by 4,000+ lines while adding new features
+- **Performance Optimization**: Improved deployment workflow performance and user interface responsiveness
+- **API Extensions**: New IPC handlers for deployment history management and status tracking
+- **Data Storage**: Enhanced deployment data persistence with structured history tracking
+- **Error Handling**: Improved error handling and user feedback throughout deployment process
+
+### User Experience
+
+- **Simplified Interface**: More intuitive deployment workflow with clear visual progression
+- **Better Feedback**: Enhanced status messages and progress indicators during deployment
+- **Historical Context**: Access to previous deployment records for reference and debugging
+- **Consistent Design**: Improved visual consistency across all deployment interface elements
+
 ## [0.8.0] - 2025-09-10
 
 ### Added

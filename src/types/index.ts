@@ -71,10 +71,10 @@ export interface ArchiveData {
   // Legacy upload tracking (maintained for backward compatibility)
   uploads: ArweaveUpload[];
   wallet: { address: string; balance?: string };
-  
+
   // Enhanced file registry with UUID-based tracking
   files: FileRegistryEntry[];
-  
+
   // Metadata
   lastUpdated: string;
   version: string;
@@ -111,7 +111,7 @@ export interface StagedPost {
     templateId?: string;
     variables?: Record<string, string>;
   };
-  
+
   // Platform-specific content variations
   platformContent: {
     [platform in Platform]: {
@@ -124,19 +124,19 @@ export interface StagedPost {
       };
     };
   };
-  
+
   // Base content and metadata
   baseContent: string;
   title?: string;
   description?: string;
   tags: string[];
-  
+
   // Scheduling and status
   scheduledFor?: string;
   status: "staged" | "scheduled" | "posting" | "posted" | "failed";
   createdAt: string;
   updatedAt: string;
-  
+
   // Results tracking
   postResults?: {
     [platform: string]: {
@@ -254,8 +254,8 @@ export interface CredentialStore {
   farcaster?: { appKey: string; jwt: string };
   twitter?: { accessToken: string; refreshToken: string };
   arweave?: { walletJWK: string };
-  github?: { 
-    token: string; 
+  github?: {
+    token: string;
     tokenType: "classic" | "fine-grained" | "github-app";
     repositories?: string[];
     expiresAt?: string;
@@ -284,7 +284,7 @@ export interface BlueskyPost {
 
 export interface RichTextFacet {
   index: { byteStart: number; byteEnd: number };
-  features: { $type: string; [key: string]: unknown }[];
+  features: { $type: string;[key: string]: unknown }[];
 }
 
 export interface ImageEmbed {
@@ -474,7 +474,6 @@ export interface ArweaveDeployConfig {
   workspacePath: string;
   siteId: string;
   manifestOnly?: boolean;
-  incremental?: boolean;
   costEstimate?: boolean;
 }
 
@@ -527,6 +526,44 @@ export interface DeploymentCostEstimate {
   };
 }
 
+// ===== ARWEAVE DEPLOYMENT HISTORY TYPES =====
+
+export interface ArweaveDeploymentHistoryRecord {
+  id: string;                    // Unique deployment ID
+  timestamp: string;             // ISO 8601 timestamp
+  siteId: string;               // Site ID used for deployment
+  manifestHash: string;         // Arweave manifest transaction ID
+  url: string;                  // Primary site URL
+  manifestUrl?: string;         // Manifest URL
+  indexFileUrl?: string;        // Index file URL
+  totalCost: {
+    ar: string;
+    usd?: string;
+  };
+  fileCount: number;
+  totalSize: number;
+  deploymentStrategy: 'full';
+  status: 'success' | 'failed';
+  error?: string;               // Error message if failed
+  uploadedFiles?: {
+    path: string;
+    hash: string;
+    url: string;
+    size: number;
+    contentType: string;
+  }[];
+  metadata?: {
+    userAgent?: string;
+    version?: string;
+  };
+}
+
+export interface ArweaveDeploymentHistory {
+  version: string;              // Schema version for migrations
+  deployments: ArweaveDeploymentHistoryRecord[];
+  lastUpdated: string;
+}
+
 export interface DeploymentVerification {
   isValid: boolean;
   errors: string[];
@@ -549,4 +586,36 @@ export interface HybridDeployResult {
     githubUrl: string;
     arweaveUrl: string;
   };
+}
+
+// ===== ENHANCED MANIFEST TYPES FOR CLEAN URLS =====
+
+export interface ArkbParsedFile {
+  id: string;
+  type: string;
+  path: string;
+  size?: string;
+}
+
+export interface ArweavePathManifest {
+  manifest: "arweave/paths";
+  version: "0.1.0" | "0.2.0";
+  index: {
+    path: string;
+  };
+  fallback?: {
+    id: string;
+  };
+  paths: {
+    [path: string]: {
+      id: string;
+    };
+  };
+}
+
+export interface EnhancedArweaveDeployResult extends ArweaveDeployResult {
+  enhancedManifest?: boolean;
+  originalManifestHash?: string;
+  cleanUrlsEnabled?: boolean;
+  parsedFiles?: ArkbParsedFile[];
 } 

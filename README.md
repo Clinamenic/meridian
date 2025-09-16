@@ -1,105 +1,121 @@
-# Meridian: Local-First Multi-Tool Interface
+# Meridian
 
-Meridian is a local-first Electron desktop application that bridges individual knowledge management with global social coordination. The app features three core tools: **Unified Resource Manager** (URL and file resource management), **Archive** (Arweave upload), and **Broadcast** (social media scheduling).
+[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/Clinamenic/meridian)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Electron](https://img.shields.io/badge/electron-28.0.0-blue.svg)](https://electronjs.org/)
 
-**Version 1.0.0** - First stable release with comprehensive modular architecture
+A local-first productivity application that combines knowledge management, file archiving, and static site deployment into a unified desktop interface.
 
-## Features
+## 🌟 Features
 
-### Unified Resource Manager
+### 📚 Unified Resource Manager
 
-- Add and organize web resources and local files with metadata extraction
-- Tag-based organization with search and filtering
-- Automatic title, description, and image extraction
-- Local SQLite database with workspace integration
-- Duplicate URL detection and management
-- Unified interface for both web resources and file management
+- **Resource Organization**: Manage web URLs, bookmarks, and local files in one interface
+- **Smart Metadata**: Automatic extraction of titles, descriptions, and images from web resources
+- **Advanced Tagging**: Powerful tag-based organization with search and filtering
+- **Local Database**: SQLite storage with efficient full-text search capabilities
+- **Duplicate Detection**: Intelligent URL deduplication and content validation
+- **Integrated Archive**: Upload files to Arweave directly from the resource interface
+- **Upload Tracking**: Monitor Arweave uploads with cost estimation and transaction status
 
-### Archive - Arweave Upload Tool
+### 🏗️ Static Site Deployment
 
-- Upload files to Arweave permanent storage via arkb
-- Cost estimation and wallet balance checking
-- Transaction tracking and status monitoring
-- Custom tagging for uploaded content
-- Bundle upload support for multiple files
+- **Quartz Integration**: Deploy knowledge gardens as static websites using Quartz
+- **Multiple Targets**: Deploy to GitHub Pages, Arweave, or export static files
+- **Build Pipeline**: Automated content scanning, processing, and optimization
+- **Cost Estimation**: Real-time deployment cost calculation for Arweave
+- **Deployment History**: Track all deployments with detailed metadata and status
 
-### Broadcast - Social Media Scheduler
+### 🔧 Account Management
 
-- Multi-platform posting to Bluesky, Farcaster, and Twitter
-- Draft management and post scheduling
-- Platform-specific character limits and previews
-- Secure credential management with OS-level encryption
-- Linear calendar interface for content planning
+- **Platform Integration**: Connect accounts for Arweave and GitHub
+- **Secure Storage**: All credentials encrypted using OS-native security
+- **Status Monitoring**: Real-time connection status across all platforms
+- **Token Management**: Easy token renewal and account switching
 
-## Technical Architecture
+## 🏗️ Architecture
 
-### Built With
+### Desktop Application
 
-- **Electron** (latest LTS) with security-hardened configuration
-- **TypeScript** for type safety and maintainability
-- **Plain CSS** with modern features (Grid, Flexbox, Custom Properties)
-- **Local-first** data storage with JSON documents
-- **Modular Architecture** with event-driven module system
+- **Electron Framework**: Cross-platform desktop app (macOS, Windows, Linux)
+- **TypeScript Backend**: Type-safe main process with specialized managers
+- **Modular Frontend**: Event-driven module system with clear separation of concerns
+- **Local-First**: All data stored locally with optional cloud synchronization
 
-### Modular System
+### Backend (Main Process)
 
-- **ModuleBase**: Abstract base class providing common functionality
-- **ModuleLoader**: Centralized module lifecycle management with dependency ordering
-- **Specialized Managers**: AccountManager, ArchiveManager, BroadcastManager, DeployManager, ModalManager, ResourceManager, UIManager, UploadManager
-- **Event-Driven Communication**: Inter-module communication via EventTarget
-- **Dependency Management**: Explicit dependency ordering and initialization
+```
+src/main/
+├── main.ts                    # Application orchestration
+├── data-manager.ts           # JSON-based data persistence
+├── unified-database-manager.ts # SQLite operations
+├── credential-manager.ts     # Secure credential storage
+├── arweave-manager.ts        # Arweave blockchain integration
+├── arweave-history-manager.ts # Deployment tracking
+├── site-deploy-manager.ts    # Static site deployment
+├── atproto-manager.ts        # Bluesky/AT Protocol
+├── x-manager.ts              # Twitter/X integration
+├── social-manager.ts         # Multi-platform coordination
+└── preload.ts                # Secure IPC bridge
+```
 
-### Security & Performance
+### Frontend (Renderer Process)
 
-- **safeStorage API** for encrypted credential storage
-- **Secure IPC** between main and renderer processes
-- **Content Security Policy** for XSS prevention
-- **Virtual scrolling** for large collections (10k+ items)
-- **Background data validation** and atomic file writes
-- **Modular Error Handling**: Consistent error handling and logging across modules
+```
+src/renderer/modules/
+├── ModuleBase.js             # Abstract base for all modules
+├── ModuleLoader.js           # Module lifecycle management
+├── ResourceManager.js        # Resource organization & search
+├── DeployManager.js          # Site deployment interface
+├── AccountManager.js         # Platform authentication
+├── UploadManager.js          # Arweave upload interface
+├── TagManager.js             # Tag system management
+├── ModalManager.js           # UI modal coordination
+└── UIManager.js              # Global UI utilities
+```
 
-## Installation
+### Data Storage
+
+```
+<workspace>/
+├── .meridian/
+│   ├── data/
+│   │   ├── resources.db      # SQLite database (resources, uploads)
+│   │   ├── deploy.json       # Site deployment configuration
+│   │   └── accounts.json     # Platform account metadata
+│   └── attachments/          # Local file cache
+└── content/                  # Markdown files for site deployment
+```
+
+## 🚀 Installation
 
 ### Prerequisites
 
-- **Node.js 22+** (required for deployment functionality)
-  - Download from [nodejs.org](https://nodejs.org/) - choose the LTS version
-- **npm 10.9.2+** (usually included with Node.js)
-  - Verify with: `npm --version`
-- **Git** (for cloning the repository)
-  - Download from [git-scm.com](https://git-scm.com/)
-- **arkb CLI** (optional, for Arweave functionality)
-  - Install with: `npm install -g arkb`
+- **Node.js 22+** (required for deployment features)
+- **npm 10.9.2+** (package management)
+- **Git** (for repository cloning)
 
 ### Quick Start
 
 ```bash
-# 1. Clone the repository
+# Clone the repository
 git clone https://github.com/Clinamenic/meridian.git
 cd meridian
 
-# 2. Install dependencies
+# Install dependencies
 npm install
 
-# 3. Build the application
+# Build the application
 npm run build
 
-# 4. Start the application
+# Start Meridian
 npm start
 ```
 
-**First Launch:** When you first start Meridian, you'll be prompted to select a workspace directory. This can be any folder where you want to store your data. The app will create `.meridian/data/` and `.meridian/attachments/` subdirectories within your chosen workspace.
-
-### Troubleshooting
-
-- **Build errors:** Ensure you're using Node.js 22+ with `node --version`
-- **Permission errors:** On macOS/Linux, you may need to use `sudo` for global npm installs
-- **App won't start:** Check that all dependencies installed successfully with `npm list --depth=0`
-
-### Development
+### Development Mode
 
 ```bash
-# Start in development mode with hot reload
+# Start with hot reload
 npm run dev
 
 # Run tests
@@ -112,123 +128,149 @@ npm run lint
 npm run package
 ```
 
-## Usage
+## 📖 Usage
 
-### Getting Started
+### First Launch
 
-1. Launch Meridian
-2. Select a workspace directory (creates `/data` and `/attachments` subdirectories)
-3. Use the three-tab interface to access different tools
+1. **Select Workspace**: Choose a directory for your data (creates `.meridian/` subdirectory)
+2. **Connect Accounts**: Optional - connect Arweave and GitHub accounts for deployment
+3. **Start Organizing**: Begin adding resources, uploading files, or deploying sites
 
-### Data Storage
+### Resource Management
 
+- **Add Resources**: Click "Add Resource" to import URLs or local files
+- **Auto-Metadata**: Use "Extract Metadata" for automatic title/description
+- **Tagging**: Add comma-separated tags for organization
+- **Search & Filter**: Use the search bar and tag filters to find content
+- **Bulk Operations**: Import multiple URLs from clipboard text
+- **Archive Files**: Upload files directly to Arweave with cost estimation
+- **Track Uploads**: Monitor Arweave upload status and transaction confirmations
+
+### Site Deployment
+
+- **Initialize**: Set up Quartz static site generator in your workspace
+- **Configure**: Set site title, description, and deployment options
+- **Build**: Process markdown files into static website
+- **Deploy**: Push to GitHub Pages, upload to Arweave, or export files
+- **Monitor**: Track deployment status and view detailed logs
+
+### File Archiving (Integrated)
+
+- **Seamless Upload**: Upload files to Arweave directly from the resource manager
+- **Cost Estimation**: See upload costs before committing transactions
+- **Bundle Uploads**: Efficiently upload multiple files together
+- **Track Status**: Monitor transaction confirmations and access URLs
+- **Upload History**: View complete history of all Arweave transactions
+
+## ⚙️ Configuration
+
+### Platform Setup
+
+#### GitHub (for deployment)
+
+```bash
+# Generate personal access token with repo permissions
+# Configure in Account Manager for GitHub Pages deployment
 ```
-<workspace>/
-├── .meridian/
-│   ├── data/
-│   │   ├── unified_resources.db  # Unified database for all resources and Arweave uploads
-│   │   └── broadcast.json        # Social posts and scheduling
-│   └── attachments/              # Local file cache
-```
-
-### Unified Resource Manager
-
-- Click "Add Resource" to add a new URL or local file
-- Use "Extract Metadata" to automatically fill title and description
-- Add comma-separated tags for organization
-- Use the search bar to filter resources
-- Click on tag filters to narrow results
-- Manage both web resources and local files in one interface
-
-### Archive Tool
-
-- Click "Upload File" to select and upload files to Arweave
-- Check wallet balance before uploading
-- Monitor upload status and transaction confirmations
-- Add custom tags to organize uploads
-
-### Broadcast Tool
-
-- Click "New Post" to create content
-- Select target platforms (Bluesky, Farcaster, Twitter)
-- Save as draft or schedule for later posting
-- Manage platform credentials in settings
-
-## Configuration
-
-### Platform Authentication
-
-#### Bluesky
-
-- Sign in with your Bluesky handle/email and password
-- Credentials are encrypted and stored securely
-
-#### Farcaster
-
-- Generate app-specific keys (implementation pending)
-- Store FID and authentication tokens
-
-#### Twitter
-
-- Set up Twitter API v2 credentials (implementation pending)
-- OAuth 2.0 authentication flow
 
 #### Arweave
 
-- Install and configure arkb CLI with wallet
-- Ensure sufficient AR balance for uploads
+```bash
+# Install arkb CLI globally
+npm install -g arkb
 
-### Workspace Integration
+# Set up wallet
+arkb wallet-save /path/to/wallet.json
+```
 
-- Choose any directory as your workspace
-- Resources and Arweave data stored in unified SQLite database for efficiency
-- Social media data stored in portable JSON format
-- Export to Markdown, CSV, or other formats
-- Compatible with Obsidian vaults and note-taking apps
+### Workspace Structure
 
-## Security
+Meridian is designed to work with any directory structure. Point it to:
+
+- **Obsidian Vaults**: Full compatibility with existing note collections
+- **Document Folders**: Any directory with markdown files
+- **Project Directories**: Organize by project or topic
+- **Research Folders**: Academic or professional research materials
+
+## 🔒 Security & Privacy
 
 ### Data Protection
 
-- All credentials encrypted with OS-native storage
-- Local-first approach keeps data under user control
-- Content Security Policy prevents XSS attacks
-- Secure IPC prevents unauthorized access
+- **Local-First**: All data stored on your device, no cloud dependencies
+- **Encrypted Credentials**: Platform tokens secured with OS-native encryption
+- **Secure IPC**: Communication between processes uses Electron's secure APIs
+- **Content Security**: CSP headers prevent XSS and injection attacks
 
-### Privacy
+### Privacy Guarantees
 
-- No telemetry or analytics tracking
-- All data stored locally in workspace
-- Social platform APIs used only for posting
-- User controls all data export and deletion
+- **No Telemetry**: Zero analytics, tracking, or data collection
+- **User Control**: Complete ownership of all data and exports
+- **Platform Isolation**: External APIs only used for explicit operations (deployment, archiving)
+- **Transparent Storage**: All data in readable JSON/SQLite formats
 
-## License
+## 🛠️ Development
 
-MIT License - see LICENSE file for details
+### Architecture Principles
 
-## Support
+- **Modular Design**: Clear separation between modules and concerns
+- **Event-Driven**: Loose coupling via EventTarget-based communication
+- **Type Safety**: TypeScript in main process, documented JavaScript in renderer
+- **Local-First**: Offline-capable with optional cloud integration
+- **Security-First**: All external communication through secure, validated APIs
 
-- Create issues for bugs or feature requests
-- Check existing issues before creating new ones
-- Include system information and reproduction steps
-- Use discussion forum for questions and ideas
+### Contributing
 
-## Recent Updates
+1. **Fork & Clone**: Fork the repository and clone your fork
+2. **Feature Branch**: Create a feature branch for your changes
+3. **Test**: Ensure all tests pass and add new tests for features
+4. **Lint**: Run `npm run lint:fix` to fix code style issues
+5. **Pull Request**: Submit PR with clear description of changes
 
-### Version 1.0.0 (2025-07-01)
+### Building & Packaging
 
-**Major Release**: Comprehensive Frontend Modularization
+```bash
+# Development build
+npm run build
 
-- Complete architectural refactor from monolithic to modular design
-- Introduced ModuleBase abstract class for consistent module interface
-- Implemented ModuleLoader for centralized lifecycle management
-- Created 8 specialized manager modules for different functionality areas
-- Added event-driven inter-module communication system
-- Maintained full backward compatibility with existing features
-- Improved maintainability and extensibility for future development
+# Watch mode for development
+npm run build:watch
 
-This release represents the first stable, production-ready version of Meridian with a robust modular architecture that enables easier feature development, better code organization, and improved maintainability.
+# Production optimized build
+npm run build:bundle
+
+# Package for current platform
+npm run package
+
+# Package with optimizations
+npm run package:prod
+```
+
+## 📝 Recent Updates
+
+### Version 0.9.0 (September 16, 2025)
+
+**Enhanced Deployment System** with comprehensive Arweave integration:
+
+- **🎯 Deployment History**: Complete tracking system with persistent history storage
+- **🎨 Streamlined UI**: Simplified interface with collapsible sections replacing complex tabs
+- **💰 Enhanced Cost Estimation**: Real-time Arweave deployment cost calculation with wallet integration
+- **⚡ Performance Optimization**: Reduced deployment code complexity by 4,000+ lines while adding features
+- **📊 ArweaveHistoryManager**: Dedicated system for tracking deployment records and metadata
+- **✨ Better UX**: Intuitive workflow with clear visual progression and enhanced feedback
+- **📤 Export Functionality**: Export deployment history for record-keeping and analysis
+
+This release significantly improves the deployment experience with a focus on simplicity, performance, and comprehensive deployment tracking.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## 🤝 Support
+
+- **Issues**: [GitHub Issues](https://github.com/Clinamenic/meridian/issues) for bugs and feature requests
+- **Discussions**: [GitHub Discussions](https://github.com/Clinamenic/meridian/discussions) for questions and ideas
+- **Documentation**: Check the [wiki](https://github.com/Clinamenic/meridian/wiki) for detailed guides
 
 ---
 
-**Meridian** - Bridging individual knowledge management with global social coordination through local-first principles.
+**Meridian** - _Bridging individual knowledge management with global social coordination through local-first principles._

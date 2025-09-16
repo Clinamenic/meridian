@@ -52,14 +52,16 @@ export class TagManager extends ModuleBase {
    * Get all existing tags from resource files
    */
   getAllExistingResourceTags() {
-    if (!this.getData().archive || !this.getData().archive.files) {
+    // Get resources from ResourceManager instead of archive data
+    const resourceManager = this.getModule('resourceManager');
+    if (!resourceManager || !resourceManager.state || !resourceManager.state.resources) {
       return [];
     }
 
     const tagSet = new Set();
-    this.getData().archive.files.forEach(file => {
-      if (file.tags) {
-        file.tags.forEach(tag => tagSet.add(tag));
+    resourceManager.state.resources.forEach(resource => {
+      if (resource.properties && resource.properties["meridian:tags"]) {
+        resource.properties["meridian:tags"].forEach(tag => tagSet.add(tag));
       }
     });
 
@@ -70,23 +72,27 @@ export class TagManager extends ModuleBase {
    * Get intelligently ranked resource tag suggestions
    */
   getIntelligentResourceTagSuggestions(input, excludeTags = [], limit = 5) {
-    if (!this.getData().archive || !this.getData().archive.files) {
+    // Get resources from ResourceManager instead of archive data
+    const resourceManager = this.getModule('resourceManager');
+    if (!resourceManager || !resourceManager.state || !resourceManager.state.resources) {
       return [];
     }
+    
+    const resources = resourceManager.state.resources;
 
     const inputLower = input.toLowerCase();
     const suggestions = new Map(); // tag -> score
 
     // Calculate tag frequency and usage stats for resource files
     const tagStats = {};
-    this.getData().archive.files.forEach(file => {
-      if (file.tags) {
-        file.tags.forEach(tag => {
+    resources.forEach(resource => {
+      if (resource.properties && resource.properties["meridian:tags"]) {
+        resource.properties["meridian:tags"].forEach(tag => {
           if (!tagStats[tag]) {
             tagStats[tag] = { count: 0, files: new Set() };
           }
           tagStats[tag].count++;
-          tagStats[tag].files.add(file.uuid);
+          tagStats[tag].files.add(resource.id);
         });
       }
     });
@@ -122,9 +128,9 @@ export class TagManager extends ModuleBase {
       score += Math.min(stats.count * 10, 100);
 
       // 5. Recency bonus (tags from recently modified files)
-      const recentFiles = this.getData().archive.files
-        .filter(f => f.modified && new Date(f.modified) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
-        .map(f => f.uuid);
+      const recentFiles = resources
+        .filter(r => r.modified && new Date(r.modified) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+        .map(r => r.id);
       
       const recentUsage = Array.from(stats.files).filter(uuid => recentFiles.includes(uuid)).length;
       score += recentUsage * 5;
@@ -321,10 +327,12 @@ export class TagManager extends ModuleBase {
    * Apply resource filters
    */
   applyResourceFilters() {
-    const files = this.getData().archive?.files || [];
+    // Get resources from ResourceManager instead of archive data
+    const resourceManager = this.getModule('resourceManager');
+    const resources = resourceManager?.state?.resources || [];
     
-    files.forEach(file => {
-      const item = document.querySelector(`.resource-item[data-uuid="${file.uuid}"]`);
+    resources.forEach(resource => {
+      const item = document.querySelector(`.resource-item[data-resource-id="${resource.id}"]`);
       if (!item) return;
 
       let shouldShow = true;
@@ -332,25 +340,25 @@ export class TagManager extends ModuleBase {
       // Apply search filter
       if (this.currentResourceSearchTerm) {
         const searchTerm = this.currentResourceSearchTerm.toLowerCase();
-        const title = (file.title || '').toLowerCase();
-        const filePath = (file.filePath || '').toLowerCase();
-        const author = (file.metadata?.author || '').toLowerCase();
+        const title = (resource.title || '').toLowerCase();
+        const url = (resource.url || '').toLowerCase();
+        const description = (resource.description || '').toLowerCase();
         
         shouldShow = title.includes(searchTerm) || 
-                    filePath.includes(searchTerm) || 
-                    author.includes(searchTerm);
+                    url.includes(searchTerm) || 
+                    description.includes(searchTerm);
       }
 
       // Apply tag filters
       if (shouldShow && this.activeResourceTagFilters.size > 0) {
-        const fileTags = new Set(file.tags || []);
+        const resourceTags = new Set(resource.properties?.["meridian:tags"] || []);
         
         if (this.resourceFilterLogic === 'all') {
           // Show if ALL of the active filters match
-          shouldShow = Array.from(this.activeResourceTagFilters).every(tag => fileTags.has(tag));
+          shouldShow = Array.from(this.activeResourceTagFilters).every(tag => resourceTags.has(tag));
         } else {
           // Show if ANY of the active filters match
-          shouldShow = Array.from(this.activeResourceTagFilters).some(tag => fileTags.has(tag));
+          shouldShow = Array.from(this.activeResourceTagFilters).some(tag => resourceTags.has(tag));
         }
       }
 
@@ -364,7 +372,9 @@ export class TagManager extends ModuleBase {
    * Update resource count display
    */
   updateResourceCount() {
-    const totalCount = this.getData().archive?.files?.length || 0;
+    // Get resources from ResourceManager instead of archive data
+    const resourceManager = this.getModule('resourceManager');
+    const totalCount = resourceManager?.state?.resources?.length || 0;
     const visibleCount = document.querySelectorAll('.resource-item[style*="display: block"], .resource-item:not([style*="display: none"])').length;
     
     const countElement = document.getElementById('resource-count-text');

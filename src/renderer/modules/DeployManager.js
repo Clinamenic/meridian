@@ -11,20 +11,17 @@ export class DeployManager extends ModuleBase {
 
   async onInit() {
     console.log('[DeployManager] Initializing...');
-    
+
     // Setup deploy-related event listeners
     this.setupDeployEvents();
-    
-    // Setup subtab navigation
-    this.setupDeploySubtabs();
-    
-    // Initialize header collapse state
-    this.initializeHeaderCollapseState();
-    
+
     // Setup global collapsible section functionality
     this.setupGlobalCollapsibleSections();
-    
-    console.log('[DeployManager] Initialized');
+
+    // Render unified deploy content
+    await this.renderUnifiedDeployContent();
+
+    console.log('[DeployManager] Initialized with unified content');
   }
 
   async onCleanup() {
@@ -36,16 +33,107 @@ export class DeployManager extends ModuleBase {
    * Set up all deploy-related event listeners
    */
   setupDeployEvents() {
-    // Setup header collapse functionality
-    this.setupHeaderCollapse();
-    
-    // Setup GitHub Pages toggle
+    // Setup header buttons
+    this.setupHeaderButtons();
+
+    // Setup GitHub Pages toggle (this is now handled in unified events)
     this.setupGitHubPagesToggle();
-    
-    // Subtab navigation is handled by setupDeploySubtabs()
-    
-    // Optional: Add any future header actions here
-    // Example: Settings button, help button, etc.
+
+    // Note: Unified content rendering handles all form events
+  }
+
+  /**
+   * Setup header buttons functionality
+   */
+  setupHeaderButtons() {
+    // Initialize button
+    const initializeBtn = document.getElementById('deploy-initialize-btn');
+    if (initializeBtn) {
+      initializeBtn.addEventListener('click', async () => {
+        await this.handleHeaderInitializeClick();
+      });
+    }
+
+    // Build button
+    const buildBtn = document.getElementById('deploy-build-btn');
+    if (buildBtn) {
+      buildBtn.addEventListener('click', async () => {
+        await this.buildSiteWithPreview();
+      });
+    }
+
+    // Deploy button
+    const deployBtn = document.getElementById('deploy-deploy-btn');
+    if (deployBtn) {
+      deployBtn.addEventListener('click', async () => {
+        await this.handleHeaderDeployClick();
+      });
+    }
+  }
+
+  /**
+   * Handle header initialize button click
+   */
+  async handleHeaderInitializeClick() {
+    try {
+      const isInitialized = await this.checkQuartzInitialized();
+      const currentSettings = await window.electronAPI.config.loadSiteSettings(this.app.workspacePath);
+
+      await this.handleConfigurationSubmit(isInitialized, currentSettings);
+    } catch (error) {
+      console.error('[DeployManager] Failed to handle initialize click:', error);
+      this.app.showError(`Initialization failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Handle header deploy button click
+   */
+  async handleHeaderDeployClick() {
+    try {
+      // Focus on the Arweave deployment section since that's the primary deployment method
+      const arweaveSection = document.getElementById('arweave-deployment-section');
+      if (arweaveSection) {
+        // Expand the section if collapsed
+        arweaveSection.classList.remove('collapsed');
+
+        // Scroll to the section
+        arweaveSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Focus on the site ID input
+        setTimeout(() => {
+          const siteIdInput = document.getElementById('arweave-site-id');
+          if (siteIdInput) {
+            siteIdInput.focus();
+          }
+        }, 500);
+      }
+    } catch (error) {
+      console.error('[DeployManager] Failed to handle deploy click:', error);
+      this.app.showError(`Deploy action failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update header button visibility and text based on initialization status
+   */
+  updateHeaderButtons(isInitialized) {
+    const initializeBtn = document.getElementById('deploy-initialize-btn');
+    const buildBtn = document.getElementById('deploy-build-btn');
+    const deployBtn = document.getElementById('deploy-deploy-btn');
+
+    if (initializeBtn) {
+      initializeBtn.style.display = 'inline-block';
+      initializeBtn.textContent = isInitialized ? 'Apply Changes' : 'Initialize Site';
+    }
+
+    if (buildBtn) {
+      buildBtn.style.display = isInitialized ? 'inline-block' : 'none';
+    }
+
+    if (deployBtn) {
+      deployBtn.style.display = isInitialized ? 'inline-block' : 'none';
+    }
   }
 
   /**
@@ -69,195 +157,86 @@ export class DeployManager extends ModuleBase {
     // The toggle state will be processed when Apply Changes is clicked
   }
 
-
   /**
-   * Setup header collapse/expand functionality
-   */
-  setupHeaderCollapse() {
-    const collapseBtn = document.getElementById('deploy-header-collapse-btn');
-    if (collapseBtn) {
-      collapseBtn.addEventListener('click', () => {
-        this.toggleHeaderCollapse();
-      });
-    }
-  }
-
-  /**
-   * Toggle header collapse state
-   */
-  toggleHeaderCollapse() {
-    const header = document.querySelector('#deploy-panel .panel-header');
-    const collapseBtn = document.getElementById('deploy-header-collapse-btn');
-    
-    if (!header || !collapseBtn) return;
-    
-    const isCollapsed = header.classList.contains('collapsed');
-    const newState = isCollapsed ? 'expanded' : 'collapsed';
-    
-    // Update header class
-    header.classList.toggle('collapsed', !isCollapsed);
-    
-    // Update button state
-    collapseBtn.setAttribute('data-state', newState);
-    collapseBtn.setAttribute('title', newState === 'expanded' ? 'Collapse Header' : 'Expand Header');
-    
-    // Save state to localStorage
-    localStorage.setItem('deployHeaderCollapsed', (!isCollapsed).toString());
-  }
-
-  /**
-   * Initialize header collapse state from localStorage
-   */
-  initializeHeaderCollapseState() {
-    const header = document.querySelector('#deploy-panel .panel-header');
-    const collapseBtn = document.getElementById('deploy-header-collapse-btn');
-    
-    if (!header || !collapseBtn) return;
-    
-    try {
-      const savedState = localStorage.getItem('deployHeaderCollapsed');
-      if (savedState === 'true') {
-        header.classList.add('collapsed');
-        collapseBtn.setAttribute('data-state', 'collapsed');
-        collapseBtn.setAttribute('title', 'Expand Header');
-      } else {
-        header.classList.remove('collapsed');
-        collapseBtn.setAttribute('data-state', 'expanded');
-        collapseBtn.setAttribute('title', 'Collapse Header');
-      }
-    } catch (error) {
-      console.warn('[DeployManager] Failed to load header collapse state:', error);
-    }
-  }
-
-  /**
-   * Set up subtab navigation event listeners
+   * Set up subtab navigation event listeners (DEPRECATED - now uses unified content)
+   * @deprecated Use renderUnifiedDeployContent() instead
    */
   setupDeploySubtabs() {
-    const subtabBtns = document.querySelectorAll('.subtab-btn');
-    subtabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.switchDeploySubtab(btn.dataset.tab);
-      });
-    });
+    console.warn('[DeployManager] setupDeploySubtabs() is deprecated - unified content is now used');
+    // Method kept for compatibility but does nothing
   }
 
   /**
-   * Switch to a specific deploy subtab
+   * Switch to a specific deploy subtab (DEPRECATED - now uses unified content)
+   * @deprecated Use renderUnifiedDeployContent() instead
    */
   switchDeploySubtab(tabName) {
-    // Hide all panels
-    document.querySelectorAll('.subtab-panel').forEach(panel => {
-      panel.classList.remove('active');
-    });
-    
-    // Show selected panel
-    const targetPanel = document.getElementById(`${tabName}-tab`);
-    if (targetPanel) {
-      targetPanel.classList.add('active');
-    }
-    
-    // Update button states
-    document.querySelectorAll('.subtab-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.tab === tabName);
-    });
-    
-    // Load tab-specific content if needed
-    this.loadSubtabContent(tabName);
+    console.warn('[DeployManager] switchDeploySubtab() is deprecated - unified content is now used');
+    // Method kept for compatibility but does nothing
   }
 
   /**
-   * Load content for a specific subtab
+   * Load content for a specific subtab (DEPRECATED - now uses unified content)
+   * @deprecated Use renderUnifiedDeployContent() instead
    */
   loadSubtabContent(tabName) {
-    switch (tabName) {
-      case 'configure':
-        this.loadConfigureContent();
-        break;
-      case 'build':
-        this.loadBuildContent();
-        break;
-      case 'publish':
-        this.loadPublishContent();
-        break;
-    }
+    console.warn('[DeployManager] loadSubtabContent() is deprecated - unified content is now used');
+    // Method kept for compatibility but does nothing
   }
 
   /**
-   * Load configure tab content
+   * Load configure tab content (DEPRECATED - now uses unified content)
+   * @deprecated Use renderUnifiedDeployContent() instead
    */
   async loadConfigureContent() {
-    try {
-      const isInitialized = await this.checkQuartzInitialized();
-      const currentSettings = await window.electronAPI.config.loadSiteSettings(this.app.workspacePath);
-      const defaultTemplate = await window.electronAPI.template.getDefault();
-      const clinamenicTemplate = await window.electronAPI.template.getClinamenic();
-      
-      this.renderConfigureContent(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate);
-    } catch (error) {
-      console.error('Failed to load configure content:', error);
-      this.getApp().showError('Failed to load configuration content');
-    }
+    console.warn('[DeployManager] loadConfigureContent() is deprecated - unified content is now used');
+    // Delegate to unified rendering for compatibility
+    await this.renderUnifiedDeployContent();
   }
 
   /**
-   * Load build tab content
+   * Load build tab content (DEPRECATED - now uses unified content)
+   * @deprecated Use renderUnifiedDeployContent() instead
    */
   loadBuildContent() {
-    this.renderBuildContent();
+    console.warn('[DeployManager] loadBuildContent() is deprecated - unified content is now used');
+    // Method kept for compatibility but does nothing (unified content handles this)
   }
 
   /**
-   * Load publish tab content
+   * Load publish tab content (DEPRECATED - now uses unified content)
+   * @deprecated Use renderUnifiedDeployContent() instead
    */
   async loadPublishContent() {
-    try {
-      const githubAccounts = await window.electronAPI.deploy.githubAccounts();
-      this.renderPublishContent(githubAccounts);
-    } catch (error) {
-      console.error('Failed to load publish content:', error);
-      this.getApp().showError('Failed to load deployment content');
-    }
+    console.warn('[DeployManager] loadPublishContent() is deprecated - unified content is now used');
+    // Method kept for compatibility but does nothing (unified content handles this)
   }
 
   /**
-   * Render configure tab content
+   * Render configure tab content (DEPRECATED - now uses unified content)
+   * @deprecated Use renderUnifiedDeployContent() instead
    */
   renderConfigureContent(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate) {
-    const container = document.getElementById('configure-tab');
-    
-    // Extract form content from existing modal creation logic
-    const formContent = this.generateConfigurationFormContent(
-      isInitialized, currentSettings, defaultTemplate, clinamenicTemplate
-    );
-    
-    container.innerHTML = formContent;
-    this.setupConfigurationFormEvents(isInitialized, currentSettings);
+    console.warn('[DeployManager] renderConfigureContent() is deprecated - unified content is now used');
+    // Method kept for compatibility but does nothing (unified content handles this)
   }
 
   /**
-   * Render build tab content
+   * Render build tab content (DEPRECATED - now uses unified content)
+   * @deprecated Use renderUnifiedDeployContent() instead
    */
   renderBuildContent() {
-    const container = document.getElementById('build-tab');
-    
-    // Move existing build logs and composition content
-    container.innerHTML = this.generateBuildContent();
-    this.setupBuildContentEvents();
-    this.setupPreviewControls();
+    console.warn('[DeployManager] renderBuildContent() is deprecated - unified content is now used');
+    // Method kept for compatibility but does nothing (unified content handles this)
   }
 
   /**
-   * Render publish tab content
+   * Render publish tab content (DEPRECATED - now uses unified content)
+   * @deprecated Use renderUnifiedDeployContent() instead
    */
-  renderPublishContent(githubAccounts) {
-    const container = document.getElementById('publish-tab');
-    
-    // Extract deployment form content from existing modal logic
-    const deploymentContent = this.generateDeploymentFormContent(githubAccounts);
-    
-    container.innerHTML = deploymentContent;
-    this.setupDeploymentFormEvents();
+  renderPublishContent() {
+    console.warn('[DeployManager] renderPublishContent() is deprecated - unified content is now used');
+    // Method kept for compatibility but does nothing (unified content handles this)
   }
 
   /**
@@ -265,12 +244,12 @@ export class DeployManager extends ModuleBase {
    */
   generateConfigurationFormContent(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate) {
     const currentTemplate = currentSettings.quartz?.template || defaultTemplate;
-    
+
     return `
       <div class="deploy-main-content">
         <form id="site-configuration-form">
           <!-- Initialization Section -->
-          <div class="collapsible-section" id="initialization-section">
+          <div class="collapsible-section collapsed" id="initialization-section">
             <div class="section-header" data-section="initialization">
               <h4>Initialization ${!isInitialized ? '(Required)' : ''}</h4>
               <button type="button" class="expand-btn" aria-label="Toggle initialization section">
@@ -321,13 +300,20 @@ export class DeployManager extends ModuleBase {
                 </div>
                 <div class="form-group-control">
                   <input type="text" id="custom-template-url" placeholder="https://github.com/username/repo" value="${currentTemplate.url || ''}">
-                </div>
+              </div>
+            </div>
+            
+            <div class="form-group checkbox-group checkbox-group-enhanced">
+              <div class="form-group-control">
+                <input type="checkbox" id="github-pages-enabled" ${currentSettings.deployment?.githubPages ? 'checked' : ''}>
+                <label for="github-pages-enabled" class="checkbox-label">GitHub Pages Deployment</label>
+                <button class="form-help-btn" title="Enables automatic deployment to GitHub Pages using GitHub Actions. Creates a workflow file that builds and deploys your site when you push changes to your repository.">?</button>
               </div>
             </div>
           </div>
 
           <!-- Site Settings Section -->
-          <div class="collapsible-section" id="site-settings-section">
+          <div class="collapsible-section collapsed" id="site-settings-section">
             <div class="section-header" data-section="site-settings">
               <h4>Site Settings</h4>
               <button type="button" class="expand-btn" aria-label="Toggle site settings section">
@@ -370,21 +356,11 @@ export class DeployManager extends ModuleBase {
                 </div>
                 <div class="form-group-control">
                   <input type="text" id="base-url" placeholder="https://example.com" value="${currentSettings.site?.baseUrl || ''}">
-                </div>
               </div>
-              
-              <div class="form-group checkbox-group checkbox-group-enhanced">
-                <div class="form-group-control">
-                  <input type="checkbox" id="github-pages-enabled" ${currentSettings.deployment?.githubPages ? 'checked' : ''}>
-                  <label for="github-pages-enabled" class="checkbox-label">GitHub Pages Deployment</label>
-                  <button class="form-help-btn" title="Enables automatic deployment to GitHub Pages using GitHub Actions. Creates a workflow file that builds and deploys your site when you push changes to your repository.">?</button>
-                </div>
-              </div>
-            </div>
           </div>
 
           <!-- Custom Ignore Patterns Section -->
-          <div class="collapsible-section" id="ignore-patterns-section">
+          <div class="collapsible-section collapsed" id="ignore-patterns-section">
             <div class="section-header" data-section="ignore-patterns">
               <h4>Custom Ignore Patterns</h4>
               <button type="button" class="expand-btn" aria-label="Toggle ignore patterns section">
@@ -401,7 +377,6 @@ export class DeployManager extends ModuleBase {
                 </div>
                 <div class="form-group-control">
                   <textarea id="custom-ignore-patterns" rows="4" placeholder="*.tmp&#10;private/**&#10;drafts/&#10;.env">${currentSettings.site?.ignorePatterns?.custom?.join('\n') || ''}</textarea>
-                </div>
               </div>
             </div>
           </div>
@@ -424,20 +399,15 @@ export class DeployManager extends ModuleBase {
     return `
       <div class="deploy-main-content">
         <!-- Build Logs Section -->
-        <div class="collapsible-section" id="build-logs-section">
+        <div class="collapsible-section collapsed" id="build-logs-section">
           <div class="section-header" data-section="build-logs">
             <h4>Build Logs</h4>
             <div class="section-header-right">
-              <div class="build-controls">
-                <button type="button" class="primary-btn" id="build-site-btn">
-                  Build Site
-                </button>
                 <div class="preview-info">
                   <span class="preview-status" id="preview-status">Server: Not running</span>
                   <button type="button" class="secondary-btn" id="open-external-btn" disabled>
                     Open External
                   </button>
-                </div>
               </div>
               <button type="button" class="expand-btn" aria-label="Toggle build logs">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -452,7 +422,7 @@ export class DeployManager extends ModuleBase {
         </div>
 
         <!-- Composition Section -->
-        <div class="collapsible-section" id="composition-section">
+        <div class="collapsible-section collapsed" id="composition-section">
           <div class="section-header" data-section="composition">
             <h4>Composition</h4>
             <div class="section-header-right">
@@ -495,148 +465,67 @@ export class DeployManager extends ModuleBase {
   /**
    * Generate deployment form content (extracted from modal)
    */
-  generateDeploymentFormContent(githubAccounts) {
-    // Always show deployment options, even without GitHub accounts
-    // since Arweave deployment doesn't require GitHub
-
-    const accountOptions = githubAccounts.map(account => 
-      `<option value="${account.id}" data-username="${account.username}" data-token-type="${account.tokenType}">
-        ${account.nickname} (@${account.username}) ${account.tokenType === 'classic' ? '⚠️' : '🔒'}
-      </option>`
-    ).join('');
-
-      return `
-        <div class="deploy-main-content">
-        <!-- GitHub Pages Deployment Section -->
-        <div class="collapsible-section" id="github-pages-section">
-          <div class="section-header" data-section="github-pages">
-            <h4>GitHub Pages Deployment</h4>
-            <button type="button" class="expand-btn" aria-label="Toggle GitHub Pages section">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-          <div class="section-content">
-            ${githubAccounts.length === 0 ? `
-          <div class="no-accounts-message">
-            <div class="message-icon">🔗</div>
-            <h4>No GitHub Accounts Connected</h4>
-            <p>To deploy your site to GitHub Pages, you'll need to connect a GitHub account first.</p>
-            <div class="account-setup-info">
-              <h5>What you'll need:</h5>
-              <ul>
-                <li>GitHub Personal Access Token (Fine-grained recommended)</li>
-                <li>Repository access permissions</li>
-                <li>GitHub Pages enabled on your account</li>
-              </ul>
-            </div>
-            <button type="button" class="primary-btn" id="setup-github-btn">
-              <span class="btn-icon">⚙️</span>
-              Set Up GitHub Account
-            </button>
-          </div>
-            ` : `
-              <form id="github-deploy-form">
-          <div class="form-group">
-            <label for="github-account">GitHub Account</label>
-            <select id="github-account" required>
-              <option value="">Select GitHub account...</option>
-              ${accountOptions}
-            </select>
-            <button type="button" id="add-github-account-btn" class="link-btn">+ Add Account</button>
-          </div>
-          
-          <div id="security-info" class="security-panel" style="display: none;">
-            <!-- Dynamic security information -->
-          </div>
-          
-          <div class="form-group">
-            <label for="repository-name">Repository Name</label>
-            <input type="text" id="repository-name" placeholder="my-site" required>
-            <small>Will create: <span id="repo-preview">username/my-site</span></small>
-          </div>
-          
-          <div class="form-group">
-            <label for="custom-domain">Custom Domain (Optional)</label>
-            <input type="text" id="custom-domain" placeholder="example.com">
-            <small>Leave empty to use GitHub Pages default domain</small>
-          </div>
-          
-          <div class="deployment-options">
-                  <h5>Deployment Options</h5>
-            <div class="option-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="auto-create-repo" checked>
-                <span class="checkmark"></span>
-                Automatically create repository if it doesn't exist
-              </label>
-            </div>
-            <div class="option-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="enable-custom-domain" disabled>
-                <span class="checkmark"></span>
-                Configure custom domain (requires domain ownership)
-              </label>
-            </div>
-          </div>
-
-          <div class="form-actions">
-                  <button type="submit" class="primary-btn" id="github-deploy-btn">
-              <span class="btn-icon">🚀</span>
-              Deploy to GitHub Pages
-            </button>
-          </div>
-        </form>
-            `}
-          </div>
-        </div>
-
-        <!-- Arweave Deployment Section -->
-        <div class="collapsible-section" id="arweave-section">
+  generateDeploymentFormContent() {
+    // Simplified Arweave-only deployment form
+    return `
+      <div class="deploy-main-content">
+        <!-- Enhanced Arweave Deployment Section -->
+        <div class="collapsible-section collapsed" id="arweave-section">
           <div class="section-header" data-section="arweave">
             <h4>Arweave Deployment</h4>
-            <button type="button" class="expand-btn" aria-label="Toggle Arweave section">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
+            <div class="section-header-right">
+              <span class="deployment-status" id="arweave-status">Ready</span>
+              <button type="button" class="expand-btn" aria-label="Toggle Arweave section">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="section-content">
-            <div class="wallet-status" id="arweave-wallet-status">
-              <div class="wallet-status-loading">Checking wallet status...</div>
-            </div>
-            
             <form id="arweave-deploy-form">
-              <div class="form-group">
-                <label for="arweave-site-id">Site ID</label>
-                <input type="text" id="arweave-site-id" placeholder="my-site-arweave" required>
-                <small>Unique identifier for your Arweave deployment</small>
-              </div>
-              
-              <div class="form-group">
-                <label for="arweave-deployment-strategy">Deployment Strategy</label>
-                <select id="arweave-deployment-strategy">
-                  <option value="full">Full Deployment</option>
-                  <option value="incremental">Incremental (if available)</option>
-                </select>
-                <small>Choose how to deploy your site</small>
+              <div class="form-group form-group-enhanced">
+                <div class="form-group-header">
+                  <label for="arweave-site-id">Site ID</label>
+                  <button class="form-help-btn" title="Unique identifier for your Arweave deployment. This will be used to track your site deployments.">?</button>
+                </div>
+                <div class="form-group-control">
+                  <input type="text" id="arweave-site-id" placeholder="my-site-arweave" required>
+                  <small>Unique identifier for your Arweave deployment</small>
+                </div>
               </div>
 
-              <div class="cost-estimate" id="arweave-cost-estimate" style="display: none;">
-                <h5>Estimated Cost</h5>
-                <div class="cost-breakdown">
-                  <div class="cost-item">
-                    <span class="cost-label">Total Size:</span>
-                    <span class="cost-value" id="arweave-total-size">Calculating...</span>
-                  </div>
-                  <div class="cost-item">
-                    <span class="cost-label">AR Cost:</span>
-                    <span class="cost-value" id="arweave-ar-cost">Calculating...</span>
-                  </div>
-                  <div class="cost-item">
-                    <span class="cost-label">USD Cost:</span>
-                    <span class="cost-value" id="arweave-usd-cost">Calculating...</span>
+              <div class="form-group form-group-enhanced" id="arweave-cost-estimate">
+                <div class="form-group-header">
+                  <label>Cost Breakdown</label>
+                  <button class="form-help-btn" title="Estimated cost for deploying your site to Arweave based on the total file size and current AR token price.">?</button>
+                </div>
+                <div class="form-group-control">
+                  <div class="cost-breakdown">
+                    <div class="cost-item">
+                      <span class="cost-label">Total Size:</span>
+                      <span class="cost-value" id="arweave-total-size">Calculating...</span>
+                    </div>
+                    <div class="cost-item">
+                      <span class="cost-label">AR Cost:</span>
+                      <span class="cost-value" id="arweave-ar-cost">Calculating...</span>
+                    </div>
+                    <div class="cost-item">
+                      <span class="cost-label">USD Cost:</span>
+                      <span class="cost-value" id="arweave-usd-cost">Calculating...</span>
+                    </div>
+                    <div class="cost-item">
+                      <span class="cost-label">Wallet:</span>
+                      <span class="cost-value" id="arweave-wallet-name">Checking...</span>
+                    </div>
+                    <div class="cost-item">
+                      <span class="cost-label">Address:</span>
+                      <span class="cost-value" id="arweave-wallet-address">Checking...</span>
+                    </div>
+                    <div class="cost-item">
+                      <span class="cost-label">Balance:</span>
+                      <span class="cost-value" id="arweave-wallet-balance">Checking...</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -650,68 +539,315 @@ export class DeployManager extends ModuleBase {
             </form>
           </div>
         </div>
+      </div>
+    `;
+  }
 
-        <!-- Hybrid Deployment Section -->
-        <div class="collapsible-section" id="hybrid-section">
-          <div class="section-header" data-section="hybrid">
-            <h4>Hybrid Deployment (Both Platforms)</h4>
-            <button type="button" class="expand-btn" aria-label="Toggle Hybrid section">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
+  /**
+   * Generate unified deploy content with flattened sections
+   */
+  generateUnifiedDeployContent(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate) {
+    const currentTemplate = currentSettings.quartz?.template || defaultTemplate;
+
+    return `
+      <div class="deploy-unified-content">
+        <!-- Initialization Section -->
+        <div class="collapsible-section collapsed" id="initialization-section">
+          <div class="section-header" data-section="initialization">
+            <h4>Initialization</h4>
+            <div class="section-header-right">
+              <button type="button" class="expand-btn" aria-label="Toggle initialization section">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="section-content">
-            <div class="hybrid-info">
-              <p>Deploy your site to both GitHub Pages and Arweave simultaneously for maximum reliability and permanence.</p>
-              <div class="hybrid-benefits">
-                <h5>Benefits:</h5>
-                <ul>
-                  <li><strong>GitHub Pages:</strong> Traditional hosting with Git integration and easy updates</li>
-                  <li><strong>Arweave:</strong> Permanent decentralized storage that never goes down</li>
-                  <li><strong>Redundancy:</strong> Your site is available even if one platform is unavailable</li>
-                </ul>
+            <form id="site-configuration-form">
+              <div class="template-options">
+                <div class="form-group form-group-enhanced">
+                  <div class="form-group-header">
+                    <label>Template Selection</label>
+                    <button class="form-help-btn" title="Choose the Quartz template for your site. Vanilla is the default, Clinamenic has enhanced features, or use a custom template from GitHub.">?</button>
+                  </div>
+                  <div class="form-group-control">
+                    <label class="radio-option">
+                      <input type="radio" name="template" value="vanilla" ${currentTemplate.id === 'vanilla-quartz' ? 'checked' : ''}>
+                      <div class="radio-content">
+                        <strong>Vanilla Quartz</strong>
+                        <p>Default Meridian-Quartz template with clean styling</p>
+                      </div>
+                    </label>
+                    
+                    <label class="radio-option">
+                      <input type="radio" name="template" value="clinamenic" ${currentTemplate.id === 'clinamenic-quartz' ? 'checked' : ''}>
+                      <div class="radio-content">
+                        <strong>Clinamenic Quartz</strong>
+                        <p>Enhanced Meridian-Quartz template with advanced features and optimizations</p>
+                      </div>
+                    </label>
+                    
+                    <label class="radio-option">
+                      <input type="radio" name="template" value="custom" ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'checked' : ''}>
+                      <div class="radio-content">
+                        <strong>Custom Template</strong>
+                        <p>Use a custom Quartz template from GitHub or other source</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="form-group form-group-enhanced" id="custom-template-group" style="display: ${currentTemplate.id !== 'vanilla-quartz' && currentTemplate.id !== 'clinamenic-quartz' ? 'block' : 'none'};">
+                <div class="form-group-header">
+                  <label for="custom-template-url">Custom Template URL</label>
+                  <button class="form-help-btn" title="Enter the full GitHub repository URL for your custom Quartz template. The repository should contain a valid Quartz configuration.">?</button>
+                </div>
+                <div class="form-group-control">
+                  <input type="text" id="custom-template-url" placeholder="https://github.com/username/repo" value="${currentTemplate.url || ''}">
+                </div>
+              </div>
+              
+              <div class="form-group checkbox-group checkbox-group-enhanced">
+                <div class="form-group-control">
+                  <input type="checkbox" id="github-pages-enabled" ${currentSettings.deployment?.githubPages ? 'checked' : ''}>
+                  <label for="github-pages-enabled" class="checkbox-label">GitHub Pages Deployment</label>
+                  <button class="form-help-btn" title="Enables automatic deployment to GitHub Pages using GitHub Actions. Creates a workflow file that builds and deploys your site when you push changes to your repository.">?</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Site Settings Section -->
+        <div class="collapsible-section collapsed" id="site-settings-section">
+          <div class="section-header" data-section="site-settings">
+            <h4>Site Settings</h4>
+            <div class="section-header-right">
+              <button type="button" class="expand-btn" aria-label="Toggle site settings section">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="section-content">
+            <div class="form-group form-group-enhanced">
+              <div class="form-group-header">
+                <label for="site-title">Site Title</label>
+                <button class="form-help-btn" title="The main title displayed on your site and in browser tabs. This appears in search results and social media previews.">?</button>
+              </div>
+              <div class="form-group-control">
+                <input type="text" id="site-title" value="${currentSettings.site?.title || ''}" maxlength="100">
+                <div class="character-count">
+                  <span id="title-count">0</span>/100
+                </div>
               </div>
             </div>
             
-            ${githubAccounts.length === 0 ? `
-              <div class="no-accounts-message">
-                <p>To use hybrid deployment, you'll need to connect a GitHub account first.</p>
-                <button type="button" class="primary-btn" id="setup-github-hybrid-btn">
-                  <span class="btn-icon">⚙️</span>
-                  Set Up GitHub Account
-                </button>
+            <div class="form-group form-group-enhanced">
+              <div class="form-group-header">
+                <label for="site-description">Site Description</label>
+                <button class="form-help-btn" title="A brief description of your site used in metadata and search engines. This helps people understand what your site is about.">?</button>
               </div>
-            ` : `
-              <form id="hybrid-deploy-form">
-                <div class="form-group">
-                  <label for="hybrid-site-id">Arweave Site ID</label>
-                  <input type="text" id="hybrid-site-id" placeholder="my-site-hybrid" required>
+              <div class="form-group-control">
+                <textarea id="site-description" rows="3" maxlength="300">${currentSettings.site?.description || ''}</textarea>
+                <div class="character-count">
+                  <span id="description-count">0</span>/300
+                </div>
+              </div>
+            </div>
+            
+            <div class="form-group form-group-enhanced">
+              <div class="form-group-header">
+                <label for="base-url">Base URL</label>
+                <button class="form-help-btn" title="The full URL where your site will be accessible. This is used for generating absolute links and social media previews. Include the protocol (https://).">?</button>
+              </div>
+              <div class="form-group-control">
+                <input type="text" id="base-url" placeholder="https://example.com" value="${currentSettings.site?.baseUrl || ''}">
+              </div>
+            </div>
+            
+            <div class="form-group form-group-enhanced">
+              <div class="form-group-header">
+                <label for="custom-ignore-patterns">Additional Ignore Patterns</label>
+                <button class="form-help-btn" title="File patterns to exclude from your site build using glob syntax (*, **, etc.). One pattern per line. These will be added to the default Quartz ignore patterns.">?</button>
+              </div>
+              <div class="form-group-control">
+                <textarea id="custom-ignore-patterns" rows="4" placeholder="*.tmp&#10;private/**&#10;drafts/&#10;.env">${currentSettings.site?.ignorePatterns?.custom?.join('\n') || ''}</textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Build Logs Section -->
+        <div class="collapsible-section collapsed" id="build-logs-section">
+          <div class="section-header" data-section="build-logs">
+            <h4>Build Logs</h4>
+            <div class="section-header-right">
+                <div class="preview-info">
+                  <span class="preview-status" id="preview-status">Server: Not running</span>
+                  <button type="button" class="secondary-btn" id="open-external-btn" disabled>
+                    Open External
+                  </button>
+              </div>
+              <button type="button" class="expand-btn" aria-label="Toggle build logs">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="section-content">
+            <pre id="build-logs-output"></pre>
+          </div>
+        </div>
+
+        <!-- Composition Section -->
+        <div class="collapsible-section collapsed" id="composition-section">
+          <div class="section-header" data-section="composition">
+            <h4>Composition</h4>
+            <div class="section-header-right">
+              <span class="composition-summary">
+                <span class="build-included">0</span> included, 
+                <span class="build-excluded">0</span> excluded
+              </span>
+              <button type="button" class="expand-btn" aria-label="Toggle composition section">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="section-content">
+            <div class="composition-breakdown">
+              <div class="composition-column">
+                <div class="breakdown-section">
+                  <h5>Included Files</h5>
+                  <div class="file-type-breakdown-compact">
+                    <div class="no-exclusions">No files processed yet</div>
+                  </div>
+                </div>
+              </div>
+              <div class="composition-column">
+                <div class="breakdown-section">
+                  <h5>Excluded Files</h5>
+                  <div class="file-type-breakdown-compact">
+                    <div class="no-exclusions">No files processed yet</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deploy to Arweave Section -->
+        <div class="collapsible-section collapsed" id="arweave-deployment-section">
+          <div class="section-header" data-section="arweave-deployment">
+            <h4>Deploy to Arweave</h4>
+            <div class="section-header-right">
+              <button type="button" class="expand-btn" aria-label="Toggle Arweave deployment section">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="section-content">
+            <form id="arweave-deploy-form">
+              <div class="form-group form-group-enhanced">
+                <div class="form-group-header">
+                  <label for="arweave-site-id">Site ID</label>
+                  <button class="form-help-btn" title="Unique identifier for your Arweave deployment. This will be used to track your site deployments.">?</button>
+                </div>
+                <div class="form-group-control">
+                  <input type="text" id="arweave-site-id" placeholder="my-site-arweave" required>
                   <small>Unique identifier for your Arweave deployment</small>
                 </div>
-                
-                <div class="form-group">
-                  <label for="hybrid-github-account">GitHub Account</label>
-                  <select id="hybrid-github-account" required>
-                    <option value="">Select GitHub account...</option>
-                    ${accountOptions}
-                  </select>
-                </div>
-                
-                <div class="form-group">
-                  <label for="hybrid-repository-name">Repository Name</label>
-                  <input type="text" id="hybrid-repository-name" placeholder="my-site" required>
-                  <small>Will create: <span id="hybrid-repo-preview">username/my-site</span></small>
-                </div>
+              </div>
 
-                <div class="form-actions">
-                  <button type="submit" class="primary-btn" id="hybrid-deploy-btn">
-                    <span class="btn-icon">🔄</span>
-                    Deploy to Both Platforms
+              <div class="form-group form-group-enhanced" id="arweave-cost-estimate">
+                <div class="form-group-header">
+                  <label>Cost Breakdown</label>
+                  <button class="form-help-btn" title="Estimated cost for deploying your site to Arweave based on the total file size and current AR token price.">?</button>
+                </div>
+                <div class="form-group-control">
+                  <div class="cost-breakdown">
+                    <div class="cost-item">
+                      <span class="cost-label">Total Size:</span>
+                      <span class="cost-value" id="arweave-total-size">Calculating...</span>
+                    </div>
+                    <div class="cost-item">
+                      <span class="cost-label">AR Cost:</span>
+                      <span class="cost-value" id="arweave-ar-cost">Calculating...</span>
+                    </div>
+                    <div class="cost-item">
+                      <span class="cost-label">USD Cost:</span>
+                      <span class="cost-value" id="arweave-usd-cost">Calculating...</span>
+                    </div>
+                    <div class="cost-item">
+                      <span class="cost-label">Wallet:</span>
+                      <span class="cost-value" id="arweave-wallet-name">Checking...</span>
+                    </div>
+                    <div class="cost-item">
+                      <span class="cost-label">Address:</span>
+                      <span class="cost-value" id="arweave-wallet-address">Checking...</span>
+                    </div>
+                    <div class="cost-item">
+                      <span class="cost-label">Balance:</span>
+                      <span class="cost-value" id="arweave-wallet-balance">Checking...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="primary-btn" id="arweave-deploy-btn">
+                  <span class="btn-icon">🌐</span>
+                  Deploy to Arweave
+                </button>
+              </div>
+            </form>
+            
+            <!-- Deployment History Section -->
+            <div class="form-group form-group-enhanced" id="arweave-deployment-history">
+              <div class="form-group-header">
+                <label>Deployment History</label>
+                <div class="history-actions">
+                  <button class="secondary-btn" id="refresh-history-btn" title="Refresh deployment history">
+                    Refresh
+                  </button>
+                  <button class="secondary-btn" id="export-history-btn" title="Export deployment history">
+                    Export
                   </button>
                 </div>
-              </form>
-            `}
+              </div>
+              
+              <div class="form-group-control">
+                <div class="history-loading" id="history-loading" style="display: none;">
+                  <div class="loading-spinner"></div>
+                  <span>Loading deployment history...</span>
+                </div>
+                
+                <div class="history-list" id="deployment-history-list">
+                  <!-- Dynamic deployment cards will be inserted here -->
+                </div>
+                
+                <div class="history-empty" id="history-empty" style="display: none;">
+                  <p>No deployment history found</p>
+                  <small>Deployments will appear here after your first successful Arweave deployment</small>
+                </div>
+                
+                <div class="history-error" id="history-error" style="display: none;">
+                  <p>Failed to load deployment history</p>
+                  <button class="secondary-btn" id="retry-history-btn">
+                    Retry
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -719,19 +855,249 @@ export class DeployManager extends ModuleBase {
   }
 
   /**
-   * Setup configuration form events
+   * Generate configuration content (DEPRECATED - now integrated into main generateUnifiedDeployContent)
+   * @deprecated Content is now generated directly in generateUnifiedDeployContent()
    */
-  setupConfigurationFormEvents(isInitialized, currentSettings) {
-    // Add form event handlers here
+  generateConfigurationContent(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate) {
+    console.warn('[DeployManager] generateConfigurationContent() is deprecated - content now integrated into unified method');
+    return '<!-- Configuration content now integrated into unified deploy content -->';
+  }
+
+  /**
+   * Generate build section content (DEPRECATED - now integrated into main generateUnifiedDeployContent)
+   * @deprecated Content is now generated directly in generateUnifiedDeployContent()
+   */
+  generateBuildSectionContent() {
+    console.warn('[DeployManager] generateBuildSectionContent() is deprecated - content now integrated into unified method');
+    return '<!-- Build content now integrated into unified deploy content -->';
+  }
+
+  /**
+   * Generate deployment section content (DEPRECATED - now integrated into main generateUnifiedDeployContent)  
+   * @deprecated Content is now generated directly in generateUnifiedDeployContent()
+   */
+  generateDeploymentSectionContent() {
+    console.warn('[DeployManager] generateDeploymentSectionContent() is deprecated - content now integrated into unified method');
+    return '<!-- Deployment content now integrated into unified deploy content -->';
+  }
+
+  /**
+   * Render unified deploy content (replaces individual tab loading)
+   */
+  async renderUnifiedDeployContent() {
+    try {
+      const container = document.querySelector('#deploy-panel .panel-content');
+      if (!container) {
+        console.error('[DeployManager] Deploy panel content container not found');
+        return;
+      }
+
+      // Check if workspace is connected
+      if (!this.app.workspacePath) {
+        this.renderDeployNoWorkspace();
+        return;
+      }
+
+      // Get all necessary data
+      const isInitialized = await this.checkQuartzInitialized();
+      const currentSettings = await window.electronAPI.config.loadSiteSettings(this.app.workspacePath);
+      const defaultTemplate = await window.electronAPI.template.getDefault();
+      const clinamenicTemplate = await window.electronAPI.template.getClinamenic();
+
+      // Generate and set unified content
+      const unifiedContent = this.generateUnifiedDeployContent(
+        isInitialized, currentSettings, defaultTemplate, clinamenicTemplate
+      );
+
+      container.innerHTML = unifiedContent;
+
+      // Setup all event handlers
+      this.setupUnifiedDeployEvents(isInitialized, currentSettings);
+
+      // Update header buttons based on initialization status
+      this.updateHeaderButtons(isInitialized);
+
+      // Load initial states
+      await this.loadUnifiedInitialStates();
+
+      console.log('[DeployManager] Unified deploy content rendered successfully');
+    } catch (error) {
+      console.error('[DeployManager] Failed to render unified deploy content:', error);
+      this.app.showError('Failed to load deployment interface');
+    }
+  }
+
+  /**
+   * Setup unified event handlers for all deploy sections
+   */
+  setupUnifiedDeployEvents(isInitialized, currentSettings) {
+    console.log('[DeployManager] Setting up unified deploy events...');
+
+    // Configuration form events
+    this.setupConfigurationEvents(isInitialized, currentSettings);
+
+    // Build section events
+    this.setupBuildEvents();
+
+    // Deployment section events
+    this.setupDeploymentEvents();
+
+    // Global collapsible sections are handled by setupGlobalCollapsibleSections()
+    console.log('[DeployManager] Unified deploy events setup complete');
+  }
+
+  /**
+   * Setup configuration section events
+   */
+  setupConfigurationEvents(isInitialized, currentSettings) {
+    // Configuration form submission (now handled by header button)
     const form = document.getElementById('site-configuration-form');
     if (form) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await this.handleConfigurationSubmit(isInitialized, currentSettings);
+        // Form submission now handled by header button
+        console.log('[DeployManager] Form submission intercepted - use header button instead');
       });
     }
 
-    // Collapsible sections are now handled globally in setupGlobalCollapsibleSections()
+    // Template radio button handling
+    const templateRadios = document.querySelectorAll('input[name="template"]');
+    const customTemplateGroup = document.getElementById('custom-template-group');
+
+    if (templateRadios.length > 0 && customTemplateGroup) {
+      templateRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          if (e.target.value === 'custom') {
+            customTemplateGroup.style.display = 'block';
+          } else {
+            customTemplateGroup.style.display = 'none';
+          }
+        });
+      });
+    }
+
+    // Character count updates (across all sections)
+    const titleInput = document.getElementById('site-title');
+    const descriptionInput = document.getElementById('site-description');
+
+    if (titleInput) {
+      titleInput.addEventListener('input', () => this.updateCharacterCounts());
+    }
+    if (descriptionInput) {
+      descriptionInput.addEventListener('input', () => this.updateCharacterCounts());
+    }
+
+    // Initialize character counts
+    this.updateCharacterCounts();
+
+    // GitHub Pages toggle (in Site Settings section)
+    const githubToggle = document.getElementById('github-pages-enabled');
+    if (githubToggle) {
+      githubToggle.addEventListener('change', (e) => {
+        this.handleGitHubPagesToggleChange(e.target.checked);
+      });
+    }
+
+    // Note: Site settings and ignore patterns are now outside the form
+    // but are still collected by collectConfigurationData() when the form is submitted
+  }
+
+  /**
+   * Setup build section events
+   */
+  setupBuildEvents() {
+    // Build site button is now in header, no longer in this section
+
+    // Open external preview button
+    const openExternalBtn = document.getElementById('open-external-btn');
+    if (openExternalBtn) {
+      openExternalBtn.addEventListener('click', () => {
+        const previewStatus = document.getElementById('preview-status');
+        if (previewStatus && previewStatus.textContent.includes('http://')) {
+          // Extract URL from the status text
+          const urlMatch = previewStatus.textContent.match(/http:\/\/[^\s]+/);
+          if (urlMatch) {
+            window.electronAPI.openExternal(urlMatch[0]);
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * Setup deployment section events  
+   */
+  setupDeploymentEvents() {
+    // Arweave deployment form
+    const arweaveForm = document.getElementById('arweave-deploy-form');
+    if (arweaveForm) {
+      arweaveForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleArweaveDeploySubmit();
+      });
+    }
+
+
+    // Load initial Arweave cost estimation
+    this.updateArweaveCostEstimate();
+
+    // Setup deployment history events
+    this.setupDeploymentHistoryEvents();
+  }
+
+  /**
+   * Load initial states for all sections
+   */
+  async loadUnifiedInitialStates() {
+    try {
+      // Sync GitHub Pages toggle with actual workflow file
+      await this.syncGitHubPagesToggleWithWorkflow();
+
+      // Check Arweave wallet status
+      await this.checkArweaveWalletStatus();
+
+      // Set default section states (Configuration expanded, others collapsed for new sites)
+      const isInitialized = await this.checkQuartzInitialized();
+      this.setDefaultSectionStates(isInitialized);
+
+    } catch (error) {
+      console.error('[DeployManager] Failed to load initial states:', error);
+    }
+  }
+
+  /**
+   * Set default collapse states for sections based on initialization status
+   */
+  setDefaultSectionStates(isInitialized) {
+    // All sections collapsed by default for a cleaner interface
+    const defaultStates = {
+      'initialization-section': false, // Collapsed by default
+      'site-settings-section': false, // Collapsed by default
+      'build-logs-section': false, // Collapsed by default
+      'composition-section': false, // Collapsed by default
+      'arweave-deployment-section': false // Collapsed by default
+    };
+
+    Object.entries(defaultStates).forEach(([sectionId, shouldExpand]) => {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        if (!shouldExpand) {
+          section.classList.add('collapsed');
+        } else {
+          section.classList.remove('collapsed');
+        }
+      }
+    });
+  }
+
+  /**
+   * Setup configuration form events (legacy method for compatibility)
+   */
+  setupConfigurationFormEvents(isInitialized, currentSettings) {
+    // This method is now deprecated in favor of setupConfigurationEvents()
+    // Keep for backward compatibility but delegate to new unified setup
+    console.log('[DeployManager] setupConfigurationFormEvents() is deprecated, using unified setup');
+    this.setupConfigurationEvents(isInitialized, currentSettings);
   }
 
   /**
@@ -741,7 +1107,7 @@ export class DeployManager extends ModuleBase {
   setupGlobalCollapsibleSections() {
     // Use event delegation on the document to handle all collapsible sections
     // This ensures it works for dynamically created content and survives page refreshes
-    
+
     // Handle section header clicks
     document.addEventListener('click', (e) => {
       const sectionHeader = e.target.closest('.collapsible-section .section-header');
@@ -750,7 +1116,7 @@ export class DeployManager extends ModuleBase {
         if (e.target.closest('.expand-btn')) {
           return;
         }
-        
+
         const section = sectionHeader.closest('.collapsible-section');
         this.toggleSection(section);
       }
@@ -789,19 +1155,19 @@ export class DeployManager extends ModuleBase {
       console.warn('[DeployManager] Cannot toggle section without ID:', section);
       return;
     }
-    
+
     const isCollapsed = section.classList.contains('collapsed');
     const newState = !isCollapsed;
-    
+
     if (newState) {
       section.classList.add('collapsed');
     } else {
       section.classList.remove('collapsed');
     }
-    
+
     // Save state to localStorage
     this.saveSectionState(section.id, newState);
-    
+
     console.log(`[DeployManager] Toggled section "${section.id}" to ${newState ? 'collapsed' : 'expanded'}`);
   }
 
@@ -820,7 +1186,7 @@ export class DeployManager extends ModuleBase {
   loadSectionStates() {
     try {
       const sectionStates = JSON.parse(localStorage.getItem('deploySectionStates') || '{}');
-      
+
       Object.entries(sectionStates).forEach(([sectionId, isExpanded]) => {
         const section = document.getElementById(sectionId);
         if (section) {
@@ -831,7 +1197,7 @@ export class DeployManager extends ModuleBase {
           }
         }
       });
-      
+
       console.log('[DeployManager] Loaded section states:', Object.keys(sectionStates));
     } catch (error) {
       console.warn('[DeployManager] Failed to load section states:', error);
@@ -857,14 +1223,6 @@ export class DeployManager extends ModuleBase {
    * Setup deployment form events
    */
   setupDeploymentFormEvents() {
-    // Setup GitHub Pages deployment form
-    const githubForm = document.getElementById('github-deploy-form');
-    if (githubForm) {
-      githubForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await this.handleGitHubDeploySubmit();
-      });
-    }
 
     // Setup Arweave deployment form
     const arweaveForm = document.getElementById('arweave-deploy-form');
@@ -875,48 +1233,14 @@ export class DeployManager extends ModuleBase {
       });
     }
 
-    // Setup Hybrid deployment form
-    const hybridForm = document.getElementById('hybrid-deploy-form');
-    if (hybridForm) {
-      hybridForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await this.handleHybridDeploySubmit();
-      });
-    }
 
-    // Setup GitHub account setup buttons
-    const setupGithubBtn = document.getElementById('setup-github-btn');
-    if (setupGithubBtn) {
-      setupGithubBtn.addEventListener('click', () => {
-        this.app.closeModal();
-        const accountManager = this.app.getModule('accountManager');
-        if (accountManager) {
-          accountManager.openGitHubAccountsModal();
-        } else {
-          console.error('AccountManager not available');
-        }
-      });
-    }
-
-    const setupGithubHybridBtn = document.getElementById('setup-github-hybrid-btn');
-    if (setupGithubHybridBtn) {
-      setupGithubHybridBtn.addEventListener('click', () => {
-        this.app.closeModal();
-        const accountManager = this.app.getModule('accountManager');
-        if (accountManager) {
-          accountManager.openGitHubAccountsModal();
-        } else {
-          console.error('AccountManager not available');
-        }
-      });
-    }
 
     // Setup Arweave configuration events
     this.setupArweaveConfigEvents();
-    
-    // Setup GitHub account change events
-    this.setupGitHubAccountEvents();
-    
+
+    // Setup deployment history events
+    this.setupDeploymentHistoryEvents();
+
     // Check Arweave wallet status
     this.checkArweaveWalletStatus();
   }
@@ -927,240 +1251,83 @@ export class DeployManager extends ModuleBase {
    * Setup Arweave configuration events
    */
   setupArweaveConfigEvents() {
-    const siteIdInput = document.getElementById('arweave-site-id');
-    if (siteIdInput) {
-      siteIdInput.addEventListener('input', () => {
-        this.updateArweaveCostEstimate();
-      });
-    }
-
-    const strategySelect = document.getElementById('arweave-deployment-strategy');
-    if (strategySelect) {
-      strategySelect.addEventListener('change', () => {
-        this.updateArweaveCostEstimate();
-      });
-    }
+    // Load initial Arweave cost estimation when config is set up
+    this.updateArweaveCostEstimate();
   }
 
-  /**
-   * Setup GitHub account events
-   */
-  setupGitHubAccountEvents() {
-    const githubAccount = document.getElementById('github-account');
-    if (githubAccount) {
-      githubAccount.addEventListener('change', async (e) => {
-        await this.onDeploymentAccountChange(e.target.value);
-      });
-    }
-
-    const hybridGithubAccount = document.getElementById('hybrid-github-account');
-    if (hybridGithubAccount) {
-      hybridGithubAccount.addEventListener('change', async (e) => {
-        await this.onHybridDeploymentAccountChange(e.target.value);
-      });
-    }
-
-    const repositoryName = document.getElementById('repository-name');
-    if (repositoryName) {
-      repositoryName.addEventListener('input', (e) => {
-        this.updateRepositoryPreview();
-      });
-    }
-
-    const hybridRepositoryName = document.getElementById('hybrid-repository-name');
-    if (hybridRepositoryName) {
-      hybridRepositoryName.addEventListener('input', (e) => {
-        this.updateHybridRepositoryPreview();
-      });
-    }
-
-    const addGithubAccountBtn = document.getElementById('add-github-account-btn');
-    if (addGithubAccountBtn) {
-      addGithubAccountBtn.addEventListener('click', () => {
-        this.app.closeModal();
-        const accountManager = this.app.getModule('accountManager');
-        if (accountManager) {
-          accountManager.openGitHubAccountsModal();
-        } else {
-          console.error('AccountManager not available');
-        }
-      });
-    }
-  }
 
   /**
-   * Check and display Arweave wallet status
+   * Check and display Arweave wallet status in cost breakdown
    */
   async checkArweaveWalletStatus() {
-    const walletStatus = document.getElementById('arweave-wallet-status');
-    if (!walletStatus) return;
+    await this.updateWalletInfoInCostBreakdown();
+  }
+
+  /**
+   * Update wallet info in the cost breakdown section
+   */
+  async updateWalletInfoInCostBreakdown() {
+    const walletName = document.getElementById('arweave-wallet-name');
+    const walletAddress = document.getElementById('arweave-wallet-address');
+    const walletBalance = document.getElementById('arweave-wallet-balance');
+
+    if (!walletName || !walletAddress || !walletBalance) return;
 
     try {
       const isConfigured = await window.electronAPI.archive.isWalletConfigured();
-      
+
       if (isConfigured) {
-        // Get wallet info to show address
-        const walletInfo = await window.electronAPI.archive.getWalletInfo();
+        // Get wallet info to show address and balance
+        const walletDetails = await window.electronAPI.archive.getWalletInfo();
         const activeAccount = await window.electronAPI.archive.getActiveAccount();
-        
-        let lastDeploymentHtml = '';
-        if (this.lastArweaveDeployment) {
-          const deploymentDate = new Date(this.lastArweaveDeployment.timestamp).toLocaleString();
-          
-          // Create file list HTML
-          let filesHtml = '';
-          if (this.lastArweaveDeployment.uploadedFiles && this.lastArweaveDeployment.uploadedFiles.length > 0) {
-            filesHtml = `
-              <div class="deployment-files">
-                <div class="deployment-files-title">Uploaded Files (${this.lastArweaveDeployment.uploadedFiles.length}):</div>
-                <div class="deployment-files-list">
-                  ${this.lastArweaveDeployment.uploadedFiles.map(file => `
-                    <div class="deployment-file-item">
-                      <span class="file-path">${file.path}</span>
-                      <span class="file-size">${this.formatFileSize(file.size)}</span>
-                      <button type="button" class="link-btn small" onclick="window.electronAPI.openExternal('${file.url}')">
-                        View
-                      </button>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-            `;
-          }
-          
-          lastDeploymentHtml = `
-            <div class="last-deployment-info">
-              <div class="last-deployment-title">Last Deployment</div>
-              <div class="last-deployment-details">
-                <div>Date: ${deploymentDate}</div>
-                <div>Cost: ${this.lastArweaveDeployment.cost} AR</div>
-                <div>Files: ${this.lastArweaveDeployment.fileCount}</div>
-                <div>Size: ${this.formatFileSize(this.lastArweaveDeployment.totalSize)}</div>
-              </div>
-              <div class="deployment-actions">
-                <button type="button" class="link-btn" id="view-last-deployment-btn">
-                  View Site
-                </button>
-                ${this.lastArweaveDeployment.indexFile ? `
-                  <button type="button" class="link-btn secondary" id="view-index-file-btn">
-                    View Index.html
-                  </button>
-                ` : ''}
-                ${this.lastArweaveDeployment.manifestUrl ? `
-                  <button type="button" class="link-btn secondary" id="view-manifest-btn">
-                    View Manifest
-                  </button>
-                ` : ''}
-              </div>
-              ${filesHtml}
-            </div>
-          `;
-        }
-        
-        walletStatus.innerHTML = `
-          <div class="wallet-status-connected">
-            <div class="wallet-status-icon">✅</div>
-            <div class="wallet-status-info">
-              <div class="wallet-status-title">Arweave Wallet Connected</div>
-              <div class="wallet-status-details">
-                ${activeAccount ? `Account: ${activeAccount.nickname} (${activeAccount.address})` : 'Wallet ready for deployment'}
-              </div>
-            </div>
-          </div>
-          ${lastDeploymentHtml}
-        `;
-        
-        // Add event listeners for deployment action buttons
-        const viewBtn = document.getElementById('view-last-deployment-btn');
-        if (viewBtn) {
-          viewBtn.addEventListener('click', () => {
-            if (this.lastArweaveDeployment) {
-              window.electronAPI.openExternal(this.lastArweaveDeployment.url);
-            }
-          });
-        }
-        
-        const viewIndexBtn = document.getElementById('view-index-file-btn');
-        if (viewIndexBtn && this.lastArweaveDeployment?.indexFile) {
-          viewIndexBtn.addEventListener('click', () => {
-            window.electronAPI.openExternal(this.lastArweaveDeployment.indexFile.url);
-          });
-        }
-        
-        const viewManifestBtn = document.getElementById('view-manifest-btn');
-        if (viewManifestBtn && this.lastArweaveDeployment?.manifestUrl) {
-          viewManifestBtn.addEventListener('click', () => {
-            window.electronAPI.openExternal(this.lastArweaveDeployment.manifestUrl);
-          });
-        }
+
+        walletName.textContent = activeAccount ? activeAccount.nickname : 'Connected';
+        walletAddress.textContent = activeAccount ? this.truncateAddress(activeAccount.address) : 'N/A';
+        walletBalance.textContent = walletDetails?.balance ? `${walletDetails.balance} AR` : 'Loading...';
+
       } else {
-        walletStatus.innerHTML = `
-          <div class="wallet-status-disconnected">
-            <div class="wallet-status-icon">⚠️</div>
-            <div class="wallet-status-info">
-              <div class="wallet-status-title">Arweave Wallet Required</div>
-              <div class="wallet-status-details">You need to set up an Arweave wallet to deploy your site</div>
-            </div>
-            <button type="button" class="secondary-btn" id="setup-arweave-wallet-btn">
-              Set Up Wallet
-            </button>
-          </div>
-        `;
-        
-        // Add event listener for setup button
-        const setupBtn = document.getElementById('setup-arweave-wallet-btn');
-        if (setupBtn) {
-          setupBtn.addEventListener('click', () => {
-            this.app.closeModal();
-            this.app.openArweaveAccountsModal();
-          });
-        }
+        walletName.textContent = 'Not connected';
+        walletAddress.textContent = 'Set up wallet';
+        walletBalance.textContent = 'N/A';
       }
     } catch (error) {
       console.error('Failed to check Arweave wallet status:', error);
-      walletStatus.innerHTML = `
-        <div class="wallet-status-error">
-          <div class="wallet-status-icon">❌</div>
-          <div class="wallet-status-info">
-            <div class="wallet-status-title">Error Checking Wallet</div>
-            <div class="wallet-status-details">Unable to verify wallet status</div>
-          </div>
-        </div>
-      `;
+      walletName.textContent = 'Error';
+      walletAddress.textContent = 'Error';
+      walletBalance.textContent = 'Error';
     }
+  }
+
+  /**
+   * Truncate Arweave address for display
+   */
+  truncateAddress(address) {
+    if (!address || address.length <= 12) return address;
+    return `${address.substring(0, 8)}...${address.substring(address.length - 4)}`;
   }
 
   /**
    * Update Arweave cost estimate
    */
   async updateArweaveCostEstimate() {
-    const costEstimate = document.getElementById('arweave-cost-estimate');
     const totalSize = document.getElementById('arweave-total-size');
     const arCost = document.getElementById('arweave-ar-cost');
     const usdCost = document.getElementById('arweave-usd-cost');
-    const siteIdInput = document.getElementById('arweave-site-id');
 
-    if (!costEstimate || !totalSize || !arCost || !usdCost || !siteIdInput) {
-      return;
-    }
-
-    const siteId = siteIdInput.value.trim();
-    if (!siteId) {
-      costEstimate.style.display = 'none';
+    if (!totalSize || !arCost || !usdCost) {
       return;
     }
 
     try {
       // Show loading state
-      costEstimate.style.display = 'block';
       totalSize.textContent = 'Calculating...';
       arCost.textContent = 'Calculating...';
       usdCost.textContent = 'Calculating...';
 
-      // Call backend to estimate cost
+      // Call backend to estimate cost (Site ID not needed for cost calculation)
       const estimate = await window.electronAPI.deploy.arweaveCostEstimate({
         workspacePath: this.getApp().workspacePath,
-        siteId: siteId,
+        siteId: 'cost-estimate', // Dummy ID since it's not used in cost calculation
         costEstimate: true
       });
 
@@ -1171,7 +1338,9 @@ export class DeployManager extends ModuleBase {
 
     } catch (error) {
       console.error('Failed to estimate Arweave cost:', error);
-      costEstimate.style.display = 'none';
+      totalSize.textContent = 'Build site first';
+      arCost.textContent = 'Build site first';
+      usdCost.textContent = 'Build site first';
     }
   }
 
@@ -1210,16 +1379,8 @@ export class DeployManager extends ModuleBase {
 
   async renderDeployStatus() {
     try {
-      // Check if workspace is connected
-      if (!this.app.workspacePath) {
-        this.renderDeployNoWorkspace();
-        return;
-      }
-
-      // Load initial content for all tabs
-      await this.loadConfigureContent();
-      this.loadBuildContent();
-      await this.loadPublishContent();
+      // Use unified rendering approach
+      await this.renderUnifiedDeployContent();
     } catch (error) {
       console.error('Failed to render deploy status:', error);
       this.getApp().showError('Failed to load deployment status');
@@ -1231,7 +1392,7 @@ export class DeployManager extends ModuleBase {
       if (!this.app.workspacePath) {
         return false;
       }
-      
+
       // Use the new backend API to check if Quartz is properly initialized
       return await window.electronAPI.deploy.checkInitialized(this.app.workspacePath);
     } catch (error) {
@@ -1247,7 +1408,7 @@ export class DeployManager extends ModuleBase {
     const configureGroup = document.getElementById('configure-group');
     const buildGroup = document.getElementById('build-group');
     const publishGroup = document.getElementById('publish-group');
-    
+
     const configureBtn = document.getElementById('configure-header-btn');
     const buildBtn = document.getElementById('build-header-btn');
     const publishBtn = document.getElementById('publish-header-btn');
@@ -1260,12 +1421,12 @@ export class DeployManager extends ModuleBase {
       // Configure phase completed
       configureGroup.classList.remove('active');
       configureGroup.classList.add('completed');
-      
+
       // Build phase active
       buildGroup.classList.remove('disabled');
       buildGroup.classList.add('active');
       if (buildBtn) buildBtn.disabled = false;
-      
+
       // Publish phase disabled until build completes
       publishGroup.classList.add('disabled');
       if (publishBtn) publishBtn.disabled = true;
@@ -1273,12 +1434,12 @@ export class DeployManager extends ModuleBase {
       // Configure phase active
       configureGroup.classList.remove('completed');
       configureGroup.classList.add('active');
-      
+
       // Build and Publish phases disabled
       buildGroup.classList.remove('active');
       buildGroup.classList.add('disabled');
       if (buildBtn) buildBtn.disabled = true;
-      
+
       publishGroup.classList.add('disabled');
       if (publishBtn) publishBtn.disabled = true;
     }
@@ -1299,7 +1460,7 @@ export class DeployManager extends ModuleBase {
     // Build phase completed
     buildGroup.classList.remove('active');
     buildGroup.classList.add('completed');
-    
+
     // Publish phase active
     publishGroup.classList.remove('disabled');
     publishGroup.classList.add('active');
@@ -1309,15 +1470,15 @@ export class DeployManager extends ModuleBase {
   async initializeQuartzProject() {
     try {
       this.app.updateFooterStatus('Initializing Quartz project...', false);
-      
+
       await window.electronAPI.deploy.initializeQuartz(this.app.workspacePath);
-      
+
       this.app.showSuccess('Quartz project initialized successfully!');
       this.app.updateFooterStatus('Ready', false);
-      
+
       // Refresh the deploy status
       await this.renderDeployStatus();
-      
+
     } catch (error) {
       console.error('Failed to initialize Quartz project:', error);
       this.app.showError(`Failed to initialize project: ${error.message}`);
@@ -1329,7 +1490,7 @@ export class DeployManager extends ModuleBase {
     try {
       // Check if site is already initialized
       const isInitialized = await this.checkQuartzInitialized();
-      
+
       // Load existing site settings if available
       let currentSettings = {};
       try {
@@ -1341,10 +1502,10 @@ export class DeployManager extends ModuleBase {
       // Get default template for reference
       const defaultTemplate = await window.electronAPI.template.getDefault();
       const clinamenicTemplate = await window.electronAPI.template.getClinamenic();
-      
+
       // Create unified configuration modal
       await this.createUnifiedConfigurationModal(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate);
-      
+
     } catch (error) {
       console.error('Failed to open configuration modal:', error);
       this.app.showError(`Failed to open configuration: ${error.message}`);
@@ -1354,7 +1515,7 @@ export class DeployManager extends ModuleBase {
   async createUnifiedConfigurationModal(isInitialized, currentSettings, defaultTemplate, clinamenicTemplate) {
     try {
       const currentTemplate = currentSettings.quartz?.template || defaultTemplate;
-      
+
       const modalHtml = `
           <div class="modal-header">
             <h3>${isInitialized ? 'Site Configuration' : 'Site Setup'}</h3>
@@ -1598,7 +1759,7 @@ export class DeployManager extends ModuleBase {
             </div>
           </div>
       `;
-      
+
       // Use ModalManager properly
       const modalManager = this.app.getModalManager();
       if (!modalManager) {
@@ -1608,20 +1769,20 @@ export class DeployManager extends ModuleBase {
 
       // Create the dynamic modal
       const modal = modalManager.createDynamicModal('site-configuration-modal', modalHtml);
-      
+
       // Add the appropriate CSS class for styling
       if (modal) {
         modal.classList.add('site-configuration-modal');
       }
-      
+
       // Open the modal using ModalManager
       await modalManager.openModal('site-configuration-modal');
-      
+
       // Setup modal-specific events with a small delay to ensure DOM is ready
       setTimeout(() => {
         this.setupConfigurationModalEvents(isInitialized, currentSettings);
       }, 50);
-      
+
     } catch (error) {
       console.error('Failed to create configuration modal:', error);
       throw error;
@@ -1630,12 +1791,12 @@ export class DeployManager extends ModuleBase {
 
   setupConfigurationModalEvents(isInitialized, currentSettings) {
     console.log('[DeployManager] Setting up configuration modal events...');
-    
+
     // Template radio button handling
     const templateRadios = document.querySelectorAll('input[name="template"]');
     const customTemplateSection = document.getElementById('custom-template-section');
     const customTemplateUrl = document.getElementById('custom-template-url');
-    
+
     templateRadios.forEach(radio => {
       radio.addEventListener('change', (e) => {
         if (e.target.value === 'custom') {
@@ -1645,31 +1806,31 @@ export class DeployManager extends ModuleBase {
         }
       });
     });
-    
+
     // URL validation for custom template
     let templateValidationTimeout;
     customTemplateUrl.addEventListener('input', (e) => {
       clearTimeout(templateValidationTimeout);
       const url = e.target.value.trim();
       const validationDiv = document.getElementById('url-validation');
-      
+
       if (!url) {
         validationDiv.innerHTML = '';
         return;
       }
-      
+
       validationDiv.innerHTML = '<div class="validation-loading">Validating URL...</div>';
-      
+
       templateValidationTimeout = setTimeout(async () => {
         try {
           const validation = await window.electronAPI.template.validateCustomUrl(url);
-          
+
           if (validation.isValid) {
             validationDiv.innerHTML = `
               <div class="validation-success">
                 ✅ Valid ${validation.detectedType} repository
-                ${validation.repoInfo?.owner && validation.repoInfo?.repo ? 
-                  `<br><small>${validation.repoInfo.owner}/${validation.repoInfo.repo}</small>` : ''}
+                ${validation.repoInfo?.owner && validation.repoInfo?.repo ?
+                `<br><small>${validation.repoInfo.owner}/${validation.repoInfo.repo}</small>` : ''}
               </div>
             `;
           } else {
@@ -1688,27 +1849,27 @@ export class DeployManager extends ModuleBase {
         }
       }, 500);
     });
-    
+
     // Base URL validation and domain preview
     const baseUrlInput = document.getElementById('site-base-url');
     let baseUrlValidationTimeout;
-    
+
     baseUrlInput.addEventListener('input', (e) => {
       clearTimeout(baseUrlValidationTimeout);
       const url = e.target.value.trim();
-      
+
       this.updateDomainPreview();
-      
+
       if (!url) {
         document.getElementById('base-url-validation').style.display = 'none';
         return;
       }
-      
+
       baseUrlValidationTimeout = setTimeout(() => {
         this.validateBaseUrl();
       }, 500);
     });
-    
+
     // Character count updates
     const titleInput = document.getElementById('site-title');
     const descriptionInput = document.getElementById('site-description');
@@ -1717,17 +1878,17 @@ export class DeployManager extends ModuleBase {
     titleInput.addEventListener('input', () => this.updateCharacterCounts());
     descriptionInput.addEventListener('input', () => this.updateCharacterCounts());
     authorInput.addEventListener('input', () => this.updateCharacterCounts());
-    
+
     // Initialize character counts
     this.updateCharacterCounts();
 
     // Custom CNAME checkbox
     const customCnameCheckbox = document.getElementById('custom-cname');
-    
+
     customCnameCheckbox.addEventListener('change', () => {
       this.updateDomainPreview();
     });
-    
+
     // Ignore patterns functionality
     const ignorePatternsTextarea = document.getElementById('ignore-patterns');
     const enableIgnorePatternsCheckbox = document.getElementById('enable-ignore-patterns');
@@ -1740,7 +1901,7 @@ export class DeployManager extends ModuleBase {
     enableIgnorePatternsCheckbox.addEventListener('change', () => {
       this.previewIgnorePatterns();
     });
-    
+
     // Reset to defaults button
     const resetDefaultsBtn = document.getElementById('reset-defaults-btn');
     if (resetDefaultsBtn) {
@@ -1748,7 +1909,7 @@ export class DeployManager extends ModuleBase {
         this.resetConfigurationToDefaults();
       });
     }
-    
+
     // Form submission
     const configForm = document.getElementById('site-configuration-form');
     if (configForm) {
@@ -1757,14 +1918,14 @@ export class DeployManager extends ModuleBase {
         await this.handleConfigurationSubmit(isInitialized, currentSettings);
       });
     }
-    
+
     // Modal close handlers - be more specific to avoid conflicts
     const modalCloseBtn = document.querySelector('#site-configuration-modal .modal-close');
     const modalCancelBtn = document.querySelector('#site-configuration-modal .modal-cancel');
-    
+
     console.log('[DeployManager] Modal close button found:', !!modalCloseBtn);
     console.log('[DeployManager] Modal cancel button found:', !!modalCancelBtn);
-    
+
     if (modalCloseBtn) {
       modalCloseBtn.addEventListener('click', (e) => {
         console.log('[DeployManager] Modal close button clicked');
@@ -1778,7 +1939,7 @@ export class DeployManager extends ModuleBase {
     } else {
       console.error('[DeployManager] Modal close button not found!');
     }
-    
+
     if (modalCancelBtn) {
       modalCancelBtn.addEventListener('click', (e) => {
         console.log('[DeployManager] Modal cancel button clicked');
@@ -1798,18 +1959,18 @@ export class DeployManager extends ModuleBase {
     try {
       console.log('[DeployManager] Handling configuration submit...');
       this.app.updateFooterStatus('Saving configuration...', false);
-      
+
       // Get form data
       const formData = this.collectConfigurationData();
       console.log('[DeployManager] Form data collected:', formData);
-      
+
       // Determine if template changed (destructive change)
       const currentTemplate = currentSettings.quartz?.template;
       const selectedTemplate = formData.template;
       const templateChanged = this.hasTemplateChanged(currentTemplate, selectedTemplate);
-      
+
       console.log('[DeployManager] isInitialized:', isInitialized, 'templateChanged:', templateChanged);
-      
+
       if (isInitialized && templateChanged) {
         console.log('[DeployManager] Taking reinitialize path');
         // Show reinitialization warning
@@ -1818,7 +1979,7 @@ export class DeployManager extends ModuleBase {
           this.app.updateFooterStatus('Ready', false);
           return;
         }
-        
+
         // Reinitialize with new template
         await this.reinitializeWithTemplate(formData);
       } else if (!isInitialized) {
@@ -1830,16 +1991,16 @@ export class DeployManager extends ModuleBase {
         // Safe configuration changes only
         await this.applySafeConfigurationChanges(formData);
       }
-      
+
       // Refresh the configuration content to show updated state
       await this.loadConfigureContent();
       this.app.updateFooterStatus('Ready', false);
       this.app.showSuccess('Configuration updated successfully!');
-      
+
       // Update header button states after configuration changes
       const isQuartzInitialized = await this.checkQuartzInitialized();
       this.updateHeaderButtonStates(isQuartzInitialized);
-      
+
     } catch (error) {
       console.error('Failed to save configuration:', error);
       this.app.showError(`Configuration failed: ${error.message}`);
@@ -1849,17 +2010,17 @@ export class DeployManager extends ModuleBase {
 
   collectConfigurationData() {
     console.log('[DeployManager] Collecting configuration data...');
-    
+
     // Get the selected template type
     const templateRadio = document.querySelector('input[name="template"]:checked');
     if (!templateRadio) {
       console.error('[DeployManager] No template radio button found');
       throw new Error('No template option selected');
     }
-    
+
     const templateType = templateRadio.value;
     let template;
-    
+
     if (templateType === 'vanilla') {
       // For vanilla template, send a default template object
       template = {
@@ -1894,35 +2055,37 @@ export class DeployManager extends ModuleBase {
       }
       template = { isCustom: true, url: customUrl };
     }
-    
-    // Collect ignore patterns - using the correct element ID from the form
+
+    // Collect ignore patterns - these are now outside the form in their own section
     const ignorePatternsElement = document.getElementById('custom-ignore-patterns');
-    if (!ignorePatternsElement) {
-      throw new Error('Ignore patterns field not found');
+    let customPatterns = [];
+    if (ignorePatternsElement) {
+      const ignorePatternsValue = ignorePatternsElement.value;
+      customPatterns = ignorePatternsValue
+        .split('\n')
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
     }
-    
-    const ignorePatternsValue = ignorePatternsElement.value;
-    const customPatterns = ignorePatternsValue
-      .split('\n')
-      .map(p => p.trim())
-      .filter(p => p.length > 0);
-    
-    // Get site settings - using the correct element IDs from the form
+
+    // Get site settings - these are now outside the form in their own section
     const siteTitleElement = document.getElementById('site-title');
     const siteDescriptionElement = document.getElementById('site-description');
     const baseUrlElement = document.getElementById('base-url');
-    
-    if (!siteTitleElement || !siteDescriptionElement || !baseUrlElement) {
-      throw new Error('Required site settings fields not found');
-    }
-    
+    const githubPagesElement = document.getElementById('github-pages-enabled');
+
+    // Provide default values if elements are not found (graceful degradation)
+    const siteTitle = siteTitleElement ? siteTitleElement.value.trim() : '';
+    const siteDescription = siteDescriptionElement ? siteDescriptionElement.value.trim() : '';
+    const baseUrl = baseUrlElement ? baseUrlElement.value.trim() : '';
+    const githubPagesEnabled = githubPagesElement ? githubPagesElement.checked : false;
+
     return {
       template,
       site: {
-        title: siteTitleElement.value.trim(),
-        description: siteDescriptionElement.value.trim(),
+        title: siteTitle,
+        description: siteDescription,
         author: '', // Not in current form
-        baseUrl: baseUrlElement.value.trim(),
+        baseUrl: baseUrl,
         ignorePatterns: {
           custom: customPatterns,
           enabled: true, // Always enabled in current form
@@ -1937,6 +2100,7 @@ export class DeployManager extends ModuleBase {
       },
       deployment: {
         customCNAME: false, // Default value since not in current form
+        githubPages: githubPagesEnabled,
       },
     };
   }
@@ -1946,28 +2110,28 @@ export class DeployManager extends ModuleBase {
     if (!currentTemplate && !selectedTemplate) return false;
     if (!currentTemplate && selectedTemplate) return true;
     if (currentTemplate && !selectedTemplate) return true;
-    
+
     // If current template is default and selected is default, no change
     if (currentTemplate?.isDefault && selectedTemplate?.isDefault) return false;
-    
+
     // If current template is Clinamenic and selected is Clinamenic, no change
     if (currentTemplate?.id === 'clinamenic-quartz' && selectedTemplate?.id === 'clinamenic-quartz') return false;
-    
+
     // If current template is default but selected is Clinamenic, it's a change
     if (currentTemplate?.isDefault && selectedTemplate?.id === 'clinamenic-quartz') return true;
-    
+
     // If current template is Clinamenic but selected is default, it's a change
     if (currentTemplate?.id === 'clinamenic-quartz' && selectedTemplate?.isDefault) return true;
-    
+
     // If current template is not default/Clinamenic but selected is default/Clinamenic, it's a change
-    if (!currentTemplate?.isDefault && currentTemplate?.id !== 'clinamenic-quartz' && 
-        (selectedTemplate?.isDefault || selectedTemplate?.id === 'clinamenic-quartz')) return true;
-    
+    if (!currentTemplate?.isDefault && currentTemplate?.id !== 'clinamenic-quartz' &&
+      (selectedTemplate?.isDefault || selectedTemplate?.id === 'clinamenic-quartz')) return true;
+
     // If selected template is custom, compare URLs
     if (selectedTemplate?.isCustom) {
       return !currentTemplate?.isDefault && currentTemplate?.id !== 'clinamenic-quartz' || currentTemplate.url !== selectedTemplate.url;
     }
-    
+
     return true;
   }
 
@@ -1982,7 +2146,7 @@ export class DeployManager extends ModuleBase {
 
   async initializeWithConfiguration(configData) {
     let template = undefined;
-    
+
     if (configData.template?.isCustom) {
       // Parse custom template URL
       template = await window.electronAPI.template.parseUrl(configData.template.url);
@@ -1990,17 +2154,17 @@ export class DeployManager extends ModuleBase {
       // Use the template object directly for both default and Clinamenic templates
       template = configData.template;
     }
-    
+
     // Initialize Quartz with selected template
     await window.electronAPI.deploy.initializeQuartz(this.app.workspacePath, template);
-    
+
     // Save additional site settings
     await this.saveSiteSettings(configData);
   }
 
   async reinitializeWithTemplate(configData) {
     let template = undefined;
-    
+
     if (configData.template?.isCustom) {
       // Parse custom template URL
       template = await window.electronAPI.template.parseUrl(configData.template.url);
@@ -2008,10 +2172,10 @@ export class DeployManager extends ModuleBase {
       // Use the template object directly for both default and Clinamenic templates
       template = configData.template;
     }
-    
+
     // Reinitialize with new template
     await window.electronAPI.deploy.initializeQuartz(this.app.workspacePath, template);
-    
+
     // Save additional site settings
     await this.saveSiteSettings(configData);
   }
@@ -2021,7 +2185,7 @@ export class DeployManager extends ModuleBase {
       console.log('[DeployManager] applySafeConfigurationChanges called');
       // Save settings that don't require reinitialization
       await this.saveSiteSettings(configData);
-      
+
       // Handle GitHub Pages workflow changes
       console.log('[DeployManager] About to call handleGitHubPagesWorkflowChanges');
       await this.handleGitHubPagesWorkflowChanges();
@@ -2081,7 +2245,7 @@ export class DeployManager extends ModuleBase {
           // Generate GitHub Actions workflow
           this.app.updateFooterStatus('Generating GitHub Actions workflow...', false);
           const result = await window.electronAPI.deploy.generateGitHubWorkflow();
-          
+
           if (result.success) {
             this.app.showSuccess('GitHub Actions workflow created successfully!');
           } else {
@@ -2094,7 +2258,7 @@ export class DeployManager extends ModuleBase {
           // Remove GitHub Actions workflow
           this.app.updateFooterStatus('Removing GitHub Actions workflow...', false);
           const result = await window.electronAPI.deploy.removeGitHubWorkflow();
-          
+
           if (result.success) {
             this.app.showSuccess('GitHub Actions workflow removed successfully!');
           } else {
@@ -2111,6 +2275,80 @@ export class DeployManager extends ModuleBase {
       throw error; // Re-throw to be caught by parent method
     } finally {
       this.app.updateFooterStatus('Ready', true);
+    }
+  }
+
+  /**
+   * Sync GitHub Pages toggle state with actual workflow file existence
+   */
+  async syncGitHubPagesToggleWithWorkflow() {
+    try {
+      const toggle = document.getElementById('github-pages-enabled');
+      if (!toggle) {
+        console.log('[DeployManager] GitHub Pages toggle not found, skipping sync');
+        return;
+      }
+
+      // Check if workflow file actually exists
+      const workflowExists = await this.checkWorkflowFileExists();
+      console.log('[DeployManager] Syncing toggle with workflow existence:', workflowExists);
+
+      // Update toggle state to match actual workflow file existence
+      toggle.checked = workflowExists;
+
+      // Update the settings to match the actual state
+      const currentSettings = await window.electronAPI.config.loadSiteSettings(this.app.workspacePath);
+      if (currentSettings.deployment?.githubPages !== workflowExists) {
+        console.log('[DeployManager] Updating settings to match workflow existence');
+        currentSettings.deployment = currentSettings.deployment || {};
+        currentSettings.deployment.githubPages = workflowExists;
+        currentSettings.lastModified = new Date().toISOString();
+
+        // Save the updated settings
+        await window.electronAPI.config.saveSiteSettings(this.app.workspacePath, currentSettings);
+      }
+    } catch (error) {
+      console.error('[DeployManager] Failed to sync GitHub Pages toggle with workflow:', error);
+      // Don't throw - this is a sync operation that shouldn't break the UI
+    }
+  }
+
+  /**
+   * Ensure GitHub Pages settings are synchronized with actual workflow file
+   * This method can be called when workspace is loaded to fix any inconsistencies
+   */
+  async ensureGitHubPagesSync() {
+    try {
+      if (!this.app.workspacePath) {
+        return; // No workspace selected
+      }
+
+      const currentSettings = await window.electronAPI.config.loadSiteSettings(this.app.workspacePath);
+      const workflowExists = await this.checkWorkflowFileExists();
+
+      // If settings say GitHub Pages is enabled but workflow doesn't exist, create it
+      if (currentSettings.deployment?.githubPages && !workflowExists) {
+        console.log('[DeployManager] Settings indicate GitHub Pages enabled but workflow missing, creating workflow...');
+        const result = await window.electronAPI.deploy.generateGitHubWorkflow();
+        if (result.success) {
+          console.log('[DeployManager] Created missing GitHub workflow');
+        } else {
+          console.warn('[DeployManager] Failed to create missing GitHub workflow:', result.error);
+        }
+      }
+      // If settings say GitHub Pages is disabled but workflow exists, remove it
+      else if (!currentSettings.deployment?.githubPages && workflowExists) {
+        console.log('[DeployManager] Settings indicate GitHub Pages disabled but workflow exists, removing workflow...');
+        const result = await window.electronAPI.deploy.removeGitHubWorkflow();
+        if (result.success) {
+          console.log('[DeployManager] Removed orphaned GitHub workflow');
+        } else {
+          console.warn('[DeployManager] Failed to remove orphaned GitHub workflow:', result.error);
+        }
+      }
+    } catch (error) {
+      console.error('[DeployManager] Failed to ensure GitHub Pages sync:', error);
+      // Don't throw - this is a maintenance operation
     }
   }
 
@@ -2147,10 +2385,10 @@ export class DeployManager extends ModuleBase {
           initialized: true,
         },
       };
-      
+
       // Save to backend
       await window.electronAPI.config.saveSiteSettings(this.app.workspacePath, settings);
-      
+
       console.log('Site settings saved successfully');
     } catch (error) {
       console.error('Failed to save site settings:', error);
@@ -2161,19 +2399,19 @@ export class DeployManager extends ModuleBase {
   async buildSite() {
     try {
       this.app.updateFooterStatus('Building site...', false);
-      
+
       const buildResult = await window.electronAPI.deploy.buildSite({
         workspacePath: this.app.workspacePath
       });
-      
+
       if (buildResult.status === 'success') {
         this.app.showSuccess(`Site built successfully! Processed ${buildResult.filesProcessed} files in ${buildResult.duration}ms`);
       } else {
         this.app.showError(`Build failed: ${buildResult.errors?.join(', ') || 'Unknown error'}`);
       }
-      
+
       this.app.updateFooterStatus('Ready', false);
-      
+
     } catch (error) {
       console.error('Failed to build site:', error);
       this.app.showError(`Build failed: ${error.message}`);
@@ -2184,15 +2422,15 @@ export class DeployManager extends ModuleBase {
   async buildSiteWithLogs() {
     try {
       this.app.updateFooterStatus('Building site...', false);
-      
+
       // Show build logs section
       this.showBuildLogs();
       this.appendBuildLog('Starting build process...');
-      
+
       const buildResult = await window.electronAPI.deploy.buildSite({
         workspacePath: this.app.workspacePath
       });
-      
+
       if (buildResult.status === 'success') {
         this.appendBuildLog('Build completed successfully!');
         this.appendBuildLog(`Processed ${buildResult.filesProcessed} files in ${buildResult.duration}ms`);
@@ -2208,9 +2446,9 @@ export class DeployManager extends ModuleBase {
         }
         this.app.showError(`Build failed: ${buildResult.errors?.join(', ') || 'Unknown error'}`);
       }
-      
+
       this.app.updateFooterStatus('Ready', false);
-      
+
     } catch (error) {
       console.error('Failed to build site:', error);
       this.appendBuildLog(`Build failed: ${error.message}`);
@@ -2222,15 +2460,15 @@ export class DeployManager extends ModuleBase {
   async buildSiteWithPreview() {
     try {
       this.app.updateFooterStatus('Building site...', false);
-      
+
       // Show build logs section
       this.showBuildLogs();
       this.appendBuildLog('Starting build process...');
-      
+
       const buildResult = await window.electronAPI.deploy.buildSite({
         workspacePath: this.app.workspacePath
       });
-      
+
       if (buildResult.status === 'success') {
         this.appendBuildLog('Build completed successfully!');
         this.appendBuildLog(`Processed ${buildResult.filesProcessed} files in ${buildResult.duration}ms`);
@@ -2238,23 +2476,23 @@ export class DeployManager extends ModuleBase {
           this.appendBuildLog('--- Build Output ---');
           this.appendBuildLog(buildResult.output);
         }
-        
+
         // Always start preview after successful build
         this.appendBuildLog('Starting preview server...');
         this.app.updateFooterStatus('Starting preview server...', false);
-        
+
         try {
           const previewUrl = await window.electronAPI.deploy.previewSite({
             workspacePath: this.app.workspacePath
           });
-          
-                  // Show preview section and load the site
-        this.showPreviewSection(previewUrl);
-        this.appendBuildLog(`Preview server started at ${previewUrl}`);
-        this.app.showSuccess(`Site built and preview started at ${previewUrl}`);
-        
-        // Update header button states to show build completion
-        this.updateBuildCompletionState();
+
+          // Show preview section and load the site
+          this.showPreviewSection(previewUrl);
+          this.appendBuildLog(`Preview server started at ${previewUrl}`);
+          this.app.showSuccess(`Site built and preview started at ${previewUrl}`);
+
+          // Update header button states to show build completion
+          this.updateBuildCompletionState();
         } catch (previewError) {
           console.error('Failed to start preview:', previewError);
           this.appendBuildLog(`Preview failed: ${previewError.message}`);
@@ -2267,9 +2505,9 @@ export class DeployManager extends ModuleBase {
         }
         this.app.showError(`Build failed: ${buildResult.errors?.join(', ') || 'Unknown error'}`);
       }
-      
+
       this.app.updateFooterStatus('Ready', false);
-      
+
     } catch (error) {
       console.error('Failed to build site:', error);
       this.appendBuildLog(`Build failed: ${error.message}`);
@@ -2281,16 +2519,16 @@ export class DeployManager extends ModuleBase {
   async previewSiteIntegrated() {
     try {
       this.app.updateFooterStatus('Starting preview server...', false);
-      
+
       const previewUrl = await window.electronAPI.deploy.previewSite({
         workspacePath: this.app.workspacePath
       });
-      
+
       // Show preview section and load the site
       this.showPreviewSection(previewUrl);
-      
+
       this.app.showSuccess(`Preview server started at ${previewUrl}`);
-      
+
     } catch (error) {
       console.error('Failed to start preview:', error);
       this.app.showError(`Preview failed: ${error.message}`);
@@ -2318,7 +2556,7 @@ export class DeployManager extends ModuleBase {
   showPreviewSection(previewUrl) {
     const previewStatus = document.getElementById('preview-status');
     const openExternalBtn = document.getElementById('open-external-btn');
-    
+
     if (previewStatus && openExternalBtn) {
       previewStatus.textContent = `Server: Running at ${previewUrl}`;
       openExternalBtn.disabled = false;
@@ -2345,16 +2583,16 @@ export class DeployManager extends ModuleBase {
   async previewSite() {
     try {
       this.app.updateFooterStatus('Starting preview server...', false);
-      
+
       const previewUrl = await window.electronAPI.deploy.previewSite({
         workspacePath: this.app.workspacePath
       });
-      
+
       // Show preview section and load the site
       this.showPreviewSection(previewUrl);
-      
+
       this.app.showSuccess(`Preview server started at ${previewUrl}`);
-      
+
     } catch (error) {
       console.error('Failed to start preview:', error);
       this.app.showError(`Preview failed: ${error.message}`);
@@ -2366,7 +2604,7 @@ export class DeployManager extends ModuleBase {
     try {
       // Open deployment configuration modal
       this.openDeploymentModal();
-      
+
     } catch (error) {
       console.error('Failed to open deployment modal:', error);
       this.app.showError(`Deployment setup failed: ${error.message}`);
@@ -2377,7 +2615,7 @@ export class DeployManager extends ModuleBase {
     try {
       // Load GitHub accounts first
       const githubAccounts = await window.electronAPI.deploy.githubAccounts();
-      
+
       if (githubAccounts.length === 0) {
         // No GitHub accounts - show setup message
         const modalContent = `
@@ -2410,12 +2648,12 @@ export class DeployManager extends ModuleBase {
             <button type="button" class="secondary-btn modal-cancel">Cancel</button>
           </div>
         `;
-        
+
         // Use ModalManager to create and open the modal
         const modalManager = this.getModalManager();
         modalManager.createDynamicModal('deploy-modal', modalContent);
         modalManager.openModal('deploy-modal');
-        
+
         // Setup GitHub account button
         document.getElementById('setup-github-btn').addEventListener('click', () => {
           this.app.closeModal();
@@ -2426,17 +2664,17 @@ export class DeployManager extends ModuleBase {
             console.error('AccountManager not available');
           }
         });
-        
+
         return;
       }
-      
+
       // Create deployment modal with GitHub account selection
-      const accountOptions = githubAccounts.map(account => 
+      const accountOptions = githubAccounts.map(account =>
         `<option value="${account.id}" data-username="${account.username}" data-token-type="${account.tokenType}">
           ${account.nickname} (@${account.username}) ${account.tokenType === 'classic' ? '⚠️' : '🔒'}
         </option>`
       ).join('');
-      
+
       const modalContent = `
         <div class="modal-header">
           <h3>Deploy to GitHub Pages</h3>
@@ -2485,7 +2723,6 @@ export class DeployManager extends ModuleBase {
                     <span class="checkmark"></span>
                     Configure custom domain (requires domain ownership)
                   </label>
-                </div>
               </div>
             </form>
           </div>
@@ -2498,15 +2735,15 @@ export class DeployManager extends ModuleBase {
           </button>
         </div>
       `;
-      
+
       // Use ModalManager to create and open the modal
       const modalManager = this.getModalManager();
       modalManager.createDynamicModal('deploy-modal', modalContent);
       modalManager.openModal('deploy-modal');
-      
+
       // Setup event listeners
       this.setupDeploymentModalEvents();
-      
+
     } catch (error) {
       console.error('Failed to open deployment modal:', error);
       this.app.showError(`Failed to open deployment modal: ${error.message}`);
@@ -2518,18 +2755,18 @@ export class DeployManager extends ModuleBase {
     document.getElementById('github-account').addEventListener('change', async (e) => {
       await this.onDeploymentAccountChange(e.target.value);
     });
-    
+
     // Repository name preview
     document.getElementById('repository-name').addEventListener('input', (e) => {
       this.updateRepositoryPreview();
     });
-    
+
     // Custom domain checkbox
     document.getElementById('custom-domain').addEventListener('input', (e) => {
       const enableCustomDomain = document.getElementById('enable-custom-domain');
       enableCustomDomain.disabled = !e.target.value.trim();
     });
-    
+
     // Add GitHub account button
     document.getElementById('add-github-account-btn').addEventListener('click', () => {
       this.app.closeModal();
@@ -2540,7 +2777,7 @@ export class DeployManager extends ModuleBase {
         console.error('AccountManager not available');
       }
     });
-    
+
     // Form submission
     document.getElementById('deploy-config-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -2548,129 +2785,12 @@ export class DeployManager extends ModuleBase {
     });
   }
 
-  async onDeploymentAccountChange(accountId) {
-    if (!accountId) {
-      const securityInfo = document.getElementById('security-info');
-      const repoPreview = document.getElementById('repo-preview');
-      if (securityInfo) securityInfo.style.display = 'none';
-      if (repoPreview) repoPreview.textContent = 'username/repository-name';
-      return;
-    }
-    
-    try {
-      const account = await window.electronAPI.deploy.getGitHubAccount(accountId);
-      if (!account) return;
-      
-      // Update repository preview
-      this.updateRepositoryPreview();
-      
-      // Update security panel
-      this.updateDeploymentSecurityPanel(account);
-      
-    } catch (error) {
-      console.error('Failed to load account details:', error);
-    }
-  }
-
-  async onHybridDeploymentAccountChange(accountId) {
-    if (!accountId) {
-      const hybridRepoPreview = document.getElementById('hybrid-repo-preview');
-      if (hybridRepoPreview) hybridRepoPreview.textContent = 'username/repository-name';
-      return;
-    }
-    
-    try {
-      const account = await window.electronAPI.deploy.getGitHubAccount(accountId);
-      if (!account) return;
-      
-      // Update hybrid repository preview
-      this.updateHybridRepositoryPreview();
-      
-    } catch (error) {
-      console.error('Failed to load account details:', error);
-    }
-  }
-
-  updateRepositoryPreview() {
-    const accountSelect = document.getElementById('github-account');
-    const repoNameInput = document.getElementById('repository-name');
-    const repoPreview = document.getElementById('repo-preview');
-    
-    if (accountSelect && repoNameInput && repoPreview) {
-      const selectedOption = accountSelect.selectedOptions[0];
-      const username = selectedOption ? selectedOption.dataset.username : '';
-      const repoName = repoNameInput.value.trim() || 'my-site';
-      
-      repoPreview.textContent = username ? `${username}/${repoName}` : 'username/repository-name';
-    }
-  }
-
-  updateHybridRepositoryPreview() {
-    const accountSelect = document.getElementById('hybrid-github-account');
-    const repoNameInput = document.getElementById('hybrid-repository-name');
-    const repoPreview = document.getElementById('hybrid-repo-preview');
-    
-    if (accountSelect && repoNameInput && repoPreview) {
-      const selectedOption = accountSelect.selectedOptions[0];
-      const username = selectedOption ? selectedOption.dataset.username : '';
-      const repoName = repoNameInput.value.trim() || 'my-site';
-      
-      repoPreview.textContent = username ? `${username}/${repoName}` : 'username/repository-name';
-    }
-  }
-
-  updateDeploymentSecurityPanel(account) {
-    // Security panel no longer needed for manual GitHub deployment
-    const securityInfo = document.getElementById('security-info');
-    if (securityInfo) {
-      securityInfo.style.display = 'none';
-    }
-  }
 
 
-  /**
-   * Handle GitHub Pages deployment
-   */
-  async handleGitHubDeploySubmit() {
-    try {
-      const form = document.getElementById('github-deploy-form');
-      const formData = new FormData(form);
-      
-      const accountId = formData.get('github-account') || document.getElementById('github-account').value;
-      const repositoryName = formData.get('repository-name') || document.getElementById('repository-name').value;
-      const customDomain = formData.get('custom-domain') || document.getElementById('custom-domain').value;
-      const autoCreateRepo = document.getElementById('auto-create-repo').checked;
-      const enableCustomDomain = document.getElementById('enable-custom-domain').checked;
-      
-      if (!accountId || !repositoryName) {
-        this.app.showError('Please select a GitHub account and enter a repository name');
-        return;
-      }
-      
-      this.app.updateFooterStatus('Deploying to GitHub Pages...', false);
-      
-      const deployResult = await window.electronAPI.deploy.deployToGitHub({
-        workspacePath: this.app.workspacePath,
-        accountId,
-        repositoryName,
-        customDomain: enableCustomDomain ? customDomain : null,
-        autoCreateRepo
-      });
-      
-      if (deployResult.success) {
-        this.app.showSuccess(`Site deployed to GitHub Pages successfully! Available at ${deployResult.url}`);
-      } else {
-        this.app.showError(`GitHub Pages deployment failed: ${deployResult.error || 'Unknown error'}`);
-      }
-      
-      this.app.updateFooterStatus('Ready', false);
-      
-    } catch (error) {
-      console.error('GitHub Pages deployment failed:', error);
-      this.app.showError(`GitHub Pages deployment failed: ${error.message}`);
-      this.app.updateFooterStatus('Ready', false);
-    }
-  }
+
+
+
+
 
   /**
    * Handle Arweave deployment
@@ -2679,85 +2799,16 @@ export class DeployManager extends ModuleBase {
     try {
       const form = document.getElementById('arweave-deploy-form');
       const formData = new FormData(form);
-      
-      const siteId = formData.get('arweave-site-id') || document.getElementById('arweave-site-id').value;
-      const deploymentStrategy = document.getElementById('arweave-deployment-strategy').value || 'full';
-      
+
+      const siteId = formData.get('arweave-site-id') || document.getElementById('arweave-site-id')?.value;
+      // Always use full deployment strategy
+      const deploymentStrategy = 'full';
+
       if (!siteId) {
         this.app.showError('Please enter a Site ID for Arweave deployment');
         return;
       }
-      
-      // Check if Arweave wallet is configured first
-      const isWalletConfigured = await window.electronAPI.archive.isWalletConfigured();
-      if (!isWalletConfigured) {
-        this.app.showError('Arweave wallet not configured. Please set up your Arweave wallet first.', {
-          action: 'Set Up Wallet',
-          onAction: () => {
-        this.app.closeModal();
-            this.app.openArweaveAccountsModal();
-          }
-        });
-        return;
-      }
-      
-      this.app.updateFooterStatus('Deploying to Arweave...', false);
-      
-      const deployResult = await window.electronAPI.deploy.arweaveDeploy({
-        workspacePath: this.app.workspacePath,
-        siteId: siteId,
-        incremental: deploymentStrategy === 'incremental'
-      });
-      
-      if (deployResult.success) {
-        const successMessage = `Site deployed to Arweave successfully!\n\nURL: ${deployResult.url}\nTransaction ID: ${deployResult.manifestHash}\nCost: ${deployResult.totalCost.ar} AR\nFiles: ${deployResult.fileCount}`;
-        this.app.showSuccess(successMessage);
-        
-        // Store the detailed deployment information for display
-        this.lastArweaveDeployment = {
-          url: deployResult.url,
-          manifestUrl: deployResult.manifestUrl,
-          transactionId: deployResult.manifestHash,
-          timestamp: new Date().toISOString(),
-          cost: deployResult.totalCost.ar,
-          fileCount: deployResult.fileCount,
-          totalSize: deployResult.totalSize,
-          uploadedFiles: deployResult.uploadedFiles || [],
-          indexFile: deployResult.indexFile
-        };
-        
-        // Update the wallet status display to show the new deployment details
-        await this.checkArweaveWalletStatus();
-      } else {
-        this.app.showError(`Arweave deployment failed: ${deployResult.error || 'Unknown error'}`);
-      }
-      
-      this.app.updateFooterStatus('Ready', false);
-      
-    } catch (error) {
-      console.error('Arweave deployment failed:', error);
-      this.app.showError(`Arweave deployment failed: ${error.message}`);
-      this.app.updateFooterStatus('Ready', false);
-    }
-  }
 
-  /**
-   * Handle Hybrid deployment
-   */
-  async handleHybridDeploySubmit() {
-    try {
-      const form = document.getElementById('hybrid-deploy-form');
-      const formData = new FormData(form);
-      
-      const siteId = formData.get('hybrid-site-id') || document.getElementById('hybrid-site-id').value;
-      const accountId = formData.get('hybrid-github-account') || document.getElementById('hybrid-github-account').value;
-      const repositoryName = formData.get('hybrid-repository-name') || document.getElementById('hybrid-repository-name').value;
-      
-      if (!accountId || !repositoryName || !siteId) {
-        this.app.showError('Please fill in all required fields for hybrid deployment');
-        return;
-      }
-      
       // Check if Arweave wallet is configured first
       const isWalletConfigured = await window.electronAPI.archive.isWalletConfigured();
       if (!isWalletConfigured) {
@@ -2770,53 +2821,45 @@ export class DeployManager extends ModuleBase {
         });
         return;
       }
-      
-      this.app.updateFooterStatus('Deploying to both platforms...', false);
-      
-      const deployResult = await window.electronAPI.deploy.hybridDeploy({
-        githubPages: {
-          workspacePath: this.app.workspacePath,
-          accountId,
-          repositoryName
-        },
-        arweave: {
-          workspacePath: this.app.workspacePath,
-          siteId: siteId,
-          incremental: false
-        },
-        syncStrategy: 'sequential',
-        crossReference: true
+
+      this.app.updateFooterStatus('Deploying to Arweave...', false);
+
+      const deployResult = await window.electronAPI.deploy.arweaveDeploy({
+        workspacePath: this.app.workspacePath,
+        siteId: siteId,
+        incremental: false
       });
-      
-      if (deployResult.githubPages.success && deployResult.arweave.success) {
-        const successMessage = `Site deployed to both platforms successfully!\nGitHub Pages: ${deployResult.githubPages.url}\nArweave: ${deployResult.arweave.url}`;
+
+      if (deployResult.success) {
+        const successMessage = `Site deployed to Arweave successfully!\n\nURL: ${deployResult.url}\nTransaction ID: ${deployResult.manifestHash}\nCost: ${deployResult.totalCost.ar} AR\nFiles: ${deployResult.fileCount}`;
         this.app.showSuccess(successMessage);
+
+
+        // Update the wallet status display to show the new deployment details
+        await this.checkArweaveWalletStatus();
+
+        // Refresh deployment history to show the new deployment
+        await this.refreshDeploymentHistoryAfterDeploy();
       } else {
-        let errorMessage = 'Hybrid deployment failed:';
-        if (!deployResult.githubPages.success) {
-          errorMessage += `\nGitHub Pages: ${deployResult.githubPages.error}`;
-        }
-        if (!deployResult.arweave.success) {
-          errorMessage += `\nArweave: ${deployResult.arweave.error}`;
-        }
-        this.app.showError(errorMessage);
+        this.app.showError(`Arweave deployment failed: ${deployResult.error || 'Unknown error'}`);
       }
-      
+
       this.app.updateFooterStatus('Ready', false);
-      
+
     } catch (error) {
-      console.error('Hybrid deployment failed:', error);
-      this.app.showError(`Hybrid deployment failed: ${error.message}`);
+      console.error('Arweave deployment failed:', error);
+      this.app.showError(`Arweave deployment failed: ${error.message}`);
       this.app.updateFooterStatus('Ready', false);
     }
   }
+
 
   /**
    * Handle deployment submit (legacy method - kept for compatibility)
    */
   async handleDeploySubmit() {
-    // Redirect to GitHub deployment for backward compatibility
-    await this.handleGitHubDeploySubmit();
+    // Redirect to Arweave deployment for backward compatibility
+    await this.handleArweaveDeploySubmit();
   }
 
   // Utility methods for formatting
@@ -2832,9 +2875,9 @@ export class DeployManager extends ModuleBase {
     if (!fileTypes || Object.keys(fileTypes).length === 0) {
       return '<div class="no-files">No files found</div>';
     }
-    
+
     return Object.entries(fileTypes)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .map(([type, count]) => `
         <div class="file-type-row">
           <span class="file-type-label">${type}</span>
@@ -2847,9 +2890,9 @@ export class DeployManager extends ModuleBase {
     if (!contentSummary.buildExcludedTypes || Object.keys(contentSummary.buildExcludedTypes).length === 0) {
       return '<div class="no-exclusions">No files excluded</div>';
     }
-    
+
     return Object.entries(contentSummary.buildExcludedTypes)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .map(([type, count]) => `
         <div class="file-type-row">
           <span class="file-type-label">${type}</span>
@@ -2887,11 +2930,11 @@ export class DeployManager extends ModuleBase {
     inputs.forEach(({ id, countId, maxLength }) => {
       const input = document.getElementById(id);
       const countDiv = document.getElementById(countId);
-      
+
       if (input && countDiv) {
         const currentLength = input.value.length;
         const isOver = currentLength > maxLength;
-        
+
         countDiv.textContent = `${currentLength}/${maxLength}`;
         countDiv.className = `character-count ${isOver ? 'over-limit' : ''}`;
       }
@@ -2901,19 +2944,19 @@ export class DeployManager extends ModuleBase {
   validateBaseUrl() {
     const baseUrlInput = document.getElementById('site-base-url');
     const validationDiv = document.getElementById('base-url-validation');
-    
+
     if (!baseUrlInput || !validationDiv) return;
-    
+
     const url = baseUrlInput.value.trim();
-    
+
     if (!url) {
       validationDiv.style.display = 'none';
       return;
     }
-    
+
     try {
       const urlObj = new URL(url);
-      
+
       if (urlObj.protocol !== 'https:' && urlObj.protocol !== 'http:') {
         validationDiv.innerHTML = `
           <div class="validation-error">
@@ -2923,7 +2966,7 @@ export class DeployManager extends ModuleBase {
         validationDiv.style.display = 'block';
         return;
       }
-      
+
       validationDiv.innerHTML = `
         <div class="validation-success">
           ✅ Valid URL
@@ -2944,19 +2987,19 @@ export class DeployManager extends ModuleBase {
     const baseUrlInput = document.getElementById('site-base-url');
     const domainPreview = document.getElementById('domain-preview');
     const customCnameCheckbox = document.getElementById('custom-cname');
-    
+
     if (!baseUrlInput || !domainPreview || !customCnameCheckbox) return;
-    
+
     const url = baseUrlInput.value.trim();
-    
+
     if (!url) {
       domainPreview.textContent = 'No domain specified';
       return;
     }
-    
+
     try {
       const domain = this.extractDomainFromUrl(url);
-      
+
       if (customCnameCheckbox.checked) {
         domainPreview.innerHTML = `
           <strong>${domain}</strong>
@@ -2974,29 +3017,29 @@ export class DeployManager extends ModuleBase {
     const ignorePatternsTextarea = document.getElementById('ignore-patterns');
     const enableIgnorePatternsCheckbox = document.getElementById('enable-ignore-patterns');
     const previewDiv = document.getElementById('ignore-preview');
-    
+
     if (!ignorePatternsTextarea || !enableIgnorePatternsCheckbox || !previewDiv) return;
-    
+
     const patterns = ignorePatternsTextarea.value
       .split('\n')
       .map(p => p.trim())
       .filter(p => p.length > 0);
-    
+
     if (!enableIgnorePatternsCheckbox.checked || patterns.length === 0) {
       previewDiv.style.display = 'none';
       return;
     }
-    
+
     try {
       // Call backend to preview patterns
       const preview = await window.electronAPI.deploy.previewIgnorePatterns(
-        this.app.workspacePath, 
+        this.app.workspacePath,
         patterns
       );
-      
+
       document.getElementById('preview-included-count').textContent = preview.currentIncluded || 0;
       document.getElementById('preview-excluded-count').textContent = preview.currentExcluded || 0;
-      
+
       previewDiv.style.display = 'block';
     } catch (error) {
       console.error('Failed to preview ignore patterns:', error);
@@ -3045,5 +3088,426 @@ export class DeployManager extends ModuleBase {
 
   getModalManager() {
     return this.app.getModule('modalManager');
+  }
+
+  // ===== DEPLOYMENT HISTORY METHODS =====
+
+  /**
+   * Setup deployment history event listeners
+   */
+  setupDeploymentHistoryEvents() {
+    // Refresh history button
+    const refreshBtn = document.getElementById('refresh-history-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', async () => {
+        await this.loadDeploymentHistory();
+      });
+    }
+
+    // Export history button
+    const exportBtn = document.getElementById('export-history-btn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', async () => {
+        await this.exportDeploymentHistory();
+      });
+    }
+
+    // Retry loading history button
+    const retryBtn = document.getElementById('retry-history-btn');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', async () => {
+        await this.loadDeploymentHistory();
+      });
+    }
+
+    // Delegate click events for deployment cards (since they're dynamically generated)
+    const historyList = document.getElementById('deployment-history-list');
+    if (historyList) {
+      historyList.addEventListener('click', async (e) => {
+        const actionBtn = e.target.closest('[data-action]');
+        if (actionBtn) {
+          const action = actionBtn.dataset.action;
+          const url = actionBtn.dataset.url;
+          const id = actionBtn.dataset.id;
+
+          await this.handleHistoryAction(action, { url, id });
+        }
+      });
+    }
+
+    // Load initial history
+    this.loadDeploymentHistory();
+  }
+
+  /**
+   * Load deployment history from backend
+   */
+  async loadDeploymentHistory() {
+    const loadingEl = document.getElementById('history-loading');
+    const listEl = document.getElementById('deployment-history-list');
+    const emptyEl = document.getElementById('history-empty');
+    const errorEl = document.getElementById('history-error');
+
+    // Show loading state
+    this.showHistoryState('loading');
+
+    try {
+      const deployments = await window.electronAPI.deploy.getRecentDeployments(20);
+
+      if (deployments && deployments.length > 0) {
+        this.renderDeploymentHistory(deployments);
+        this.showHistoryState('list');
+      } else {
+        this.showHistoryState('empty');
+      }
+    } catch (error) {
+      console.error('[DeployManager] Failed to load deployment history:', error);
+      this.showHistoryState('error');
+    }
+  }
+
+  /**
+   * Render deployment history cards
+   */
+  renderDeploymentHistory(deployments) {
+    const listEl = document.getElementById('deployment-history-list');
+    if (!listEl) return;
+
+    listEl.innerHTML = deployments.map(deployment =>
+      this.renderDeploymentCard(deployment)
+    ).join('');
+  }
+
+  /**
+   * Render individual deployment card
+   */
+  renderDeploymentCard(deployment) {
+    const timestamp = new Date(deployment.timestamp);
+    const timeAgo = this.formatTimeAgo(timestamp);
+    const formattedDate = timestamp.toLocaleDateString() + ' ' + timestamp.toLocaleTimeString();
+    const fileSize = this.formatFileSize(deployment.totalSize);
+    const statusClass = deployment.status === 'success' ? 'success' : 'failed';
+
+    return `
+      <div class="deployment-card" data-deployment-id="${deployment.id}">
+        <div class="deployment-header">
+          <div class="deployment-info">
+            <h6 class="deployment-site-id">${deployment.siteId}</h6>
+            <span class="deployment-timestamp" title="${formattedDate}">${timeAgo}</span>
+          </div>
+          <div class="deployment-status">
+            <span class="status-badge ${statusClass}">${deployment.status}</span>
+          </div>
+        </div>
+        
+        <div class="deployment-details">
+          <div class="deployment-stats">
+            <span class="stat">${deployment.fileCount} files</span>
+            <span class="stat">${fileSize}</span>
+            <span class="stat">${deployment.totalCost.ar} AR</span>
+          </div>
+          
+          ${deployment.status === 'success' ? `
+            <div class="deployment-actions">
+              <button class="secondary-btn" data-action="view" data-url="${deployment.url}" title="View deployed site">
+                View Site
+              </button>
+              <button class="secondary-btn" data-action="copy" data-url="${deployment.url}" title="Copy site URL">
+                Copy URL
+              </button>
+              ${deployment.manifestUrl ? `
+                <button class="secondary-btn" data-action="manifest" data-url="${deployment.manifestUrl}" title="View manifest">
+                  Manifest
+                </button>
+              ` : ''}
+              <button class="secondary-btn" data-action="details" data-id="${deployment.id}" title="View details">
+                Details
+              </button>
+            </div>
+          ` : `
+            <div class="deployment-error">
+              <span class="error-message">${deployment.error || 'Deployment failed'}</span>
+            </div>
+          `}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Handle history action clicks
+   */
+  async handleHistoryAction(action, data) {
+    try {
+      switch (action) {
+        case 'view':
+          if (data.url) {
+            window.electronAPI.openExternal(data.url);
+          }
+          break;
+
+        case 'copy':
+          if (data.url) {
+            await navigator.clipboard.writeText(data.url);
+            this.app.showSuccess('URL copied to clipboard!');
+          }
+          break;
+
+        case 'manifest':
+          if (data.url) {
+            window.electronAPI.openExternal(data.url);
+          }
+          break;
+
+        case 'details':
+          if (data.id) {
+            await this.showDeploymentDetails(data.id);
+          }
+          break;
+
+        default:
+          console.warn('[DeployManager] Unknown history action:', action);
+      }
+    } catch (error) {
+      console.error('[DeployManager] Failed to handle history action:', error);
+      this.app.showError(`Failed to ${action}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Show deployment details modal
+   */
+  async showDeploymentDetails(deploymentId) {
+    try {
+      const deployment = await window.electronAPI.deploy.getDeploymentById(deploymentId);
+      if (!deployment) {
+        this.app.showError('Deployment not found');
+        return;
+      }
+
+      const modalContent = this.generateDeploymentDetailsModal(deployment);
+      const modalManager = this.getModalManager();
+      if (modalManager) {
+        modalManager.createDynamicModal('deployment-details', modalContent);
+        modalManager.openModal('deployment-details');
+      }
+    } catch (error) {
+      console.error('[DeployManager] Failed to show deployment details:', error);
+      this.app.showError('Failed to load deployment details');
+    }
+  }
+
+  /**
+   * Generate deployment details modal content
+   */
+  generateDeploymentDetailsModal(deployment) {
+    const timestamp = new Date(deployment.timestamp);
+    const formattedDate = timestamp.toLocaleDateString() + ' ' + timestamp.toLocaleTimeString();
+    const fileSize = this.formatFileSize(deployment.totalSize);
+
+    return `
+      <div class="modal-header">
+        <h3>Deployment Details</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-content">
+        <div class="form-section">
+          <h4>Basic Information</h4>
+          <div class="detail-list">
+            <div class="detail-item">
+              <span class="detail-label">Site ID:</span>
+              <span class="detail-value">${deployment.siteId}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Deployment Date:</span>
+              <span class="detail-value">${formattedDate}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Status:</span>
+              <span class="detail-value">
+                <span class="status-badge ${deployment.status}">${deployment.status}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <h4>Deployment Metrics</h4>
+          <div class="detail-list">
+            <div class="detail-item">
+              <span class="detail-label">Files Deployed:</span>
+              <span class="detail-value">${deployment.fileCount}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Total Size:</span>
+              <span class="detail-value">${fileSize}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Cost (AR):</span>
+              <span class="detail-value">${deployment.totalCost.ar}</span>
+            </div>
+            ${deployment.totalCost.usd ? `
+              <div class="detail-item">
+                <span class="detail-label">Cost (USD):</span>
+                <span class="detail-value">$${deployment.totalCost.usd}</span>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+        
+        ${deployment.status === 'success' ? `
+          <div class="form-section">
+            <h4>Deployment URLs</h4>
+            <div class="detail-list">
+              <div class="detail-item url-item">
+                <span class="detail-label">Site URL:</span>
+                <div class="detail-value">
+                  <div class="url-container">
+                    <span class="url-text">${deployment.url}</span>
+                    <button class="secondary-btn" onclick="navigator.clipboard.writeText('${deployment.url}')">Copy</button>
+                    <button class="secondary-btn" onclick="window.electronAPI.openExternal('${deployment.url}')">Open</button>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-item url-item">
+                <span class="detail-label">Transaction ID:</span>
+                <div class="detail-value">
+                  <div class="url-container">
+                    <span class="url-text">${deployment.manifestHash}</span>
+                    <button class="secondary-btn" onclick="navigator.clipboard.writeText('${deployment.manifestHash}')">Copy</button>
+                  </div>
+                </div>
+              </div>
+              ${deployment.manifestUrl ? `
+                <div class="detail-item url-item">
+                  <span class="detail-label">Manifest URL:</span>
+                  <div class="detail-value">
+                    <div class="url-container">
+                      <span class="url-text">${deployment.manifestUrl}</span>
+                      <button class="secondary-btn" onclick="navigator.clipboard.writeText('${deployment.manifestUrl}')">Copy</button>
+                      <button class="secondary-btn" onclick="window.electronAPI.openExternal('${deployment.manifestUrl}')">Open</button>
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        ` : ''}
+        
+        ${deployment.error ? `
+          <div class="form-section">
+            <h4>Error Details</h4>
+            <div class="error-message">
+              <pre>${deployment.error}</pre>
+            </div>
+          </div>
+        ` : ''}
+        
+        ${deployment.uploadedFiles && deployment.uploadedFiles.length > 0 ? `
+          <div class="form-section">
+            <h4>Uploaded Files (${deployment.uploadedFiles.length})</h4>
+            <div class="files-list">
+              ${deployment.uploadedFiles.slice(0, 10).map(file => `
+                <div class="file-item">
+                  <span class="file-name">${file.path || file.name}</span>
+                  <span class="file-size">${this.formatFileSize(file.size)}</span>
+                </div>
+              `).join('')}
+              ${deployment.uploadedFiles.length > 10 ? `
+                <div class="file-item">
+                  <span class="more-files">... and ${deployment.uploadedFiles.length - 10} more files</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  /**
+   * Export deployment history
+   */
+  async exportDeploymentHistory() {
+    try {
+      const result = await window.electronAPI.deploy.exportDeploymentHistory();
+
+      if (result.success) {
+        this.app.showSuccess(`Deployment history exported to: ${result.filePath}`);
+      } else {
+        this.app.showError(`Failed to export history: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('[DeployManager] Failed to export deployment history:', error);
+      this.app.showError('Failed to export deployment history');
+    }
+  }
+
+  /**
+   * Show different history states (loading, list, empty, error)
+   */
+  showHistoryState(state) {
+    const states = ['loading', 'list', 'empty', 'error'];
+
+    states.forEach(s => {
+      const el = document.getElementById(`history-${s}`);
+      if (el) {
+        el.style.display = s === state ? 'block' : 'none';
+      }
+    });
+
+    // Special case for list - it's the container, not a specific element
+    if (state === 'list') {
+      const listEl = document.getElementById('deployment-history-list');
+      if (listEl) {
+        listEl.style.display = 'block';
+      }
+    } else {
+      const listEl = document.getElementById('deployment-history-list');
+      if (listEl) {
+        listEl.style.display = 'none';
+      }
+    }
+  }
+
+  /**
+   * Format file size in human readable format
+   */
+  formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  /**
+   * Format timestamp as "time ago" string
+   */
+  formatTimeAgo(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return date.toLocaleDateString();
+  }
+
+  /**
+   * Refresh deployment history after a successful deployment
+   */
+  async refreshDeploymentHistoryAfterDeploy() {
+    // Wait a moment for the backend to save the deployment
+    setTimeout(async () => {
+      await this.loadDeploymentHistory();
+    }, 1000);
   }
 } 
