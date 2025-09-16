@@ -6,9 +6,9 @@
 
 A local-first productivity application that combines knowledge management, file archiving, and static site deployment into a unified desktop interface.
 
-## 🌟 Features
+## Features
 
-### 📚 Unified Resource Manager
+### Unified Resource Manager
 
 - **Resource Organization**: Manage web URLs, bookmarks, and local files in one interface
 - **Smart Metadata**: Automatic extraction of titles, descriptions, and images from web resources
@@ -18,7 +18,7 @@ A local-first productivity application that combines knowledge management, file 
 - **Integrated Archive**: Upload files to Arweave directly from the resource interface
 - **Upload Tracking**: Monitor Arweave uploads with cost estimation and transaction status
 
-### 🏗️ Static Site Deployment
+### Static Site Deployment
 
 - **Quartz Integration**: Deploy knowledge gardens as static websites using Quartz
 - **Multiple Targets**: Deploy to GitHub Pages, Arweave, or export static files
@@ -26,14 +26,14 @@ A local-first productivity application that combines knowledge management, file 
 - **Cost Estimation**: Real-time deployment cost calculation for Arweave
 - **Deployment History**: Track all deployments with detailed metadata and status
 
-### 🔧 Account Management
+### Account Management
 
 - **Platform Integration**: Connect accounts for Arweave and GitHub
 - **Secure Storage**: All credentials encrypted using OS-native security
 - **Status Monitoring**: Real-time connection status across all platforms
 - **Token Management**: Easy token renewal and account switching
 
-## 🏗️ Architecture
+## Architecture
 
 ### Desktop Application
 
@@ -87,7 +87,7 @@ src/renderer/modules/
 └── content/                  # Markdown files for site deployment
 ```
 
-## 🚀 Installation
+## Installation
 
 ### Prerequisites
 
@@ -128,7 +128,7 @@ npm run lint
 npm run package
 ```
 
-## 📖 Usage
+## Usage
 
 ### First Launch
 
@@ -162,7 +162,7 @@ npm run package
 - **Track Status**: Monitor transaction confirmations and access URLs
 - **Upload History**: View complete history of all Arweave transactions
 
-## ⚙️ Configuration
+## Configuration
 
 ### Platform Setup
 
@@ -192,7 +192,7 @@ Meridian is designed to work with any directory structure. Point it to:
 - **Project Directories**: Organize by project or topic
 - **Research Folders**: Academic or professional research materials
 
-## 🔒 Security & Privacy
+## Security & Privacy
 
 ### Data Protection
 
@@ -208,7 +208,7 @@ Meridian is designed to work with any directory structure. Point it to:
 - **Platform Isolation**: External APIs only used for explicit operations (deployment, archiving)
 - **Transparent Storage**: All data in readable JSON/SQLite formats
 
-## 🛠️ Development
+## Development
 
 ### Architecture Principles
 
@@ -245,27 +245,27 @@ npm run package
 npm run package:prod
 ```
 
-## 📝 Recent Updates
+## Recent Updates
 
 ### Version 0.9.0 (September 16, 2025)
 
 **Enhanced Deployment System** with comprehensive Arweave integration:
 
-- **🎯 Deployment History**: Complete tracking system with persistent history storage
-- **🎨 Streamlined UI**: Simplified interface with collapsible sections replacing complex tabs
-- **💰 Enhanced Cost Estimation**: Real-time Arweave deployment cost calculation with wallet integration
-- **⚡ Performance Optimization**: Reduced deployment code complexity by 4,000+ lines while adding features
-- **📊 ArweaveHistoryManager**: Dedicated system for tracking deployment records and metadata
-- **✨ Better UX**: Intuitive workflow with clear visual progression and enhanced feedback
-- **📤 Export Functionality**: Export deployment history for record-keeping and analysis
+- **Deployment History**: Complete tracking system with persistent history storage
+- **Streamlined UI**: Simplified interface with collapsible sections replacing complex tabs
+- **Enhanced Cost Estimation**: Real-time Arweave deployment cost calculation with wallet integration
+- **Performance Optimization**: Reduced deployment code complexity by 4,000+ lines while adding features
+- **ArweaveHistoryManager**: Dedicated system for tracking deployment records and metadata
+- **Better UX**: Intuitive workflow with clear visual progression and enhanced feedback
+- **Export Functionality**: Export deployment history for record-keeping and analysis
 
 This release significantly improves the deployment experience with a focus on simplicity, performance, and comprehensive deployment tracking.
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## 🤝 Support
+## Support
 
 - **Issues**: [GitHub Issues](https://github.com/Clinamenic/meridian/issues) for bugs and feature requests
 - **Discussions**: [GitHub Discussions](https://github.com/Clinamenic/meridian/discussions) for questions and ideas
