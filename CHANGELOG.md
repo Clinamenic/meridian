@@ -40,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Historical Context**: Access to previous deployment records for reference and debugging
 - **Consistent Design**: Improved visual consistency across all deployment interface elements
 
+### References
+
+- Version bump commit: [362d070](https://github.com/Clinamenic/meridian/commit/362d070)
+- Release date: 2025-09-16T10:06:02-07:00
+
 ## [0.8.0] - 2025-09-10
 
 ### Added
